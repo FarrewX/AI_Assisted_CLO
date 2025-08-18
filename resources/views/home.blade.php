@@ -23,7 +23,13 @@
             <div class="container mx-auto px-4">
                 <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 80vh;">
                     <h1 class="whitespace-nowrap font-bold" style="font-size:60px;">Welcome</h1>
-                    <a href="" data-slot="button" class="inline-flex items-center justify-center whitespace-nowrap bg-blue-600 hover:bg-blue-800 text-white font-bold" style="height:2rem;width:5.6000000000000005rem;font-size:0.76rem;border-radius:0.4rem">Get Started</a>
+                    <a href="{{ route('form') }}"
+                        data-slot="button"
+                        class="inline-flex items-center justify-center whitespace-nowrap bg-blue-600 hover:bg-blue-800 text-white font-bold transition 
+                                duration-200 ease-in-out shadow-md hover:shadow-lg"
+                        style="height:2rem;width:5.6rem;font-size:0.76rem;border-radius:0.4rem">
+                            Get Started</a>
+
                 </div>
             </div>
         </div>
