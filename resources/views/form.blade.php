@@ -45,25 +45,15 @@
         <option value="CS401">CS401 - AI Fundamentals</option>
       </select>
 
-      <!-- Prompt -->
       <label for="prompt">รายละเอียดรายวิชา :</label>
       <textarea id="prompt" name="prompt" rows="4" placeholder="กรอกรายละเอียดรายวิชาที่ต้องการให้ AI สร้าง..."></textarea>
-      
-      <label for="model">เลือกAI :</label>
-      <select id="model" name="model">
-        <option value="gpt">Chat GPT</option>
-        <option value="image">Azura</option>
-        <option value="image">Auto Mode</option>
-      </select>
-      
       <button type="submit" onclick="createPreview()" 
               class="inline-flex items-center justify-center whitespace-nowrap bg-blue-500
               hover:bg-blue-700 text-white font-bold transition duration-200 ease-in-out shadow-md hover:shadow-lg">
               Generate
       </button>
     </form>
-
-    <!-- Preview Output -->
+    
     <div id="preview" style="margin-top:15px; padding:10px; background:#f9f9f9; border-radius:8px; border:1px solid #ddd; display:none;">
       <strong>ข้อความที่คุณกรอก:</strong>
       <p id="preview-text"></p>
@@ -109,7 +99,6 @@
 <script> 
 function createPreview() {
   let prompt = document.getElementById("prompt").value;
-  let model = document.getElementById("model").value;
   let sec_clo = document.querySelector('input[name="sec_clo"]:checked');
   let course = document.getElementById("course").value;
 
@@ -129,7 +118,6 @@ function createPreview() {
   let previewHtml = `
     <p><strong>Section CLO:</strong> ${sec_clo ? sec_clo.value : 'Not selected'}</p>
     <p><strong>Course:</strong> ${course}</p>
-    <p><strong>AI Model:</strong> ${model}</p>
     <p><strong>รายละเอียด:</strong> ${prompt}</p>
   `;
 
