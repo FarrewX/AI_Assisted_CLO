@@ -10,21 +10,20 @@
   <title>เข้าสู่ระบบ</title>
   <style>
     :root {
-      --bg: #0f172a;          /* slate-900 */
-      --card: #0b1023cc;      /* translucent */
-      --text: #e2e8f0;        /* slate-200 */
-      --muted: #94a3b8;       /* slate-400 */
-      --primary: #6366f1;     /* indigo-500 */
-      --primary-hover: #4f46e5; /* indigo-600 */
-      --ring: #22d3ee;        /* cyan-400 */
-      --danger: #ef4444;      /* red-500 */
+      --bg: #ffffffff;
+      --card: #ffffffcc;
+      --text: #000000ff;
+      --muted: #9b9b9bff;
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --ring: #22d3ee;
+      --danger: #ef4444;
     }
 
     * { box-sizing: border-box; }
     html, body { height: 100%; }
     body {
       margin: 0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, Noto Sans, "Apple Color Emoji", "Segoe UI Emoji";
       color: var(--text);
       display: grid;
       place-items: center;
@@ -69,8 +68,8 @@
       width: 100%;
       padding: 12px 44px 12px 12px;
       border-radius: 12px;
-      border: 1px solid rgba(226,232,240,0.15);
-      background: rgba(2,6,23,0.45);
+      border: 1px solid rgba(0, 0, 0, 0.15);
+      background: rgba(255, 255, 255, 1);
       color: var(--text);
       outline: none;
       transition: border .2s, box-shadow .2s, transform .05s;
@@ -81,7 +80,7 @@
     }
 
     .toggle-pass {
-      position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+      position: absolute; right: 10px; top: 50%;
       border: 0; background: transparent; color: var(--muted); cursor: pointer; font-size: .9rem;
     }
 
@@ -97,14 +96,13 @@
       box-shadow: 0 10px 30px rgba(79,70,229,0.35);
       transition: transform .05s ease, box-shadow .2s ease, filter .2s ease;
     }
+    .btn:hover { filter: brightness(1.1); box-shadow: 0 10px 30px rgba(79,70,229,0.35); }
     .btn:active { transform: translateY(1px); }
 
     .muted-link { color: var(--muted); font-size: .9rem; text-decoration: none; }
     .muted-link:hover { text-decoration: underline; }
 
-    .error { display:none; color: var(--danger); font-size: .9rem; margin-top: -6px; }
-    .footer { margin-top: 12px; text-align: center; color: var(--muted); font-size: .9rem; }
-    .footer a { color: var(--text); }
+    .error { display:none; color: var(--danger); font-size: .9rem; margin-top: -12px; }
 
     @media (prefers-reduced-motion: no-preference) {
       .card { animation: floatIn .6s cubic-bezier(.2,.8,.2,1); }
@@ -118,7 +116,7 @@
       <div class="logo" aria-hidden="true"></div>
       <div>
         <h1>เข้าสู่ระบบ</h1>
-        <p class="sub">ยินดีต้อนรับกลับมา • โปรเจค Generative AI</p>
+        <p class="sub">ยินดีต้อนรับสู่ ELO Generator</p>
       </div>
     </div>
 
@@ -126,15 +124,15 @@
       <div class="field">
         <label for="email">อีเมลหรือชื่อผู้ใช้</label>
         <input id="email" name="email" type="text" placeholder="you@example.com" autocomplete="username" required />
-        <div id="emailErr" class="error">กรุณากรอกอีเมลหรือชื่อผู้ใช้</div>
       </div>
+      <div id="emailErr" class="error">กรุณากรอกอีเมลหรือชื่อผู้ใช้</div>
 
       <div class="field">
         <label for="password">รหัสผ่าน</label>
         <input id="password" name="password" type="password" placeholder="••••••••" autocomplete="current-password" required minlength="6" />
         <button type="button" class="toggle-pass" aria-label="แสดง/ซ่อนรหัสผ่าน" onclick="togglePass()">แสดง</button>
-        <div id="passErr" class="error">กรุณากรอกรหัสผ่านอย่างน้อย 6 ตัวอักษร</div>
       </div>
+      <div id="passErr" class="error">กรุณากรอกรหัสผ่านอย่างน้อย 6 ตัวอักษร</div>
 
       <div class="row">
         <label class="inline"><input type="checkbox" name="remember" /> จดจำฉันไว้</label>
@@ -143,10 +141,6 @@
 
       <button class="btn" type="submit">เข้าสู่ระบบ</button>
     </form>
-
-    <div class="footer">
-      ยังไม่มีบัญชี? <a href="#">สมัครสมาชิก</a>
-    </div>
   </main>
 
   <script>
@@ -177,7 +171,7 @@
       // ถ้ายังไม่มี backend: กัน submit จริงเพื่อเดโม UI
       // ลบบรรทัดต่อไปนี้เมื่อเชื่อมต่อ backend แล้ว
       e.preventDefault();
-      alert('Demo only: ส่งข้อมูลเข้าสู่ระบบ\nusername: ' + email.value);
+      alert('ส่งข้อมูลเข้าสู่ระบบ\nusername: ' + email.value);
     });
   </script>
 </body>
