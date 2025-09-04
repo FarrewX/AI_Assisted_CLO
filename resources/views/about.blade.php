@@ -1,57 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Document</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>ELO_Generator</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.bunny.net">
+  <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
+
+  <!-- Styles / Scripts -->
+  @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
+      @vite(['resources/css/app.css', 'resources/js/app.js'])
+  @else
+  @endif
 </head>
 <body>
-    <h1>improve Productivity with an AI Generator</h1>
-
-  <div class="button-container">
-    <button class="btn">1-Click Generate</button>
-    <button class="btn">Free Downloads</button>
-  </div>
+    @include('component.navbar')
+    <h1 class="font-bold text-2xl text-center mb-40 mt-20">improve Productivity with an AI Generator</h1>
+    <div class="button-container flex justify-center gap-10 mb-40">
+      <button class="px-8 py-4 text-base font-bold border border-black rounded-full bg-white cursor-pointer transition-all duration-300 hover:bg-black hover:text-white">
+        1-Click Generate
+      </button>
+      <button class="px-8 py-4 text-base font-bold border border-black rounded-full bg-white cursor-pointer transition-all duration-300 hover:bg-black hover:text-white">
+        Free Downloads
+      </button>
+    </div>
 </body>
 </html>
-<style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin: 0;
-      padding: 100px 20px;
-      background-color: #fff;
-    }
-
-    h1 {
-      font-size: 24px;
-      font-weight: bold;
-      margin-bottom: 40px;
-    }
-
-    .button-container {
-      display: flex;
-      justify-content: center;
-      gap: 20px;
-      flex-wrap: wrap;
-    }
-
-    .btn {
-      padding: 15px 30px;
-      font-size: 16px;
-      font-weight: bold;
-      border: 1px solid black;
-      border-radius: 30px;
-      background-color: white;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .btn:hover {
-      background-color: black;
-      color: white;
-    }
-
-
-</style>

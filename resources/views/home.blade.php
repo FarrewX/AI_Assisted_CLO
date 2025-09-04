@@ -18,7 +18,7 @@
     </head>
     <body>
         @include('component.navbar')
-        <div class="bg-white min-h-screen flex flex-col items-center py-10 " style="height: 80vh; margin-top: 100px;">
+        <div class="bg-white flex flex-col items-center py-10 " style="margin-top: 100px;">
             <!-- Header -->
             <div class="text-center mb-6">
                 <h1 class="text-xl font-bold">ยินดีต้อนรับ</h1>
