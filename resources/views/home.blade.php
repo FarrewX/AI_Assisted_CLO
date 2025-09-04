@@ -18,7 +18,7 @@
     </head>
     <body>
         @include('component.navbar')
-        <div class="bg-white flex flex-col items-center py-10 " style="margin-top: 100px;">
+        <div class="bg-white flex flex-col items-center" style="margin-top: 100px;">
             <!-- Header -->
             <div class="text-center mb-6">
                 <h1 class="text-xl font-bold">ยินดีต้อนรับ</h1>
@@ -39,7 +39,7 @@
 
             <!-- รายวิชา -->
             <div class="w-full max-w-2xl px-4">
-                <h3 class="text-md font-semibold mb-4">รายวิชาที่เปิดสอน ปี ล่าสุด</h3>
+                <h3 class="text-md mb-4">รายวิชาที่เปิดสอน ปี ล่าสุด</h3>
 
                 <div class="mb-6">
                     <div class="flex justify-between">
