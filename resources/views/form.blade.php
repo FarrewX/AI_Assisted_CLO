@@ -6,95 +6,62 @@
 
     <title>ELO_Generate</title>
 
-    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
 
-    <!-- Styles / Scripts -->
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
       @vite(['resources/css/app.css', 'resources/js/app.js'])
     @else
     @endif
 </head>
 <body>
-  <div class="form-container">
-    <h2 class="whitespace-nowrap font-bold" style="font-size:30px;">ELO_Generate</h2>
-    <form action="/generate" method="POST">
-
-      <div style="display: flex; gap: 20px; align-items: center;">
-        <form style="display: flex; gap: 20px; align-items: center;">
-          <div style="display: flex; align-items: center; gap: 5px;">
-            <input type="radio" id="clo3" name="sec_clo" value="clo3" style="height: 15px; width: 15px; margin-top: 20px;">
-            <label for="clo3">มคอ.3</label>&ensp;
+  @include('component.navbar')
+  <div class="flex justify-center items-center mt-40">
+    <div class="bg-white p-6 rounded-xl shadow-md w-[400px]">
+      <h2 class="text-center text-[30px] font-bold text-gray-800 mb-4">ELO_Generate</h2>
+  
+      <form action="/generate" method="POST" class="space-y-4">
+        <!-- เลือก มคอ -->
+        <div class="flex items-center gap-6">
+          <div class="flex items-center gap-2">
+            <input type="radio" id="clo3" name="sec_clo" value="clo3" class="w-4 h-4 text-blue-600">
+            <label for="clo3" class="text-gray-700">มคอ.3</label>
           </div>
-          <div style="display: flex; align-items: center; gap: 5px;">
-            <input type="radio" id="clo5" name="sec_clo" value="clo5" style="height: 15px; width: 15px; margin-top: 20px;">
-            <label for="clo5">มคอ.5</label>
+          <div class="flex items-center gap-2">
+            <input type="radio" id="clo5" name="sec_clo" value="clo5" class="w-4 h-4 text-blue-600">
+            <label for="clo5" class="text-gray-700">มคอ.5</label>
           </div>
-        </form>
-      </div>
-
-      <label for="course">เลือกรายวิชา :</label>
-      <select id="course" name="course">
-        <option value="" disabled selected>-- กรุณาเลือกรายวิชา --</option>
-        <option value="CS101">CS101 - Introduction to Computer Science</option>
-        <option value="CS102">CS102 - Programming Basics</option>
-        <option value="CS201">CS201 - Data Structures</option>
-        <option value="CS301">CS301 - Software Engineering</option>
-        <option value="CS401">CS401 - AI Fundamentals</option>
-      </select>
-
-      <label for="prompt">รายละเอียดรายวิชา :</label>
-      <textarea id="prompt" name="prompt" rows="4" placeholder="กรอกรายละเอียดรายวิชาที่ต้องการให้ AI สร้าง..."></textarea>
-      <button type="submit" onclick="createPreview()" 
-              class="inline-flex items-center justify-center whitespace-nowrap bg-blue-500
-              hover:bg-blue-700 text-white font-bold transition duration-200 ease-in-out shadow-md hover:shadow-lg">
-              Generate
-      </button>
-    </form>
-    
-    <div id="preview" style="margin-top:15px; padding:10px; background:#f9f9f9; border-radius:8px; border:1px solid #ddd; display:none;">
-      <strong>ข้อความที่คุณกรอก:</strong>
-      <p id="preview-text"></p>
+        </div>
+  
+        <!-- รายวิชา -->
+        <div>
+          <label for="course" class="block font-semibold text-gray-700 mb-1">เลือกรายวิชา :</label>
+          <select id="course" name="course" class="w-full p-2 border border-gray-300 rounded-md focus:ring focus:ring-blue-200">
+            <option value="" disabled selected>-- กรุณาเลือกรายวิชา --</option>
+            <option value="CS101">CS101 - Introduction to Computer Science</option>
+            <option value="CS102">CS102 - Programming Basics</option>
+            <option value="CS201">CS201 - Data Structures</option>
+            <option value="CS301">CS301 - Software Engineering</option>
+            <option value="CS401">CS401 - AI Fundamentals</option>
+          </select>
+        </div>
+  
+        <!-- รายละเอียด -->
+        <div>
+          <label for="prompt" class="block font-semibold text-gray-700 mb-1">รายละเอียดรายวิชา :</label>
+          <textarea id="prompt" name="prompt" rows="4" placeholder="กรอกรายละเอียดรายวิชาที่ต้องการให้ AI สร้าง..." class="w-full p-2 border border-gray-300 rounded-md focus:ring focus:ring-blue-200"></textarea>
+        </div>
+  
+        <!-- ปุ่ม -->
+        <button type="submit" onclick="createPreview()" 
+                class="w-full inline-flex items-center justify-center whitespace-nowrap bg-blue-500 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-md shadow-md hover:shadow-lg transition">
+                Generate
+        </button>
+      </form>
     </div>
   </div>
 </body>
-</html>
-<style>
-    body {
-      /* background: #f4f6f8; */
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-    .form-container {
-      background: white;
-      padding: 20px 30px;
-      border-radius: 12px;
-      box-shadow: 0px 4px 8px rgba(0,0,0,0.1);
-      width: 400px;
-    }
-    .form-container h2 {
-      text-align: center;
-      margin-bottom: 15px;
-      color: #333;
-    }
-    label {
-      font-weight: bold;
-      display: block;
-      margin-top: 10px;
-      margin-bottom: 5px;
-    }
-    input, textarea, select, button {
-      width: 100%;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      margin-bottom: 15px;
-      font-size: 14px;
-    }
-</style>
+
 <script> 
 function createPreview() {
   let prompt = document.getElementById("prompt").value;
