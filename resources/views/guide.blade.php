@@ -7,6 +7,7 @@
     <title>Document</title>
 </head>
 <body>
+    @include('component.navbar')
     <div class="guide-container">
   <div class="guide-card">
     <h1>📌 วิธีการใช้งาน</h1>

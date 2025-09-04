@@ -7,6 +7,7 @@
     <title>Document</title>
 </head>
 <body>
+    @include('component.navbar')    
     <!DOCTYPE html>
 <html lang="th">
 <head>
@@ -15,7 +16,8 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
+    <br>
+    
   <div class="container">
     <button class="notify-btn" onclick="location.href='message'">ส่งแจ้งเตือน</button>
     

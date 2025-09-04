@@ -7,27 +7,28 @@
     <title>Document</title>
 </head>
 <body>
+    @include('component.navbar')
     <h1>improve Productivity with an AI Generator</h1>
-
-  <div class="button-container">
+    <div class="button-container">
     <button class="btn">1-Click Generate</button>
     <button class="btn">Free Downloads</button>
-  </div>
+    </div>
 </body>
 </html>
 <style>
-    body {
+    /* body {
       font-family: Arial, sans-serif;
       text-align: center;
       margin: 0;
       padding: 100px 20px;
       background-color: #fff;
-    }
+    } */
 
     h1 {
       font-size: 24px;
       font-weight: bold;
       margin-bottom: 40px;
+      text-align: center
     }
 
     .button-container {
