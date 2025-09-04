@@ -15,9 +15,12 @@
     @endif
 </head>
 <body>
-  @include('component.navbar')
-  <div class="flex justify-center items-center mt-40">
-    <div class="bg-white p-6 rounded-xl shadow-md w-[400px]">
+  <button type="button" onclick="window.history.back()"
+    class="mt-10 ml-10 top-4 right-4 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md shadow">
+    ← back
+  </button>
+  <div class="flex justify-center items-center mt-30">
+    <div class="bg-white p-6 rounded-xl shadow-md w-[400px] relative">
       <h2 class="text-center text-[30px] font-bold text-gray-800 mb-4">ELO_Generate</h2>
   
       <form action="/generate" method="POST" class="space-y-4">
