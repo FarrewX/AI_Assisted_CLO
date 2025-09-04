@@ -29,3 +29,7 @@ Route::get('/notification', function () {
 Route::get('/message', function () {
     return view('message');
 })->name('message');
+
+Route::get('/clo', function () {
+    return view('clo');
+})->name('clo');
