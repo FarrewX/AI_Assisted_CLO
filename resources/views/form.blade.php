@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,9 +12,8 @@
 
     <!-- Styles / Scripts -->
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+      @vite(['resources/css/app.css', 'resources/js/app.js'])
     @else
-        
     @endif
 </head>
 <body>
@@ -63,7 +62,7 @@
 </html>
 <style>
     body {
-      background: #f4f6f8;
+      /* background: #f4f6f8; */
       display: flex;
       justify-content: center;
       align-items: center;
