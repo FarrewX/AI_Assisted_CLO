@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title>ELO_Generate</title>
+        <title>ELO_Generator</title>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
@@ -16,43 +16,60 @@
         @else
         @endif
     </head>
-    <body>
-        <div id="app">
-            @include('component.navbar')
-            <div class="container mx-auto px-4">
-                <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 80vh; margin-top: 100px;">
-                    <h1 class="whitespace-nowrap font-bold" style="font-size:60px;">Welcome</h1>
-                    <h2 class="whitespace-nowrap font-bold">To the ELO_Generate </h2>
-                    <p class="text-gray-600 text-lg">ระบบสร้างผลลัพธ์การเรียนรู้ระดับรายวิชา (CLO) ด้วย AI</p>
-                    <br>
-                    <div class="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-md">
-                        <h2 class="text-xl font-semibold mb-4">📌 วิธีการใช้งาน</h2>
-                        <ol class="list-decimal list-inside space-y-2 text-gray-800">
-                            <li>เลือกประเภทผลลัพธ์ที่ต้องการสร้าง (มคอ.3 หรือ มคอ.5)</li>
-                            <li>เลือกรายวิชาที่ต้องการ</li>
-                            <li>กรอกคำอธิบายรายวิชาหรือเป้าหมายการสอน</li>
-                            <li>กดปุ่ม Generate เพื่อให้ระบบสร้างผลลัพธ์การเรียนรู้</li>
-                            <li>ตรวจสอบผลลัพธ์ในหน้าแสดงตัวอย่าง (Preview)</li>
-                            <li>สามารถกลับมาแก้ไขpromptหรือแก้ไขข้อมูลที่ AI Gen ออกมาได้</li>
-                        </ol>
+    <body class="bg-white min-h-screen flex flex-col items-center py-10 " style="height: 80vh; margin-top: 100px;">
+        @include('component.navbar')
+        <!-- Header -->
+        <div class="text-center mb-6">
+            <h1 class="text-xl font-bold">ยินดีต้อนรับ</h1>
+            <h2 class="text-lg font-bold">อาจารย์ {{ Auth::user()->name ?? 'สมมติ' }}</h2>
+        </div>
 
-                        @if(session('status'))
-                            <div class="mt-6 p-4 bg-green-100 border border-green-300 rounded text-green-800">
-                                ✅ <strong>Status:</strong> {{ session('status') }}
-                            </div>
-                        @endif
-                        
-                        <div class="text-center mt-8">
-                            <a href="{{ route('form') }}"
-                                class="inline-block bg-blue-600 hover:bg-blue-800 text-white font-bold py-2 px-6 rounded transition duration-200">
-                                Get Started
-                            </a>
-                        </div>
-                    </div>
+        <!-- Buttons -->
+        <div class="flex space-x-6 mb-10">
+            <a href="{{ url('/form') }}" 
+            class="px-6 py-3 bg-sky-300 text-black font-bold rounded-lg shadow hover:bg-sky-400">
+                + สร้าง CLO ใหม่
+            </a>
+            <a href="{{ url('/clo/all') }}" 
+            class="px-6 py-3 bg-emerald-400 text-white font-bold rounded-lg shadow hover:bg-emerald-500">
+                CLO ทั้งหมดที่ดาวน์โหลด
+            </a>
+        </div>
+
+        <!-- รายวิชา -->
+        <div class="w-full max-w-2xl px-4">
+            <h3 class="text-md font-semibold mb-4">รายวิชาที่เปิดสอน ปี ล่าสุด</h3>
+
+            <div class="mb-6">
+                <div class="flex justify-between">
+                    <span>• AI</span>
+                    <span class="text-gray-500 text-sm">- prompt แล้ว</span>
+                </div>
+                <div class="w-full bg-gray-100 rounded-full h-3 mt-1">
+                    <div class="bg-green-500 h-3 rounded-full" style="width: 70%"></div>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <div class="flex justify-between">
+                    <span>• Cloud</span>
+                    <span class="text-gray-500 text-sm">- กรอกข้อมูลแล้ว</span>
+                </div>
+                <div class="w-full bg-gray-100 rounded-full h-3 mt-1">
+                    <div class="bg-green-500 h-3 rounded-full" style="width: 50%"></div>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <div class="flex justify-between">
+                    <span>• T</span>
+                    <span class="text-gray-500 text-sm">- กรอกข้อมูลแล้ว</span>
+                </div>
+                <div class="w-full bg-gray-100 rounded-full h-3 mt-1">
+                    <div class="bg-green-500 h-3 rounded-full" style="width: 50%"></div>
                 </div>
             </div>
         </div>
 
-        @vite(['resources/js/app.js'])
     </body>
 </html>
