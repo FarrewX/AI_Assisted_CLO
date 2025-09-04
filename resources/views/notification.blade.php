@@ -1,119 +1,55 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Document</title>
-</head>
-<body>
-    <!DOCTYPE html>
-<html lang="th">
-<head>
-  <meta charset="UTF-8">
-  <title>รายการวิชา</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <div class="container">
-    <button class="notify-btn" onclick="location.href='message'">ส่งแจ้งเตือน</button>
-    
-    <table>
-      <thead>
-        <tr>
-          <th>รหัสวิชา</th>
-          <th>รายชื่อวิชา</th>
-          <th>อาจารย์รายวิชา</th>
-          <th>สถานะงาน</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>00000001</td>
-          <td>การออกแบบอัลกอริทึมและการเขียนโปรแกรมเชิงขั้นตอน...</td>
-          <td>อาจารย์เอ</td>
-          <td>ยังไม่เสร็จ</td>
-        </tr>
-        <tr>
-          <td>00000002</td>
-          <td>หลักการและเทคนิคการพัฒนาโปรแกรมคอมพิวเตอร์...</td>
-          <td>อาจารย์บี</td>
-          <td>ยังไม่เริ่ม</td>
-        </tr>
-      </tbody>
-    </table>
+  <title>ELO_Generator</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.bunny.net">
+  <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
+
+  <!-- Styles / Scripts -->
+  @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
+      @vite(['resources/css/app.css', 'resources/js/app.js'])
+  @else
+  @endif
+</head>
+<body>
+  @include('component.navbar')
+  <div class="bg-white mt-20">
+    <div class="w-[90%] max-w-[1000px] mx-auto">
+      <button 
+        class="float-right bg-orange-500 hover:bg-orange-600 text-white font-bold px-5 py-2 rounded transition mb-3"
+        onclick="location.href='message'">
+        ส่งแจ้งเตือน
+      </button>
+  
+      <table class="w-full border border-gray-300 border-collapse bg-white mt-5">
+        <thead>
+          <tr class="bg-gray-100">
+            <th class="px-4 py-3 border border-gray-300 text-left">รหัสวิชา</th>
+            <th class="px-4 py-3 border border-gray-300 text-left">รายชื่อวิชา</th>
+            <th class="px-4 py-3 border border-gray-300 text-left">อาจารย์รายวิชา</th>
+            <th class="px-4 py-3 border border-gray-300 text-left">สถานะงาน</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="px-4 py-3 border border-gray-300">00000001</td>
+            <td class="px-4 py-3 border border-gray-300">การออกแบบอัลกอริทึมและการเขียนโปรแกรมเชิงขั้นตอน...</td>
+            <td class="px-4 py-3 border border-gray-300">อาจารย์เอ</td>
+            <td class="px-4 py-3 border border-gray-300">ยังไม่เสร็จ</td>
+          </tr>
+          <tr>
+            <td class="px-4 py-3 border border-gray-300">00000002</td>
+            <td class="px-4 py-3 border border-gray-300">หลักการและเทคนิคการพัฒนาโปรแกรมคอมพิวเตอร์...</td>
+            <td class="px-4 py-3 border border-gray-300">อาจารย์บี</td>
+            <td class="px-4 py-3 border border-gray-300">ยังไม่เริ่ม</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
-
 </body>
-</html>
-
-</body>
-</html>
-<style>
-    body {
-  font-family: 'Tahoma', sans-serif;
-  background-color: #f9f9f9;
-  margin: 0;
-  padding: 20px;
-}
-
-.container {
-  width: 90%;
-  max-width: 1000px;
-  margin: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  background-color: #fff;
-  margin-top: 20px;
-}
-
-th, td {
-  padding: 12px 15px;
-  border: 1px solid #ccc;
-  text-align: left;
-  vertical-align: top;
-}
-
-th {
-  background-color: #f2f2f2;
-}
-
-.notify-btn {
-  float: right;
-  background-color: orange;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  font-weight: bold;
-  cursor: pointer;
-  margin-bottom: 10px;
-}
-
-.notify-btn:hover {
-  background-color: darkorange;
-}
-
-.email-btn {
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.email-btn:hover {
-  background-color: #45a049;
-}
-
-textarea {
-  width: 100%;
-  padding: 10px;
-  font-size: 16px;
-}
-
-</style>
