@@ -17,7 +17,7 @@ class CourseFactory extends Factory
         $user_id = User::inRandomOrder()->first()->user_id ?? Str::uuid();
 
         return [
-            'course_id' => (string) Str::uuid(),
+            'course_id' => str_pad((string) fake()->numberBetween(0, 999999), 6, '0', STR_PAD_LEFT),
             'user_id' => $user_id,
             'course_detail' => $this->faker->sentence(6),
         ];
