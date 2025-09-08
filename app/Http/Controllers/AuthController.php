@@ -71,6 +71,16 @@ class AuthController extends Controller
         return redirect()->route('register')->with('error', 'สมัครสมาชิกไม่สำเร็จ! กรุณาลองใหม่อีกครั้ง.');
     }
 
+    public function logout(Request $request)
+    {
+        Auth::logout(); // ลบ session ของ user
+
+        $request->session()->invalidate(); // ยกเลิก session ทั้งหมด
+        $request->session()->regenerateToken(); // สร้าง CSRF token ใหม่
+
+        return redirect()->route('login')->with('success', 'ออกจากระบบเรียบร้อย');
+    }
+
 
     /**
      * Show the form for creating a new resource.

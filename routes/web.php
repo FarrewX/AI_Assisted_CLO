@@ -15,6 +15,8 @@ Route::middleware('auth')->group(function () {
         return view('home');
     });
 
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
     Route::get('/form', function () {
         return view('form');
     })->name('form');
