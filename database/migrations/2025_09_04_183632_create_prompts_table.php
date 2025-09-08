@@ -12,7 +12,6 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('prompts', function (Blueprint $table) {
-            $table->id();
             $table->string('user_id');
             $table->string('course_id');
             $table->string('name');

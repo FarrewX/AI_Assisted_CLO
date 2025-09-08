@@ -7,8 +7,9 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     @else
     @endif
-  <title>เข้าสู่ระบบ</title>
+  <title>Register</title>
   <style>
+    /* ใช้ style เดิมทั้งหมดจากหน้า Login */
     :root {
       --bg: #ffffffff;
       --card: #ffffffcc;
@@ -84,10 +85,6 @@
       border: 0; background: transparent; color: var(--muted); cursor: pointer; font-size: .9rem;
     }
 
-    .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-    .row label.inline { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
-    .row input[type="checkbox"] { width: 16px; height: 16px; }
-
     .btn {
       appearance: none; border: 0; cursor: pointer;
       padding: 12px 14px; border-radius: 12px; font-weight: 600; font-size: 1rem;
@@ -96,7 +93,7 @@
       box-shadow: 0 10px 30px rgba(79,70,229,0.35);
       transition: transform .05s ease, box-shadow .2s ease, filter .2s ease;
     }
-    .btn:hover { filter: brightness(1.1); box-shadow: 0 10px 30px rgba(79,70,229,0.35); }
+    .btn:hover { filter: brightness(1.1); }
     .btn:active { transform: translateY(1px); }
 
     .muted-link { color: var(--muted); font-size: .9rem; text-decoration: none; }
@@ -111,67 +108,95 @@
   </style>
 </head>
 <body>
-  <main class="card" aria-label="Login form">
+  <main class="card" aria-label="Register form">
+    @if(session()->has('success'))
+        <div class="alert alert-success" style="background-color: #d1fae5; color: #065f46; padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
+            {{ session()->get('success') }}
+        </div>
+    @endif
+    @if(session()->has('error'))
+        <div class="alert alert-error" style="background-color: #d1fae5; color: #065f46; padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
+            {{ session()->get('error') }}
+        </div>
+    @endif
     <div class="brand">
       <div class="logo" aria-hidden="true"></div>
       <div>
-        <h1>เข้าสู่ระบบ</h1>
-        <p class="sub">ยินดีต้อนรับสู่ ELO Generator</p>
+        <h1>สมัครสมาชิก</h1>
+        <p class="sub">สร้างบัญชีใหม่สำหรับ ELO Generator</p>
       </div>
     </div>
 
-    <form id="loginForm" action="/login" method="POST" novalidate>
+    <form id="registerForm" action="{{ route('register.post') }}" method="POST" novalidate>
+        @csrf
       <div class="field">
-        <label for="email">อีเมลหรือชื่อผู้ใช้</label>
-        <input id="email" name="email" type="text" placeholder="you@example.com" autocomplete="username" required />
+        <label for="name">ชื่อผู้ใช้</label>
+        <input id="name" name="name" type="text" placeholder="yourname" required />
       </div>
-      <div id="emailErr" class="error">กรุณากรอกอีเมลหรือชื่อผู้ใช้</div>
+      <div id="nameErr" class="error">กรุณากรอกชื่อผู้ใช้</div>
+
+      <div class="field">
+        <label for="email">อีเมล</label>
+        <input id="email" name="email" type="email" placeholder="you@example.com" autocomplete="email" required />
+      </div>
+      <div id="emailErr" class="error">กรุณากรอกอีเมลให้ถูกต้อง</div>
 
       <div class="field">
         <label for="password">รหัสผ่าน</label>
-        <input id="password" name="password" type="password" placeholder="••••••••" autocomplete="current-password" required minlength="6" />
-        <button type="button" class="toggle-pass" aria-label="แสดง/ซ่อนรหัสผ่าน" onclick="togglePass()">แสดง</button>
+        <input id="password" name="password" type="password" placeholder="••••••••" autocomplete="new-password" required minlength="6" />
+        <button type="button" class="toggle-pass" aria-label="แสดง/ซ่อนรหัสผ่าน" onclick="togglePass('password', this)">แสดง</button>
       </div>
-      <div id="passErr" class="error">กรุณากรอกรหัสผ่านอย่างน้อย 6 ตัวอักษร</div>
+      <div id="passErr" class="error">รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร</div>
 
-      <div class="row">
-        <label class="inline"><input type="checkbox" name="remember" /> จดจำฉันไว้</label>
-        <a href="#" class="muted-link">ลืมรหัสผ่าน?</a>
+      <div class="field">
+        <label for="confirm">ยืนยันรหัสผ่าน</label>
+        <input id="confirm" name="password_confirmation" type="password" placeholder="••••••••" required minlength="6" />
+        <button type="button" class="toggle-pass" aria-label="แสดง/ซ่อนรหัสผ่าน" onclick="togglePass('confirm', this)">แสดง</button>
       </div>
+      <div id="confirmErr" class="error">รหัสผ่านไม่ตรงกัน</div>
 
-      <button class="btn" type="submit">เข้าสู่ระบบ</button>
+      <button class="btn" type="submit">สมัครสมาชิก</button>
+      <p style="text-align:center; margin-top:10px;">
+        <a href="login" class="muted-link">มีบัญชีแล้ว? เข้าสู่ระบบ</a>
+      </p>
     </form>
   </main>
 
   <script>
-    function togglePass() {
-      const inp = document.getElementById('password');
-      const btn = document.querySelector('.toggle-pass');
+    function togglePass(id, btn) {
+      const inp = document.getElementById(id);
       const isPwd = inp.type === 'password';
       inp.type = isPwd ? 'text' : 'password';
       btn.textContent = isPwd ? 'ซ่อน' : 'แสดง';
     }
 
-    // Minimal client-side validation & demo submit
-    document.getElementById('loginForm').addEventListener('submit', function (e) {
+    document.getElementById('registerForm').addEventListener('submit', function (e) {
+      const name = document.getElementById('name');
       const email = document.getElementById('email');
       const pass = document.getElementById('password');
+      const confirm = document.getElementById('confirm');
+
+      const nameErr = document.getElementById('nameErr');
       const emailErr = document.getElementById('emailErr');
       const passErr = document.getElementById('passErr');
+      const confirmErr = document.getElementById('confirmErr');
 
       let valid = true;
+      nameErr.style.display = 'none';
       emailErr.style.display = 'none';
       passErr.style.display = 'none';
+      confirmErr.style.display = 'none';
 
-      if (!email.value.trim()) { emailErr.style.display = 'block'; valid = false; }
+      if (!name.value.trim()) { nameErr.style.display = 'block'; valid = false; }
+      if (!email.value.trim() || !email.value.includes('@')) { emailErr.style.display = 'block'; valid = false; }
       if (!pass.value || pass.value.length < 6) { passErr.style.display = 'block'; valid = false; }
+      if (pass.value !== confirm.value) { confirmErr.style.display = 'block'; valid = false; }
 
       if (!valid) { e.preventDefault(); return; }
 
-      // ถ้ายังไม่มี backend: กัน submit จริงเพื่อเดโม UI
-      // ลบบรรทัดต่อไปนี้เมื่อเชื่อมต่อ backend แล้ว
-      e.preventDefault();
-      alert('ส่งข้อมูลเข้าสู่ระบบ\nusername: ' + email.value);
+      // กัน submit จริงเพื่อเดโม
+    //   e.preventDefault();
+    //   alert('สมัครสมาชิกสำเร็จ\nname: ' + name.value + '\nemail: ' + email.value);
     });
   </script>
 </body>

@@ -10,11 +10,27 @@ use Illuminate\Database\Eloquent\Model;
 
 class User extends Authenticatable
 {
-    use HasFactory;
+    use HasFactory, Notifiable;
 
-    public $incrementing = false;
     protected $primaryKey = 'user_id';
+    public $incrementing = true;
     protected $keyType = 'string';
+
+    protected $fillable = [
+        'user_id',
+        'name',
+        'email',
+        'password',
+        'role_id',
+    ];
+
+    protected $hidden = [
+        'password',
+    ];
+
+    protected $casts = [
+        'password' => 'hashed',
+    ];
 
     public function role() {
         return $this->belongsTo(Role::class, 'role_id', 'role_id');

@@ -19,15 +19,15 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // Users
-        User::factory()->count(10)->create();
+        // User::factory()->count(10)->create();
 
         // Courses
-        Course::factory()->count(10)->create();
+        // Course::factory()->count(10)->create();
 
         // Prompts
-        Prompt::factory()->count(20)->create();
+        // Prompt::factory()->count(20)->create();
 
         // Status
-        Status::factory()->count(10)->create();
+        // Status::factory()->count(10)->create();
     }
 }
