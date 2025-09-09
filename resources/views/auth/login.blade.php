@@ -152,6 +152,7 @@
     <div class="row">
       <label class="inline"><input type="checkbox" name="remember" /> จดจำฉันไว้</label>
       <a href="#" class="muted-link">ลืมรหัสผ่าน?</a>
+      <a href="register" class="muted-link">สมัครสมาชิก</a>
     </div>
 
     <button class="btn" type="submit">เข้าสู่ระบบ</button>
