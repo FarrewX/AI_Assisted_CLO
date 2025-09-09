@@ -63,14 +63,14 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 <!-- insert course_data in sql command
 เอา ไฟล์ csv ไปใส่ใน xampp เช่น C:/xampp/mysql/data/elo_generator/courses.csv
 
-SET FOREIGN_KEY_CHECKS=0;
 LOAD DATA INFILE 'C:/xampp/mysql/data/elo_generator/courses.csv'
 INTO TABLE courses
-FIELDS TERMINATED BY ','
-ENCLOSED BY '"'
+CHARACTER SET utf8mb4
+FIELDS TERMINATED BY ',' 
+OPTIONALLY ENCLOSED BY '"'
 LINES TERMINATED BY '\n'
 IGNORE 1 ROWS
-(course_id, course_name, course_name_en, course_detail_th, course_detail_en);
-SET FOREIGN_KEY_CHECKS=1; 
+(course_id, course_name, course_name_en, course_detail_th, course_detail_en, @user_id)
+SET user_id = IF(TRIM(@user_id) = '' OR @user_id IS NULL, 'unknown', TRIM(BOTH '"' FROM @user_id));
 
 -->
