@@ -13,13 +13,14 @@ return new class extends Migration
     {
        Schema::create('courses', function (Blueprint $table) {
             $table->string('course_id')->primary();
+            $table->string('user_id')->default('unknown');
             $table->string('course_name');
             $table->string('course_name_en');
             $table->string('course_detail_th');
             $table->string('course_detail_en');
             $table->timestamps();
 
-            // $table->foreign('user_id')->references('user_id')->on('users')->onDelete('cascade');
+            $table->foreign('user_id')->references('user_id')->on('users')->onDelete('cascade');
         });
     }
 
