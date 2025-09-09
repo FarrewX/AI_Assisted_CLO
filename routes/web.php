@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CourseController;
 use Illuminate\Support\Facades\Route;
 
 // หน้า login/register ไม่ต้องล็อกอิน
@@ -16,6 +17,8 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+    Route::get('/', [CourseController::class, 'index'])->name('homedashboard');
 
     Route::get('/form', function () {
         return view('form');

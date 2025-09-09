@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Course;
 use App\Http\Requests\StoreCourseRequest;
 use App\Http\Requests\UpdateCourseRequest;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 
 class CourseController extends Controller
 {
@@ -13,7 +16,23 @@ class CourseController extends Controller
      */
     public function index()
     {
-        //
+        $user = Auth::user();
+
+        // ดึงรายวิชาพร้อมสถานะของผู้ใช้ปัจจุบัน
+        $courses = DB::table('courses')
+            ->leftJoin('statuses', 'courses.course_id', '=', 'statuses.course_id')
+            ->where('courses.user_id', $user->user_id)
+            ->select(
+                'courses.course_id',
+                'courses.course_name',
+                'statuses.startprompt',
+                'statuses.generated',
+                'statuses.downloaded',
+                'statuses.success'
+            )
+            ->get();
+
+        return view('home', compact('courses', 'user'));
     }
 
     /**
