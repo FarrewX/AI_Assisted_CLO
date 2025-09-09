@@ -14,11 +14,9 @@ return new class extends Migration
         Schema::create('prompts', function (Blueprint $table) {
             $table->string('user_id');
             $table->string('course_id');
-            $table->string('name');
             $table->text('course_text');
             $table->timestamps();
 
-            $table->foreign('user_id')->references('user_id')->on('users')->onDelete('cascade');
             $table->foreign('course_id')->references('course_id')->on('courses')->onDelete('cascade');
         });
     }
