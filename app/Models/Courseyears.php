@@ -22,6 +22,6 @@ class Courseyears extends Model
 
     public function prompts()
     {
-        return $this->hasMany(Prompt::class, 'course_id', 'course_id');
+        return $this->hasOne(Prompt::class, 'id', 'ref_id');
     }
 }

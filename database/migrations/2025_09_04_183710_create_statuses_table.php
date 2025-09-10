@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
        Schema::create('statuses', function (Blueprint $table) {
-            $table->string('ref_id');
+            $table->string('ref_id')->unique();;
             $table->timestamp('startprompt')->nullable();
             $table->timestamp('generated')->nullable();
             $table->timestamp('downloaded')->nullable();
