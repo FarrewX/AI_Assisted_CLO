@@ -11,7 +11,6 @@
 
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
       @vite(['resources/css/app.css', 'resources/js/app.js'])
-    @else
     @endif
 </head>
 <body>
@@ -19,10 +18,11 @@
     class="mt-10 ml-10 top-4 right-4 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md shadow">
     ← back
   </button>
+
   <div class="flex justify-center items-center mt-30">
     <div class="bg-white p-6 rounded-xl shadow-md w-[400px] relative">
       <h2 class="text-center text-[30px] font-bold text-gray-800 mb-4">ELO_Generate</h2>
-  
+
       <form action="/generate" method="POST" class="space-y-4">
         @csrf
         <!-- เลือก มคอ -->
@@ -36,45 +36,56 @@
             <label for="clo5" class="text-gray-700">มคอ.5</label>
           </div>
         </div>
-  
+
         <!-- รายวิชา -->
         <div>
           <label for="course" class="block font-semibold text-gray-700 mb-1">เลือกรายวิชา :</label>
           <select id="course" name="course" class="w-full p-2 border border-gray-300 rounded-md">
             <option value="" disabled selected>-- กรุณาเลือกรายวิชา --</option>
             @foreach ($courses as $course)
-              <option value="{{ $course->user_id }}">{{ $course->course_name }}</option>
+              <option value="{{ $course->course_id }}" data-detail="{{ $course->course_detail_th }}">
+                {{ $course->course_id }} - {{ $course->course_name }}
+              </option>
             @endforeach
           </select>
         </div>
-  
+
         <!-- รายละเอียด -->
         <div>
           <label for="prompt" class="block font-semibold text-gray-700 mb-1">รายละเอียดรายวิชา :</label>
           <textarea id="prompt" name="prompt" rows="4" placeholder="กรอกรายละเอียดรายวิชาที่ต้องการให้ AI สร้าง..." class="w-full p-2 border border-gray-300 rounded-md focus:ring focus:ring-blue-200"></textarea>
         </div>
-  
+
         <!-- ปุ่ม -->
         <button type="submit" onclick="createPreview()" 
                 class="w-full inline-flex items-center justify-center whitespace-nowrap bg-blue-500 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-md shadow-md hover:shadow-lg transition">
                 Generate
         </button>
       </form>
+
+      <!-- preview -->
+      <div id="preview" class="mt-4 p-4 border border-gray-200 rounded-md hidden"></div>
     </div>
   </div>
-</body>
 
-<script> 
+<script>
+document.getElementById('course').addEventListener('change', function() {
+    let selectedOption = this.options[this.selectedIndex];
+    let detail = selectedOption.getAttribute('data-detail') || '';
+    document.getElementById('prompt').value = detail;
+});
+
 function createPreview() {
   let prompt = document.getElementById("prompt").value;
   let sec_clo = document.querySelector('input[name="sec_clo"]:checked');
-  let course = document.getElementById("course").value;
+  let courseSelect = document.getElementById("course");
+  let courseText = courseSelect.options[courseSelect.selectedIndex].text;
 
   if (prompt.trim() === "") {
     alert("กรุณากรอกข้อความก่อนกด Generate");
     return;
   }
-  if (!course) {
+  if (!courseSelect.value) {
     alert("กรุณาเลือกรายวิชา");
     return;
   }
@@ -84,12 +95,15 @@ function createPreview() {
   }
 
   let previewHtml = `
-    <p><strong>Section CLO:</strong> ${sec_clo ? sec_clo.value : 'Not selected'}</p>
-    <p><strong>Course:</strong> ${course}</p>
+    <p><strong>Section CLO:</strong> ${sec_clo.value}</p>
+    <p><strong>Course:</strong> ${courseText}</p>
     <p><strong>รายละเอียด:</strong> ${prompt}</p>
   `;
 
-  document.getElementById("preview").innerHTML = previewHtml;
-  document.getElementById("preview").style.display = "block";
+  let previewDiv = document.getElementById("preview");
+  previewDiv.innerHTML = previewHtml;
+  previewDiv.style.display = "block";
 }
 </script>
+</body>
+</html>
