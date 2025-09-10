@@ -9,7 +9,11 @@ class Courseyears extends Model
 {
     use HasFactory;
     
-    protected $fillable = ['course_id', 'year'];
+    protected $primaryKey = 'id';
+    public $incrementing = true;
+    protected $keyType = 'string';
+
+    protected $fillable = ['id', 'course_id', 'year'];
 
     public function course()
     {

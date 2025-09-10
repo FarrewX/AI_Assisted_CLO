@@ -12,7 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('courseyears', function (Blueprint $table) {
-            $table->id();
+            $table->string('id')->primary();
+            $table->string('user_id')->default('unknown');
             $table->string('course_id');
             $table->year('year');
             $table->timestamps();

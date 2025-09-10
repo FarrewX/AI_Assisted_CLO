@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateCourseRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class CourseController extends Controller
 {
@@ -18,16 +19,18 @@ class CourseController extends Controller
     {
         $user = Auth::user();
 
-        $courses = DB::table('courses')
-            ->leftJoin('statuses', 'courses.course_id', '=', 'statuses.course_id')
-            ->where('courses.user_id', $user->user_id)
+        $courses = DB::table('courses as c')
+            ->leftJoin('courseyears as cy', 'c.course_id', '=', 'cy.course_id')
+            ->leftJoin('statuses as s', 'cy.id', '=', 's.ref_id')
+            ->where('c.user_id', $user->user_id)
+            ->where('cy.year', Carbon::now()->year)
             ->select(
-                'courses.course_id',
-                'courses.course_name',
-                'statuses.startprompt',
-                'statuses.generated',
-                'statuses.downloaded',
-                'statuses.success'
+                'c.course_id',
+                'c.course_name',
+                's.startprompt',
+                's.generated',
+                's.downloaded',
+                's.success'
             )
             ->get();
 
