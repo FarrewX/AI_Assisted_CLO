@@ -15,7 +15,8 @@ class Prompt extends Model
         return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 
-    public function course() {
-        return $this->belongsTo(Course::class, 'course_id', 'course_id');
+    public function courseYear()
+    {
+        return $this->belongsTo(Courseyears::class, 'course_id', 'course_id');
     }
 }

@@ -11,12 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-       Schema::create('statuses', function (Blueprint $table) {
+        Schema::create('prompts', function (Blueprint $table) {
             $table->unsignedBigInteger('ref_id');
-            $table->timestamp('startprompt')->nullable();
-            $table->timestamp('generated')->nullable();
-            $table->timestamp('downloaded')->nullable();
-            $table->timestamp('success')->nullable();
+            $table->string('course_id');
+            $table->string('course_text');
             $table->timestamps();
 
             $table->foreign('ref_id')->references('id')->on('courseyears')->onDelete('cascade');
@@ -28,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('statuses');
+        Schema::dropIfExists('prompts');
     }
 };

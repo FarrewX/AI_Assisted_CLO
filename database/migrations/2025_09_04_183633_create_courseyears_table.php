@@ -11,20 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('prompts', function (Blueprint $table) {
+        Schema::create('courseyears', function (Blueprint $table) {
+            $table->id();
             $table->string('course_id');
-            $table->text('course_text');
+            $table->year('year');
             $table->timestamps();
 
             $table->foreign('course_id')->references('course_id')->on('courses')->onDelete('cascade');
+            $table->unique(['course_id', 'year']);
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        Schema::dropIfExists('prompts');
+        Schema::dropIfExists('courseyears');
     }
 };

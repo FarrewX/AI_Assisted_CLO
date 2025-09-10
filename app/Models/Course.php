@@ -33,4 +33,9 @@ class Course extends Model
     public function status() {
         return $this->hasMany(Status::class, 'course_id', 'course_id');
     }
+
+    public function courseYear()
+    {
+        return $this->hasMany(Courseyears::class, 'course_id', 'course_id');
+    }
 }
