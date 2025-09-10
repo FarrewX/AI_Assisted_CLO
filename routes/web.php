@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CourseController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\OllamaController;
 
 // หน้า login/register ไม่ต้องล็อกอิน
 Route::get('/login', [AuthController::class, "login"])->name('login');
@@ -17,6 +18,8 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/', [CourseController::class, 'index'])->name('home');
     Route::get('/form', [CourseController::class, 'formdata'])->name('form');
+
+    Route::post('/generate', [OllamaController::class, 'generateText']);
 
     Route::get('/about', function () {
         return view('about');
