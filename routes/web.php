@@ -12,17 +12,11 @@ Route::post('/register', [AuthController::class, "registerPost"])->name('registe
 
 // หน้าที่ต้องล็อกอิน
 Route::middleware('auth')->group(function () {
-    Route::get('/', function () {
-        return view('home');
-    });
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    Route::get('/', [CourseController::class, 'index'])->name('homedashboard');
-
-    Route::get('/form', function () {
-        return view('form');
-    })->name('form');
+    Route::get('/', [CourseController::class, 'index']);
+    Route::get('/form', [CourseController::class, 'formdata'])->name('form');
 
     Route::get('/about', function () {
         return view('about');

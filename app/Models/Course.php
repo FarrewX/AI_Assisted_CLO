@@ -13,6 +13,15 @@ class Course extends Model
     protected $primaryKey = 'course_id';
     protected $keyType = 'string';
 
+    protected $fillable = [
+        'course_id',
+        'user_id',
+        'course_name',
+        'course_name_en',
+        'course_detail_th',
+        'course_detail_en',
+    ];
+
     public function user() {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
@@ -22,6 +31,6 @@ class Course extends Model
     }
 
     public function status() {
-        return $this->hasOne(Status::class, 'course_id', 'course_id');
+        return $this->hasMany(Status::class, 'course_id', 'course_id');
     }
 }

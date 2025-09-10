@@ -24,6 +24,7 @@
       <h2 class="text-center text-[30px] font-bold text-gray-800 mb-4">ELO_Generate</h2>
   
       <form action="/generate" method="POST" class="space-y-4">
+        @csrf
         <!-- เลือก มคอ -->
         <div class="flex items-center gap-6">
           <div class="flex items-center gap-2">
@@ -39,13 +40,11 @@
         <!-- รายวิชา -->
         <div>
           <label for="course" class="block font-semibold text-gray-700 mb-1">เลือกรายวิชา :</label>
-          <select id="course" name="course" class="w-full p-2 border border-gray-300 rounded-md focus:ring focus:ring-blue-200">
+          <select id="course" name="course" class="w-full p-2 border border-gray-300 rounded-md">
             <option value="" disabled selected>-- กรุณาเลือกรายวิชา --</option>
-            <option value="CS101">CS101 - Introduction to Computer Science</option>
-            <option value="CS102">CS102 - Programming Basics</option>
-            <option value="CS201">CS201 - Data Structures</option>
-            <option value="CS301">CS301 - Software Engineering</option>
-            <option value="CS401">CS401 - AI Fundamentals</option>
+            @foreach ($courses as $course)
+              <option value="{{ $course->user_id }}">{{ $course->course_name }}</option>
+            @endforeach
           </select>
         </div>
   

@@ -18,7 +18,6 @@ class CourseController extends Controller
     {
         $user = Auth::user();
 
-        // ดึงรายวิชาพร้อมสถานะของผู้ใช้ปัจจุบัน
         $courses = DB::table('courses')
             ->leftJoin('statuses', 'courses.course_id', '=', 'statuses.course_id')
             ->where('courses.user_id', $user->user_id)
@@ -33,6 +32,23 @@ class CourseController extends Controller
             ->get();
 
         return view('home', compact('courses', 'user'));
+    }
+    public function formdata()
+    {
+        $user = Auth::user();
+
+        $courses = DB::table('users as u')
+            ->join('courses as c', 'u.user_id', '=', 'c.user_id')
+            ->where('u.user_id', $user->user_id)
+            ->select(
+                'c.course_id',
+                'c.course_name',
+                'c.course_detail_th',
+                'c.user_id',
+            )
+            ->get();
+
+        return view('form', compact('courses'));
     }
 
     /**
