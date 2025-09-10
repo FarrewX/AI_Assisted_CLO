@@ -24,7 +24,6 @@ class CourseController extends Controller
         $courses = DB::table('courses as c')
             ->leftJoin('courseyears as cy', 'c.course_id', '=', 'cy.course_id')
             ->leftJoin('statuses as s', 'cy.id', '=', 's.ref_id')
-            ->where('c.user_id', $user->user_id)
             ->where('cy.user_id', $user->user_id)
             ->where('cy.year', $selectedYear)
             ->select(
@@ -41,27 +40,39 @@ class CourseController extends Controller
     }
 
     public function formdata()
-{
-    $user = Auth::user();
-    $currentYear = now()->year;
-    $nextYear = $currentYear + 1;
+    {
+        $user = Auth::user();
+        $currentYear = now()->year;
+        $nextYear = $currentYear + 1;
 
-    $courses = DB::table('users as u')
-        ->join('courses as c', 'u.user_id', '=', 'c.user_id')
-        ->join('courseyears as cy', 'c.course_id', '=', 'cy.course_id')
-        ->where('u.user_id', $user->user_id)
-        ->whereIn('cy.year', [$currentYear, $nextYear]) // ✅ เอาเฉพาะปีปัจจุบัน + ปีถัดไป
-        ->select(
-            'c.course_id',
-            'c.course_name',
-            'c.course_detail_th',
-            'c.user_id',
-            'cy.year'
-        )
-        ->get();
+        $courses = DB::table('users as u')
+            ->join('courses as c', 'u.user_id', '=', 'c.user_id')
+            ->join('courseyears as cy', 'c.course_id', '=', 'cy.course_id')
+            ->leftJoin('statuses as s', 'cy.id', '=', 's.ref_id')
+            ->where('u.user_id', $user->user_id)
+            ->whereIn('cy.year', [$currentYear, $nextYear])
+            // เงื่อนไข: ต้องไม่ครบ 100% (อย่างน้อย 1 ช่องเป็น null)
+            ->where(function ($q) {
+                $q->whereNull('s.startprompt')
+                ->orWhereNull('s.generated')
+                ->orWhereNull('s.downloaded')
+                ->orWhereNull('s.success');
+            })
+            ->select(
+                'c.course_id',
+                'c.course_name',
+                'c.course_detail_th',
+                'c.user_id',
+                'cy.year',
+                's.startprompt',
+                's.generated',
+                's.downloaded',
+                's.success'
+            )
+            ->get();
 
-    return view('form', compact('courses', 'currentYear', 'nextYear'));
-}
+        return view('form', compact('courses', 'currentYear', 'nextYear'));
+    }
 
     /**
      * Show the form for creating a new resource.
