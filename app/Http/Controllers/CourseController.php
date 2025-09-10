@@ -25,6 +25,7 @@ class CourseController extends Controller
             ->leftJoin('courseyears as cy', 'c.course_id', '=', 'cy.course_id')
             ->leftJoin('statuses as s', 'cy.id', '=', 's.ref_id')
             ->where('c.user_id', $user->user_id)
+            ->where('cy.user_id', $user->user_id)
             ->where('cy.year', $selectedYear)
             ->select(
                 'c.course_id',
