@@ -45,31 +45,30 @@ class CourseController extends Controller
         $currentYear = now()->year;
         $nextYear = $currentYear + 1;
 
-        $courses = DB::table('users as u')
-            ->join('courses as c', 'u.user_id', '=', 'c.user_id')
-            ->join('courseyears as cy', 'c.course_id', '=', 'cy.course_id')
-            ->leftJoin('statuses as s', 'cy.id', '=', 's.ref_id')
-            ->where('u.user_id', $user->user_id)
-            ->whereIn('cy.year', [$currentYear, $nextYear])
-            // เงื่อนไข: ต้องไม่ครบ 100% (อย่างน้อย 1 ช่องเป็น null)
-            ->where(function ($q) {
-                $q->whereNull('s.startprompt')
-                ->orWhereNull('s.generated')
-                ->orWhereNull('s.downloaded')
-                ->orWhereNull('s.success');
-            })
-            ->select(
-                'c.course_id',
-                'c.course_name',
-                'c.course_detail_th',
-                'c.user_id',
-                'cy.year',
-                's.startprompt',
-                's.generated',
-                's.downloaded',
-                's.success'
-            )
-            ->get();
+        $courses = DB::table('courseyears as cy')
+        ->join('users as u', 'u.user_id', '=', 'cy.user_id')
+        ->join('courses as c', 'cy.course_id', '=', 'c.course_id')
+        ->leftJoin('statuses as s', 'cy.id', '=', 's.ref_id')
+        ->where('u.user_id', $user->user_id)
+        ->whereIn('cy.year', [$currentYear, $nextYear])
+        ->where(function ($q) {
+            $q->whereNull('s.startprompt')
+            ->orWhereNull('s.generated')
+            ->orWhereNull('s.downloaded')
+            ->orWhereNull('s.success');
+        })
+        ->select(
+            'c.course_id',
+            'c.course_name',
+            'c.course_detail_th',
+            'cy.year',
+            's.startprompt',
+            's.generated',
+            's.downloaded',
+            's.success'
+        )
+        ->orderBy('cy.year', 'asc')
+        ->get();
 
         return view('form', compact('courses', 'currentYear', 'nextYear'));
     }
