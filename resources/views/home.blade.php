@@ -39,7 +39,17 @@
 
             <!-- รายวิชา -->
             <div class="w-full max-w-2xl px-4">
-                <h3 class="text-md mb-4">รายวิชาที่เปิดสอน ปี ล่าสุด</h3>
+                <h3 class="text-md mb-4">รายวิชาที่เปิดสอน ปี
+                    <form method="GET" action="{{ route('home') }}" class="inline">
+                        <select name="year" id="year" onchange="this.form.submit()" class="">
+                            @foreach(range(date('Y') + 1, date('Y') - 5) as $year)
+                                <option value="{{ $year }}" {{ $selectedYear == $year ? 'selected' : '' }}>
+                                    {{ $year }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </form>
+                </h3>
 
                 @forelse ($courses as $course)
                     @php

@@ -43,11 +43,12 @@
           <select id="course" name="course" class="w-full p-2 border border-gray-300 rounded-md">
             <option value="" disabled selected>-- กรุณาเลือกรายวิชา --</option>
             @foreach ($courses as $course)
-              <option value="{{ $course->course_id }}" data-detail="{{ $course->course_detail_th }}">
-                {{ $course->course_id }} - {{ $course->course_name }}
-              </option>
+                <option value="{{ $course->course_id }}" 
+                        data-detail="{{ $course->course_detail_th }}">
+                    {{ $course->course_id }} - {{ $course->course_name }} (ปี {{ $course->year }})
+                </option>
             @endforeach
-          </select>
+        </select>
         </div>
 
         <!-- รายละเอียด -->

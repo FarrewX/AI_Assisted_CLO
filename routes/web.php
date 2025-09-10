@@ -15,7 +15,7 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    Route::get('/', [CourseController::class, 'index']);
+    Route::get('/', [CourseController::class, 'index'])->name('home');
     Route::get('/form', [CourseController::class, 'formdata'])->name('form');
 
     Route::get('/about', function () {
