@@ -60,17 +60,17 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
 
-<!-- insert course_data in sql command
-เอา ไฟล์ csv ไปใส่ใน xampp เช่น C:/xampp/mysql/data/elo_generator/courses.csv
+## how install Ollama??
 
-LOAD DATA INFILE 'C:/xampp/mysql/data/elo_generator/courses.csv'
-INTO TABLE courses
-CHARACTER SET utf8mb4
-FIELDS TERMINATED BY ',' 
-OPTIONALLY ENCLOSED BY '"'
-LINES TERMINATED BY '\n'
-IGNORE 1 ROWS
-(course_id, course_name, course_name_en, course_detail_th, course_detail_en, @user_id)
-SET user_id = IF(TRIM(@user_id) = '' OR @user_id IS NULL, 'unknown', TRIM(BOTH '"' FROM @user_id));
+- download Ollama (https://ollama.com/download)
 
--->
+- change directory in ollama
+cd .\ollama\
+
+- Create the model in Ollama
+ollama create elo_generator -f Modelfile
+
+- Run the model
+ollama run elo_generator
+
+(https://github.com/ollama/ollama/blob/main/README.md)
