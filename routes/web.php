@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CourseController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\OllamaController;
+use App\Http\Controllers\NotificationController;
 
 // หน้า login/register ไม่ต้องล็อกอิน
 Route::get('/login', [AuthController::class, "login"])->name('login');
@@ -29,9 +30,9 @@ Route::middleware('auth')->group(function () {
         return view('guide');
     })->name('guide');
 
-    Route::get('/notification', function () {
-        return view('notification');
-    })->name('notification');
+    Route::get('/notification', [NotificationController::class, 'index'])
+        ->name('notification')
+        ->middleware('admin');
 
     Route::get('/message', function () {
         return view('message');

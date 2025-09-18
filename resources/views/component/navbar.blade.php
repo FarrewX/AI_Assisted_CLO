@@ -14,7 +14,12 @@
                 <a href="{{ url('/') }}" class="text-lg font-bold">ELO Generator</a>
                 <a href="{{ url('/about') }}" class="hidden md:flex space-x-8 mt-1.5 text-sm font-medium hover:text-blue-600">about</a>
                 <a href="{{ url('/guide') }}" class="hidden md:flex space-x-8 mt-1.5 text-sm font-medium hover:text-blue-600">วิธีการใช้งานระบบ</a>
-                <a href="{{ url('/notification') }}" class="hidden md:flex space-x-8 mt-1.5 text-sm font-medium hover:text-blue-600">notification</a>
+
+                @if(Auth::check() && Auth::user()->role_id == 1)
+                    <a href="{{ url('/notification') }}" class="hidden md:flex space-x-8 mt-1.5 text-sm font-medium hover:text-blue-600">
+                        notification
+                    </a>
+                @endif
             </div>
             
             <div class="flex items-center space-x-4">
@@ -95,7 +100,10 @@
                 <nav class="space-y-4 mt-8">
                     <a href="{{ url('/about') }}" class="block text-base font-medium hover:text-blue-600">about</a>
                     <a href="{{ url('/guide') }}" class="block text-base font-medium hover:text-blue-600">วิธีการใช้งานระบบ</a>
-                    <a href="{{ url('/notification') }}" class="block text-base font-medium hover:text-blue-600">notification</a>
+                    
+                    @if(Auth::check() && Auth::user()->role_id == 1)
+                        <a href="{{ url('/notification') }}" class="block text-base font-medium hover:text-blue-600">notification</a>
+                    @endif
                     
                     <a href="{{ url('/form') }}" class="block bg-blue-600 text-white px-4 py-2 rounded-md shadow hover:bg-blue-700">
                         Get start
