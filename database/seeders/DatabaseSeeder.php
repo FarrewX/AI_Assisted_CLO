@@ -5,9 +5,11 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\User;
 use App\Models\Course;
+use App\Models\Plos;
 use App\Models\Prompt;
 use App\Models\Status;
 use App\Models\Role;
+
 
 class DatabaseSeeder extends Seeder
 {
