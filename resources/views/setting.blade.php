@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <title>ELO_Generator</title>
+
+        <!-- Fonts -->
+        <link rel="preconnect" href="https://fonts.bunny.net">
+        <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
+
+        <!-- Styles / Scripts -->
+        @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
+            @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @else
+        @endif
+    </head>
+    <body>
+        @include('component.navbar')
+        <div class="bg-white flex flex-col items-center" style="margin-top: 100px;">
+            <h1 class="text-2xl font-bold mb-6">ตั้งค่า</h1>
+            <a href="{{ url('/plos') }}" 
+                class="px-6 py-3 bg-sky-300 text-black font-bold rounded-lg shadow hover:bg-sky-400">
+                    จัดการ PLOs
+            </a>
+        </div>
+    </body>
+</html>

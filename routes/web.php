@@ -13,6 +13,7 @@ Route::get('/login', [AuthController::class, "login"])->name('login');
 Route::post('/login', [AuthController::class, "loginPost"])->name('login.post');
 Route::get('/register', [AuthController::class, "register"])->name('register');
 Route::post('/register', [AuthController::class, "registerPost"])->name('register.post');
+Route::post('/plos/update/{id}', [PlosController::class, 'update'])->name('plos.update');
 
 // หน้าที่ต้องล็อกอิน
 Route::middleware('auth')->group(function () {
@@ -39,6 +40,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/guide', function () {
         return view('guide');
     })->name('guide');
+
+    Route::get('/setting', function () {
+        return view('setting');
+    })->name('setting')->middleware('admin');
+
+    Route::get('/plos', [PlosController::class, 'index'])->name('plos.index')->middleware('admin');
 
     Route::get('/notification', [NotificationController::class, 'index'])
         ->name('notification')
