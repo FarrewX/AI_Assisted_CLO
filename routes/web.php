@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\OllamaController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PlosController;
+use App\Http\Controllers\CourseyearsController;
 use Illuminate\Support\Facades\Auth;
 
 // หน้า login/register ไม่ต้องล็อกอิน
@@ -13,7 +14,6 @@ Route::get('/login', [AuthController::class, "login"])->name('login');
 Route::post('/login', [AuthController::class, "loginPost"])->name('login.post');
 Route::get('/register', [AuthController::class, "register"])->name('register');
 Route::post('/register', [AuthController::class, "registerPost"])->name('register.post');
-Route::post('/plos/update/{id}', [PlosController::class, 'update'])->name('plos.update');
 
 // หน้าที่ต้องล็อกอิน
 Route::middleware('auth')->group(function () {
@@ -58,4 +58,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/clo', function () {
         return view('clo');
     })->name('clo');
+
+    Route::get('/courses', [CourseyearsController::class, 'index'])->name('courses')->middleware('admin');
 });
+
+Route::post('/plos/update/{id}', [PlosController::class, 'update'])->name('plos.update');
+
+Route::post('/courses/{courseId}/teachers', [CourseyearsController::class, 'store'])->name('teachers.store');
+Route::put('/courses/{courseId}/teachers/{id}', [CourseyearsController::class, 'update'])->name('teachers.update');
+Route::delete('/courses/{courseId}/teachers/{id}', [CourseyearsController::class, 'destroy'])->name('teachers.destroy');

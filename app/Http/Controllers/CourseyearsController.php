@@ -5,62 +5,57 @@ namespace App\Http\Controllers;
 use App\Models\Courseyears;
 use App\Http\Requests\StoreCourseyearsRequest;
 use App\Http\Requests\UpdateCourseyearsRequest;
+use App\Models\Course;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class CourseyearsController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
+   public function index(Request $request)
+{
+    $courses = Course::all();
+    $users   = User::all();
+    $teachers = null;
+    $courseId = $request->course_id;
+
+    if ($courseId) {
+        $teachers = Courseyears::with('user')
+            ->where('course_id', $courseId)
+            ->get();
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+    return view('setting.course', compact('courses', 'users', 'teachers', 'courseId'));
+}
+
+public function store(Request $request, $courseId)
+{
+    $exists = \App\Models\Courseyears::where('course_id', $courseId)
+        ->where('year', $request->year)
+        ->exists();
+
+    if ($exists) {
+        return back()->with('error', 'ปีนี้มีอาจารย์สอนอยู่แล้ว');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StoreCourseyearsRequest $request)
-    {
-        //
-    }
+    Courseyears::create([
+        'user_id'   => $request->user_id,
+        'course_id' => $courseId,
+        'year'      => $request->year,
+    ]);
+    return back()->with('success', 'เพิ่มอาจารย์สำเร็จ');
+}
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Courseyears $courseyears)
-    {
-        //
+public function update(Request $request, $courseId, $id)
+{
+    $record = Courseyears::findOrFail($id);
+    $record->year = $request->year;
+    if ($request->has('user_id')) {
+        $record->user_id = $request->user_id;
     }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Courseyears $courseyears)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateCourseyearsRequest $request, Courseyears $courseyears)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Courseyears $courseyears)
-    {
-        //
-    }
+    $record->save();
+    return back()->with('success', 'อัพเดทสำเร็จ');
+}
 }

@@ -11,9 +11,10 @@ class Courseyears extends Model
     
     protected $primaryKey = 'id';
     public $incrementing = true;
-    protected $keyType = 'string';
+    protected $keyType = 'int';
 
-    protected $fillable = ['id', 'course_id', 'year'];
+    protected $table = 'courseyears';
+    protected $fillable = ['id','user_id','course_id','year'];
 
     public function course()
     {
@@ -23,5 +24,10 @@ class Courseyears extends Model
     public function prompts()
     {
         return $this->hasOne(Prompt::class, 'id', 'ref_id');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'user_id');
     }
 }

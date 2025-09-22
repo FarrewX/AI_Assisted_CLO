@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('prompts', function (Blueprint $table) {
-            $table->string('ref_id');
+            $table->unsignedBigInteger('ref_id');
             $table->string('course_id');
             $table->string('course_text');
             $table->timestamps();
