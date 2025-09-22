@@ -19,6 +19,9 @@
                     <a href="{{ url('/notification') }}" class="hidden md:flex space-x-8 mt-1.5 text-sm font-medium hover:text-blue-600">
                         notification
                     </a>
+                    <a href="{{ url('/setting') }}" class="hidden md:flex space-x-8 mt-1.5 text-sm font-medium hover:text-blue-600">
+                        setting
+                    </a>
                 @endif
             </div>
             
@@ -103,6 +106,7 @@
                     
                     @if(Auth::check() && Auth::user()->role_id == 1)
                         <a href="{{ url('/notification') }}" class="block text-base font-medium hover:text-blue-600">notification</a>
+                        <a href="{{ url('/setting') }}" class="block text-base font-medium hover:text-blue-600">setting</a>
                     @endif
                     
                     <a href="{{ url('/form') }}" class="block bg-blue-600 text-white px-4 py-2 rounded-md shadow hover:bg-blue-700">
