@@ -70,7 +70,7 @@ class CourseController extends Controller
         ->orderBy('cy.year', 'asc')
         ->get();
 
-        return view('form', compact('courses', 'currentYear', 'nextYear'));
+        return $courses;
     }
 
     /**

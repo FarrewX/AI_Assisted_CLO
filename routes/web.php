@@ -5,6 +5,8 @@ use App\Http\Controllers\CourseController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\OllamaController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\PlosController;
+use Illuminate\Support\Facades\Auth;
 
 // หน้า login/register ไม่ต้องล็อกอิน
 Route::get('/login', [AuthController::class, "login"])->name('login');
@@ -18,7 +20,15 @@ Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     Route::get('/', [CourseController::class, 'index'])->name('home');
-    Route::get('/form', [CourseController::class, 'formdata'])->name('form');
+    
+    Route::get('/form', function () {
+        $user = Auth::user();
+
+        $courses = app(\App\Http\Controllers\CourseController::class)->formdata($user);
+        $plos = app(\App\Http\Controllers\PlosController::class)->plos();
+
+        return view('form', compact('courses', 'plos'));
+    });
 
     Route::post('/generate', [OllamaController::class, 'generateText']);
 
