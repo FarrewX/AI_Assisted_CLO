@@ -31,7 +31,7 @@ Course description:'.$prompt.'
 
 เงื่อนไขการออกแบบ CLO:
 - จำนวน CLO ที่ต้องการ:'.$num_clo.'
-- เลือกให้ CLO เหล่านี้สอดคล้องกับ PLO เฉพาะที่ต้องการ: โดยจะมี PLO '. implode(', ', (array)$select_plo) .'
+- เลือกให้ CLO เหล่านี้สอดคล้องกับ PLO เฉพาะที่ต้องการ(ตอบเฉพาะ PLO ที่เป็นตัวเลขเท่านั้น เช่น PLO1, PLO4): โดยจะมี PLO '. implode(', ', (array)$select_plo) .'
 - รูปแบบการเขียน CLO: Action Verb - Object - Qualification Phase (ตามหลัก SMART)
 - Learning’s Level ของ CLO สามารถเท่ากับหรือต่ำกว่า PLO ที่สอดคล้อง
 - ต้องกำหนด Domain ของ CLO ให้ตรงกับ Domain ของ PLO

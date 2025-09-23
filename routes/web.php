@@ -28,6 +28,7 @@ Route::middleware('auth')->group(function () {
         $courses = app(\App\Http\Controllers\CourseController::class)->formdata($user);
         $plos = app(\App\Http\Controllers\PlosController::class)->plos();
 
+
         return view('form', compact('courses', 'plos'));
     });
 
@@ -62,10 +63,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/courses', [CourseyearsController::class, 'index'])->name('courses')->middleware('admin');
 });
 
-Route::post('/plos/update/{id}', [PlosController::class, 'update'])->name('plos.update');
-Route::post('/plos/create', [PlosController::class, 'create'])->name('plos.create');
-Route::delete('/plos/delete/{id}', [PlosController::class, 'destroy'])->name('plos.destroy');
+Route::post('/plos/update/{id}', [PlosController::class, 'update'])->name('plos.update')->middleware('admin');
+Route::post('/plos/create', [PlosController::class, 'create'])->name('plos.create')->middleware('admin');
+Route::delete('/plos/delete/{id}', [PlosController::class, 'destroy'])->name('plos.destroy')->middleware('admin');
 
-Route::post('/courses/{courseId}/teachers', [CourseyearsController::class, 'store'])->name('teachers.store');
-Route::put('/courses/{courseId}/teachers/{id}', [CourseyearsController::class, 'update'])->name('teachers.update');
-Route::delete('/courses/{courseId}/teachers/{id}', [CourseyearsController::class, 'destroy'])->name('teachers.destroy');
+Route::post('/courses/{courseId}/teachers', [CourseyearsController::class, 'store'])->name('teachers.store')->middleware('admin');
+Route::put('/courses/{courseId}/teachers/{id}', [CourseyearsController::class, 'update'])->name('teachers.update')->middleware('admin');
+Route::delete('/courses/{courseId}/teachers/{id}', [CourseyearsController::class, 'destroy'])->name('teachers.destroy')->middleware('admin');
+
+Route::post('/updatestartprompt', [CourseController::class, 'updateStartPrompt']);
+Route::post('/saveprompt', [CourseController::class, 'savePrompt'])->name('save.prompt');

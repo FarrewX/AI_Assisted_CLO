@@ -98,7 +98,9 @@
               class="w-full p-2 border border-gray-300 rounded-md">
             <option value="" disabled selected>-- กรุณาเลือกรายวิชา --</option>
             @foreach ($courses as $course)
-              <option value="{{ $course->course_id }}" data-detail="{{ $course->course_detail_th }}">
+              <option value="{{ $course->course_id }}"
+                data-detail="{{ $course->course_detail_th }}"
+                data-coursetext="{{ $course->course_text }}">
                 {{ $course->course_id }} - {{ $course->course_name }} (ปี {{ $course->year }})
               </option>
             @endforeach
@@ -168,9 +170,29 @@
 <script>
 document.getElementById('course').addEventListener('change', function () {
   let selectedOption = this.options[this.selectedIndex];
+  let courseText = selectedOption.getAttribute('data-coursetext') || '';
   let detail = selectedOption.getAttribute('data-detail') || '';
-  document.getElementById('prompt').value = detail;
-});
+  document.getElementById('prompt').value = courseText ? courseText : detail;
+
+    // อัปเดต startprompt status
+    let courseId = this.value;
+    if (courseId) {
+      fetch('/updatestartprompt', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ course_id: courseId })
+      })
+      .then(res => res.json())
+      .then(data => {
+        console.log('startprompt updated:', data);
+      })
+      .catch(err => console.error('Error updating startprompt:', err));
+    }
+  });
+
 
 function showPopup(message) {
     document.getElementById('popup-message').textContent = message;
@@ -213,7 +235,34 @@ function openPreview() {
 }
 function closePreview() { document.getElementById("previewModal").classList.add("hidden"); }
 function closeOnBackground(event) { if (event.target.id === "previewModal") closePreview(); }
-function submitForm() { document.getElementById("eloForm").submit(); }
+function submitForm() {
+  // ส่ง prompt ไปบันทึกก่อน
+  let courseId = document.getElementById("course").value;
+  let prompt = document.getElementById("prompt").value.trim();
+  if (!courseId || !prompt) {
+    document.getElementById("eloForm").submit();
+    return;
+  }
+  fetch('/saveprompt', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-TOKEN': '{{ csrf_token() }}'
+    },
+    body: JSON.stringify({
+      course_id: courseId,
+      prompt: prompt
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    // ไม่ว่าบันทึกจะสำเร็จหรือไม่ ให้ submit form ต่อ
+    document.getElementById("eloForm").submit();
+  })
+  .catch(() => {
+    document.getElementById("eloForm").submit();
+  });
+}
 
 // จำกัดจำนวนการเลือก PLO ตามจำนวน CLO ที่เลือก
 document.getElementById('numClo').addEventListener('change', function() {
