@@ -103,14 +103,23 @@
         <div class="mt-6">
           <label for="numClo" class="block font-semibold text-gray-700 mb-1">จำนวน CLO ที่ต้องการ :</label>
           <select id="numClo" name="numClo" class="w-32 p-2 border border-gray-300 rounded-md">
-            @for ($i = 1; $i <= 4; $i++) <!-- ปรับเป็น 4 -->
+            @for ($i = 1; $i <= 5; $i++)
               <option value="{{ $i }}">{{ $i }}</option>
             @endfor
           </select>
         </div>
 
-        <!-- ส่วนของ CLOs -->
-        <div id="cloContainer" class="mt-4 space-y-4"></div>
+        <!-- ตรงกับ PLO ไหน -->
+        <div id="selectPloboxes" class="mt-4">
+          <div class="flex flex-wrap gap-4">
+            @foreach($plos as $selectPlo)
+                <label class="flex items-center space-x-2">
+                    <input type="checkbox" name="selectPlo[]" value="{{ $selectPlo->plo }}" class="rounded selectPlo">
+                    <span>PLO {{ $selectPlo->plo }}</span>
+                </label>
+            @endforeach
+          </div>
+        </div>
 
         <!-- ปุ่ม -->
         <button type="button" onclick="openPreview()"
@@ -156,11 +165,16 @@ function openPreview() {
   let sec_clo = document.querySelector('input[name="sec_clo"]:checked');
   let courseSelect = document.getElementById("course");
   let numClo = document.getElementById("numClo").value;
+  let ploChecked = Array.from(document.querySelectorAll('.selectPlo:checked'));
+  let ploLabels = ploChecked.map(cb => {
+    return cb.parentElement.querySelector('span').textContent.trim();
+  });
 
   if (!sec_clo) { showPopup("กรุณาเลือก มคอ.3 หรือ มคอ.5"); return; }
   if (!courseSelect.value) { showPopup("กรุณาเลือกรายวิชา"); return; }
   if (!prompt) { showPopup("กรุณากรอกรายละเอียดรายวิชา"); return; }
   if (!numClo) { showPopup("กรุณาเลือกจำนวน CLO ที่ต้องการ"); return; }
+  if (ploChecked.length === 0) { showPopup("กรุณาเลือกอย่างน้อย 1 PLO"); return; }
 
   document.getElementById("previewModal").classList.remove("hidden");
   let selectedText = courseSelect.options[courseSelect.selectedIndex].text;
@@ -171,21 +185,51 @@ function openPreview() {
     <p><b>รายวิชา:</b> ${selectedText}</p>
     <p><b>รายละเอียด:</b> ${prompt}</p>
     <p><b>จำนวน CLO:</b> ${numClo}</p>
+    <p><b>PLO ที่เลือก:</b> ${ploLabels.join(', ')}</p>
   `;
-
-  // preview CLOs
-  const cloDivs = document.querySelectorAll('#cloContainer > div');
-  cloDivs.forEach((div, index) => {
-    let desc = div.querySelector('input[name^="clos"][name$="[description]"]').value;
-    let plos = [...div.querySelectorAll('input[type="checkbox"]:checked')].map(c => c.value).join(', ') || '-';
-    content += `<p><b>CLO ${index+1}:</b> ${desc} (PLO: ${plos})</p>`;
-  });
 
   document.getElementById("previewContent").innerHTML = content;
 }
 function closePreview() { document.getElementById("previewModal").classList.add("hidden"); }
 function closeOnBackground(event) { if (event.target.id === "previewModal") closePreview(); }
 function submitForm() { document.getElementById("eloForm").submit(); }
+
+// จำกัดจำนวนการเลือก PLO ตามจำนวน CLO ที่เลือก
+document.getElementById('numClo').addEventListener('change', function() {
+  updatePloCheckboxLimit();
+});
+function updatePloCheckboxLimit() {
+  const max = parseInt(document.getElementById('numClo').value, 10) || 1;
+  const checkboxes = document.querySelectorAll('.selectPlo');
+  let checkedCount = 0;
+  checkboxes.forEach(cb => {
+    if (cb.checked) checkedCount++;
+  });
+  // ถ้าเลือกเกิน max ให้ uncheck
+  if (checkedCount > max) {
+    let count = 0;
+    checkboxes.forEach(cb => {
+      if (cb.checked) {
+        count++;
+        if (count > max) cb.checked = false;
+      }
+    });
+  }
+  // ปิดการเลือกถ้าเกิน max
+  checkboxes.forEach(cb => {
+    if (!cb.checked && document.querySelectorAll('.selectPlo:checked').length >= max) {
+      cb.disabled = true;
+    } else {
+      cb.disabled = false;
+    }
+  });
+}
+// เรียกครั้งแรก
+updatePloCheckboxLimit();
+// อัปเดตเมื่อมีการคลิก checkbox
+document.querySelectorAll('.selectPlo').forEach(cb => {
+  cb.addEventListener('change', updatePloCheckboxLimit);
+});
 </script>
 </body>
 </html>
