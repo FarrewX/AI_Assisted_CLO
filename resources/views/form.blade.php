@@ -12,17 +12,16 @@
   <script src="//unpkg.com/alpinejs" defer></script>
 </head>
 <body>
-  <button type="button" onclick="window.history.back()"
-    class="mt-10 ml-10 top-4 right-4 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md shadow">
-    ← back
-  </button>
-
-  <!-- Sidebar PLOs -->
-  <div x-data="{ ploOpen: false }" class="mt-10 ml-10 top-10 right-4">
-    <button @click="ploOpen = true"
-        class="px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-md shadow">
-        เปิด PLO
+    <div x-data="{ ploOpen: false }" class="mt-10 ml-10 top-10 right-4">
+    <button type="button" onclick="window.history.back()"
+      class="mt-10 ml-10 top-4 right-4 px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md shadow">
+      ← back
     </button>
+    <button @click="ploOpen = true"
+      class="px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-md shadow">
+      เปิด PLO
+    </button>
+    
     <div class="fixed inset-y-25 left-0 w-72 z-50 flex" x-show="ploOpen"
         x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="opacity-0"
