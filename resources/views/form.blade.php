@@ -52,6 +52,15 @@
     </div>
   </div>
 
+  <!-- Modal Popup -->
+  <div id="popup-modal" class="fixed inset-0 flex items-center justify-center z-50 hidden">
+      <div class="absolute inset-0 backdrop-blur-sm bg-black/30"></div>
+      <div class="relative bg-white rounded shadow-lg p-6 min-w-[250px] max-w-xs text-center">
+          <div id="popup-message" class="mb-4 font-bold text-center"></div>
+          <button id="popup-close" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">ปิด</button>
+      </div>
+  </div>
+
   <!-- Form -->
   <div class="flex justify-center items-center mt-10">
     <div class="bg-white p-6 rounded-xl shadow-md w-[500px] relative">
@@ -133,14 +142,13 @@ document.getElementById('course').addEventListener('change', function () {
   document.getElementById('prompt').value = detail;
 });
 
-// Dynamic CLO–PLO generation
-// document.getElementById('numClo').addEventListener('change', function() {
-//     let count = parseInt(this.value);
-//     let container = document.getElementById('cloContainer');
-//     container.innerHTML = ""; // ล้างของเก่าออก
-//     let cloDiv = document.createElement("div");
-//     cloDiv.classList.add("p-4","border","rounded-md","bg-gray-50");
-// });
+function showPopup(message) {
+    document.getElementById('popup-message').textContent = message;
+    document.getElementById('popup-modal').classList.remove('hidden');
+}
+document.getElementById('popup-close').onclick = function() {
+  document.getElementById('popup-modal').classList.add('hidden');
+};
 
 // Preview Modal
 function openPreview() {
@@ -149,10 +157,10 @@ function openPreview() {
   let courseSelect = document.getElementById("course");
   let numClo = document.getElementById("numClo").value;
 
-  if (!sec_clo) { alert("กรุณาเลือก มคอ.3 หรือ มคอ.5"); return; }
-  if (!courseSelect.value) { alert("กรุณาเลือกรายวิชา"); return; }
-  if (!prompt) { alert("กรุณากรอกรายละเอียดรายวิชา"); return; }
-  if (!numClo) { alert("กรุณาเลือกจำนวน CLO ที่ต้องการ"); return; }
+  if (!sec_clo) { showPopup("กรุณาเลือก มคอ.3 หรือ มคอ.5"); return; }
+  if (!courseSelect.value) { showPopup("กรุณาเลือกรายวิชา"); return; }
+  if (!prompt) { showPopup("กรุณากรอกรายละเอียดรายวิชา"); return; }
+  if (!numClo) { showPopup("กรุณาเลือกจำนวน CLO ที่ต้องการ"); return; }
 
   document.getElementById("previewModal").classList.remove("hidden");
   let selectedText = courseSelect.options[courseSelect.selectedIndex].text;
