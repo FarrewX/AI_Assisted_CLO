@@ -22,6 +22,8 @@
         <div class="container mx-auto p-4">
             <h1 class="text-2xl font-bold mb-4">จัดการ PLOs</h1>
 
+            <button id="add-plo-btn" class="mb-4 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded">เพิ่ม PLO</button>
+
             <table class="min-w-full border border-gray-300">
                 <thead>
                     <tr class="bg-gray-100">
@@ -37,15 +39,53 @@
                             <input type="number" class="plo-input px-2 py-1 w-full" value="{{ $plo->plo }}" readonly>
                         </td>
                         <td class="px-4 py-2">
-                            <textarea class="desc-input px-2 py-1 w-full resize-none" rows="1" style="overflow:hidden">{{ $plo->description }}</textarea>
+                            <textarea class="desc-input px-2 py-1 w-full resize-none" rows="1" style="overflow:hidden" readonly>{{ $plo->description }}</textarea>
                         </td>
                         <td class="px-4 py-2 text-center">
-                            <button class="update-btn bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded">บันทึก</button>
+                            <button class="edit-btn bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded">แก้ไข</button>
                         </td>
                     </tr>
                     @endforeach
                 </tbody>
             </table>
+        </div>
+
+        <!-- Add PLO Modal -->
+        @php
+            $nextPloNumber = ($plos->max('plo') ?? 0) + 1;
+        @endphp
+        <div id="add-plo-modal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50 hidden">
+            <div class="bg-white rounded shadow-lg p-6 min-w-[400px] max-w-lg text-center">
+                <h2 class="text-lg font-bold mb-4">เพิ่ม PLO</h2>
+                <div class="mb-2 text-left">
+                    <label class="block mb-1">PLO</label>
+                    <input id="new-plo" type="number" class="border px-2 py-1 w-full rounded bg-gray-100" min="1" readonly>
+                </div>
+                <div class="mb-4 text-left">
+                    <label class="block mb-1">Description</label>
+                    <textarea id="new-desc" class="border px-2 py-1 w-full rounded resize-none" rows="15"></textarea>
+                </div>
+                <button id="add-plo-save" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mr-2">บันทึก</button>
+                <button id="add-plo-cancel" class="bg-red-400 hover:bg-red-500 text-white px-4 py-2 rounded">ยกเลิก</button>
+            </div>
+        </div>
+
+        <!-- Edit PLO Modal -->
+        <div id="edit-plo-modal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50 hidden">
+            <div class="bg-white rounded shadow-lg p-6 min-w-[400px] max-w-lg text-center">
+                <h2 class="text-lg font-bold mb-4">แก้ไข PLO</h2>
+                <div class="mb-2 text-left">
+                    <label class="block mb-1">PLO</label>
+                    <input id="edit-plo" type="number" class="border px-2 py-1 w-full rounded bg-gray-100" readonly>
+                </div>
+                <div class="mb-4 text-left">
+                    <label class="block mb-1">Description</label>
+                    <textarea id="edit-desc" class="border px-2 py-1 w-full rounded resize-none" rows="15"></textarea>
+                </div>
+                <button id="edit-plo-save" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mr-2">บันทึก</button>
+                <button id="edit-plo-delete" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded mr-2">ลบ</button>
+                <button id="edit-plo-cancel" class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded">ยกเลิก</button>
+            </div>
         </div>
 
         <!-- Modal Popup -->
@@ -101,30 +141,112 @@
             confirmCallback = null;
         };
 
-        document.querySelectorAll('.update-btn').forEach(button => {
+        // แก้ไข PLO
+        let currentEditTr = null;
+        document.querySelectorAll('.edit-btn').forEach(button => {
             button.addEventListener('click', function() {
-                const tr = this.closest('tr');
-                const oldId = tr.dataset.id;
-                const plo = tr.querySelector('.plo-input').value;
-                const description = tr.querySelector('.desc-input').value;
-
-                showConfirm('คุณต้องการบันทึกการเปลี่ยนแปลงนี้หรือไม่?', function() {
-                    axios.post('/plos/update/' + oldId, {
-                        plo: plo,
-                        description: description,
-                        _token: '{{ csrf_token() }}'
-                    })
-                    .then(response => {
-                        showPopup(response.data.message);
-                        tr.dataset.id = plo;
-                    })
-                    .catch(error => {
-                        showPopup('เกิดข้อผิดพลาด');
-                        console.error(error);
-                    });
-                });
+                currentEditTr = this.closest('tr');
+                const plo = currentEditTr.querySelector('.plo-input').value;
+                const desc = currentEditTr.querySelector('.desc-input').value;
+                document.getElementById('edit-plo').value = plo;
+                document.getElementById('edit-desc').value = desc;
+                document.getElementById('edit-plo-modal').classList.remove('hidden');
             });
         });
+        document.getElementById('edit-plo-cancel').onclick = function() {
+            document.getElementById('edit-plo-modal').classList.add('hidden');
+        };
+
+        // บันทึกการแก้ไข PLO
+        document.getElementById('edit-plo-save').onclick = function() {
+            const plo = document.getElementById('edit-plo').value.trim();
+            const desc = document.getElementById('edit-desc').value.trim();
+            showConfirm('คุณต้องการบันทึกการเปลี่ยนแปลงนี้หรือไม่?', function() {
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', '/plos/update/' + plo, true);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                xhr.setRequestHeader('X-CSRF-TOKEN', '{{ csrf_token() }}');
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4) {
+                        if (xhr.status === 200) {
+                            try {
+                                var data = JSON.parse(xhr.responseText);
+                                showPopup(data.message);
+                                if (currentEditTr) {
+                                    currentEditTr.querySelector('.desc-input').value = desc;
+                                }
+                                document.getElementById('edit-plo-modal').classList.add('hidden');
+                            } catch (e) {
+                                showPopup('เกิดข้อผิดพลาด');
+                            }
+                        } else {
+                            showPopup('เกิดข้อผิดพลาด');
+                        }
+                    }
+                };
+                xhr.send(JSON.stringify({
+                    plo: plo,
+                    description: desc
+                }));
+            });
+        };
+
+        // ลบ PLO
+        document.getElementById('edit-plo-delete').onclick = function() {
+            const plo = document.getElementById('edit-plo').value.trim();
+            showConfirm('คุณต้องการลบ PLO นี้หรือไม่?', function() {
+                var xhr = new XMLHttpRequest();
+                xhr.open('DELETE', '/plos/delete/' + plo, true);
+                xhr.setRequestHeader('X-CSRF-TOKEN', '{{ csrf_token() }}');
+                xhr.onreadystatechange = function() {
+                    if (xhr.readyState === 4) {
+                        if (xhr.status === 200) {
+                            showPopup('ลบ PLO สำเร็จ');
+                            if (currentEditTr) {
+                                currentEditTr.remove();
+                            }
+                            document.getElementById('edit-plo-modal').classList.add('hidden');
+                        } else {
+                            showPopup('เกิดข้อผิดพลาด');
+                        }
+                    }
+                };
+                xhr.send();
+            });
+        };
+
+        // Add PLO Modal logic
+        const nextPloNumber = {{ $nextPloNumber }};
+        document.getElementById('add-plo-btn').onclick = function() {
+            document.getElementById('new-plo').value = nextPloNumber;
+            document.getElementById('new-desc').value = '';
+            document.getElementById('add-plo-modal').classList.remove('hidden');
+        };
+        document.getElementById('add-plo-cancel').onclick = function() {
+            document.getElementById('add-plo-modal').classList.add('hidden');
+        };
+        document.getElementById('add-plo-save').onclick = function() {
+            const plo = document.getElementById('new-plo').value.trim();
+            const desc = document.getElementById('new-desc').value.trim();
+            if (!plo || !desc) {
+                showPopup('กรุณากรอกข้อมูลให้ครบถ้วน');
+                return;
+            }
+            axios.post('/plos/create', {
+                plo: plo,
+                description: desc,
+                _token: '{{ csrf_token() }}'
+            })
+            .then(response => {
+                showPopup(response.data.message || 'เพิ่ม PLO สำเร็จ');
+                document.getElementById('add-plo-modal').classList.add('hidden');
+                setTimeout(() => location.reload(), 1000);
+            })
+            .catch(error => {
+                showPopup('เกิดข้อผิดพลาด');
+                console.error(error);
+            });
+        };
         </script>
     </body>
 </html>

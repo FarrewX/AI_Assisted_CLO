@@ -63,6 +63,8 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::post('/plos/update/{id}', [PlosController::class, 'update'])->name('plos.update');
+Route::post('/plos/create', [PlosController::class, 'create'])->name('plos.create');
+Route::delete('/plos/delete/{id}', [PlosController::class, 'destroy'])->name('plos.destroy');
 
 Route::post('/courses/{courseId}/teachers', [CourseyearsController::class, 'store'])->name('teachers.store');
 Route::put('/courses/{courseId}/teachers/{id}', [CourseyearsController::class, 'update'])->name('teachers.update');

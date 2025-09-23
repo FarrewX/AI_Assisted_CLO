@@ -37,5 +37,29 @@ class PlosController extends Controller
 
         return response()->json(['message' => 'อัพเดทสำเร็จ']);
     }
-   
+
+    public function create(Request $request)
+    {
+        $request->validate([
+            'plo' => 'required|integer|unique:plos,plo',
+            'description' => 'required|string'
+        ]);
+
+        $plo = new Plos();
+        $plo->plo = $request->plo;
+        $plo->description = $request->description;
+        $plo->save();
+
+        return response()->json(['message' => 'เพิ่ม PLO สำเร็จ']);
+    }
+
+    public function destroy($id)
+    {
+        $plo = Plos::find($id);
+        if (!$plo) {
+            return response()->json(['message' => 'ไม่พบ PLO นี้'], 404);
+        }
+        $plo->delete();
+        return response()->json(['message' => 'ลบ PLO สำเร็จ']);
+    }
 }
