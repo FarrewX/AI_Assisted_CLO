@@ -14,6 +14,8 @@ return new class extends Migration
         Schema::create('plos', function (Blueprint $table) {
             $table->tinyInteger('plo');
             $table->string('description');
+            $table->string('domain')->nullable();
+            $table->string('learning_level')->nullable();
             $table->timestamps();
         });
     }

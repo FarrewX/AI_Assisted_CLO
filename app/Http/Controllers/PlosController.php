@@ -33,6 +33,8 @@ class PlosController extends Controller
 
         $plo->plo = $request->plo;
         $plo->description = $request->description;
+        $plo->domain = $request->domain;
+        $plo->learning_level = $request->learning_level;
         $plo->save();
 
         return response()->json(['message' => 'อัพเดทสำเร็จ']);
@@ -48,6 +50,8 @@ class PlosController extends Controller
         $plo = new Plos();
         $plo->plo = $request->plo;
         $plo->description = $request->description;
+        $plo->domain = $request->domain;
+        $plo->learning_level = $request->learning_level;
         $plo->save();
 
         return response()->json(['message' => 'เพิ่ม PLO สำเร็จ']);

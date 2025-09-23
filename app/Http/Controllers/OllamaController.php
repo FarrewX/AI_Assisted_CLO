@@ -23,7 +23,7 @@ class OllamaController extends Controller
 รายละเอียด PLO ของหลักสูตร:
 [PLO: เนื้อหา + Domain + Learning Level]
 ' .$plo->map(function ($item) {
-        return $item->plo.': '.$item->description;
+        return $item->plo.': '.$item->description.' + Domain: '.$item->domain.' + Learning Level: '.$item->learning_level;
     })->implode("\n").'
 โดยใช้ข้อมูลรายวิชาดีงนี้
 ชื่อรายวิชา:'.$course.'

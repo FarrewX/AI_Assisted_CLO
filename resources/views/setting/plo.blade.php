@@ -29,17 +29,25 @@
                     <tr class="bg-gray-100">
                         <th class="border px-4 py-2 w-18">PLO</th>
                         <th class="border px-4 py-2">Description</th>
+                        <th class="border px-4 py-2 w-35">Domain</th>
+                        <th class="border px-4 py-2 w-40">Learning Level</th>
                         <th class="border px-4 py-2 w-30">Action</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach($plos as $plo)
-                    <tr data-id="{{ $plo->plo }}">
+                    <tr data-id="{{ $plo->plo }}" data-domain="{{ $plo->domain }}" data-level="{{ $plo->learning_level }}">
                         <td class="px-4 py-2">
                             <input type="number" class="plo-input px-2 py-1 w-full" value="{{ $plo->plo }}" readonly>
                         </td>
                         <td class="px-4 py-2">
                             <textarea class="desc-input px-2 py-1 w-full resize-none" rows="1" style="overflow:hidden" readonly>{{ $plo->description }}</textarea>
+                        </td>
+                        <td class="px-4 py-2">
+                            <textarea class="desc-input px-2 py-1 w-full resize-none" rows="1" style="overflow:hidden" readonly>{{ $plo->domain }}</textarea>
+                        </td>
+                        <td class="px-4 py-2">
+                            <textarea class="desc-input px-2 py-1 w-full resize-none" rows="1" style="overflow:hidden" readonly>{{ $plo->learning_level }}</textarea>
                         </td>
                         <td class="px-4 py-2 text-center">
                             <button class="edit-btn bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded">แก้ไข</button>
@@ -63,7 +71,15 @@
                 </div>
                 <div class="mb-4 text-left">
                     <label class="block mb-1">Description</label>
-                    <textarea id="new-desc" class="border px-2 py-1 w-full rounded resize-none" rows="15"></textarea>
+                    <textarea id="new-desc" class="border px-2 py-1 w-full rounded resize-none" rows="7"></textarea>
+                </div>
+                <div class="mb-4 text-left">
+                    <label class="block mb-1">Domain</label>
+                    <textarea id="new-domain" class="border px-2 py-1 w-full rounded resize-none" rows="2"></textarea>
+                </div>
+                <div class="mb-4 text-left">
+                    <label class="block mb-1">Learning Level</label>
+                    <textarea id="new-level" class="border px-2 py-1 w-full rounded resize-none" rows="2"></textarea>
                 </div>
                 <button id="add-plo-save" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mr-2">บันทึก</button>
                 <button id="add-plo-cancel" class="bg-red-400 hover:bg-red-500 text-white px-4 py-2 rounded">ยกเลิก</button>
@@ -80,7 +96,15 @@
                 </div>
                 <div class="mb-4 text-left">
                     <label class="block mb-1">Description</label>
-                    <textarea id="edit-desc" class="border px-2 py-1 w-full rounded resize-none" rows="15"></textarea>
+                    <textarea id="edit-desc" class="border px-2 py-1 w-full rounded resize-none" rows="7"></textarea>
+                </div>
+                <div class="mb-4 text-left">
+                    <label class="block mb-1">Domain</label>
+                    <textarea id="edit-domain" class="border px-2 py-1 w-full rounded resize-none" rows="2"></textarea>
+                </div>
+                <div class="mb-4 text-left">
+                    <label class="block mb-1">Learning Level</label>
+                    <textarea id="edit-level" class="border px-2 py-1 w-full rounded resize-none" rows="2"></textarea>
                 </div>
                 <button id="edit-plo-save" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mr-2">บันทึก</button>
                 <button id="edit-plo-delete" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded mr-2">ลบ</button>
@@ -150,6 +174,8 @@
                 const desc = currentEditTr.querySelector('.desc-input').value;
                 document.getElementById('edit-plo').value = plo;
                 document.getElementById('edit-desc').value = desc;
+                document.getElementById('edit-domain').value = currentEditTr.dataset.domain || '';
+                document.getElementById('edit-level').value = currentEditTr.dataset.level || '';
                 document.getElementById('edit-plo-modal').classList.remove('hidden');
             });
         });
@@ -161,6 +187,8 @@
         document.getElementById('edit-plo-save').onclick = function() {
             const plo = document.getElementById('edit-plo').value.trim();
             const desc = document.getElementById('edit-desc').value.trim();
+            const domain = document.getElementById('edit-domain').value.trim();
+            const level = document.getElementById('edit-level').value.trim();
             showConfirm('คุณต้องการบันทึกการเปลี่ยนแปลงนี้หรือไม่?', function() {
                 var xhr = new XMLHttpRequest();
                 xhr.open('POST', '/plos/update/' + plo, true);
@@ -174,8 +202,11 @@
                                 showPopup(data.message);
                                 if (currentEditTr) {
                                     currentEditTr.querySelector('.desc-input').value = desc;
+                                    currentEditTr.dataset.domain = domain;
+                                    currentEditTr.dataset.level = level;
                                 }
                                 document.getElementById('edit-plo-modal').classList.add('hidden');
+                                setTimeout(() => location.reload(), 1000);
                             } catch (e) {
                                 showPopup('เกิดข้อผิดพลาด');
                             }
@@ -186,7 +217,9 @@
                 };
                 xhr.send(JSON.stringify({
                     plo: plo,
-                    description: desc
+                    description: desc,
+                    domain: domain,
+                    learning_level: level
                 }));
             });
         };
@@ -206,6 +239,7 @@
                                 currentEditTr.remove();
                             }
                             document.getElementById('edit-plo-modal').classList.add('hidden');
+                            setTimeout(() => location.reload(), 1000);
                         } else {
                             showPopup('เกิดข้อผิดพลาด');
                         }
@@ -220,6 +254,8 @@
         document.getElementById('add-plo-btn').onclick = function() {
             document.getElementById('new-plo').value = nextPloNumber;
             document.getElementById('new-desc').value = '';
+            document.getElementById('new-domain').value = '';
+            document.getElementById('new-level').value = '';
             document.getElementById('add-plo-modal').classList.remove('hidden');
         };
         document.getElementById('add-plo-cancel').onclick = function() {
@@ -228,6 +264,8 @@
         document.getElementById('add-plo-save').onclick = function() {
             const plo = document.getElementById('new-plo').value.trim();
             const desc = document.getElementById('new-desc').value.trim();
+            const domain = document.getElementById('new-domain').value.trim();
+            const level = document.getElementById('new-level').value.trim();
             if (!plo || !desc) {
                 showPopup('กรุณากรอกข้อมูลให้ครบถ้วน');
                 return;
@@ -235,6 +273,8 @@
             axios.post('/plos/create', {
                 plo: plo,
                 description: desc,
+                domain: domain,
+                learning_level: level,
                 _token: '{{ csrf_token() }}'
             })
             .then(response => {
