@@ -45,8 +45,8 @@
                 <table class="min-w-full border border-gray-300 mb-6 mt-4">
                     <thead>
                         <tr class="bg-gray-100">
-                            <th class="border px-4 py-2">อาจารย์</th>
-                            <th class="border px-4 py-2">ปีการสอน</th>
+                            <th class="border px-4 py-2 w-300">อาจารย์</th>
+                            <th class="border px-4 py-2 w-30">ปีการสอน</th>
                             <th class="border px-4 py-2 w-28">การจัดการ</th>
                         </tr>
                     </thead>
@@ -165,18 +165,70 @@
                 });
             });
 
+            // ================== Edit modal duplicate check ==================
+            $('#edit-form').on('submit', function(e) {
+                var userId = $('#edit-user-input').val();
+                var year = $('#edit-year-input').val();
+                var isDuplicate = false;
+                var isYearConflict = false;
+                var currentRowUser = $('#edit-user-input option:selected').text().trim();
+                var currentId = null;
+
+                // หา id ของแถวที่กำลังแก้ไข (จาก form action)
+                var actionUrl = $(this).attr('action');
+                var match = actionUrl.match(/teachers\/update\/(\d+)$/);
+                if (match) {
+                    currentId = match[1];
+                }
+
+                $('table tbody tr').each(function() {
+                    var rowUser = $(this).find('td:first').text().trim();
+                    var rowYear = $(this).find('.year-display').text().trim();
+                    var editBtn = $(this).find('.edit-btn');
+                    var rowId = editBtn.data('id') ? editBtn.data('id').toString() : '';
+
+                    //user+year ซ้ำ
+                    if (
+                        rowUser === currentRowUser &&
+                        rowYear === year &&
+                        rowId !== currentId
+                    ) {
+                        isDuplicate = true;
+                        return false; // break
+                    }
+
+                    //ปีซ้ำ แต่คนละ user
+                    if (
+                        rowUser !== currentRowUser &&
+                        rowYear === year &&
+                        rowId !== currentId
+                    ) {
+                        isYearConflict = true;
+                        return false;
+                    }
+                });
+
+                if (isDuplicate) {
+                    $('#duplicate-modal').removeClass('hidden');
+                    e.preventDefault();
+                    return false;
+                }
+
+                if (isYearConflict) {
+                    $('#year-duplicate-modal').removeClass('hidden');
+                    e.preventDefault();
+                    return false;
+                }
+
+                $('#edit-modal').addClass('hidden');
+            });
+
+            // ปุ่ม cancel ปิด modal
             document.getElementById('edit-cancel').onclick = function() {
                 document.getElementById('edit-modal').classList.add('hidden');
             };
 
-            var editForm = document.getElementById('edit-form');
-            if (editForm) {
-                editForm.onsubmit = function() {
-                    document.getElementById('edit-modal').classList.add('hidden');
-                };
-            }
-
-            // ================== Duplicate check ==================
+            // ================== Duplicate check ตอน create ==================
             $('form[action*="teachers.store"]').on('submit', function(e) {
                 var $form = $(this);
                 var userId = $form.find('select[name="user_id"]').val();
