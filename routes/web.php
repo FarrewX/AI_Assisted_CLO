@@ -72,4 +72,5 @@ Route::put('/courses/{courseId}/teachers/{id}', [CourseyearsController::class, '
 Route::delete('/courses/{courseId}/teachers/{id}', [CourseyearsController::class, 'destroy'])->name('teachers.destroy')->middleware('admin');
 
 Route::post('/updatestartprompt', [CourseController::class, 'updateStartPrompt']);
+Route::post('/getprompt', [CourseController::class, 'getPrompt']);
 Route::post('/saveprompt', [CourseController::class, 'savePrompt'])->name('save.prompt');

@@ -21,7 +21,7 @@ class OllamaController extends Controller
         $promptString = 'ต่อจากนี้ให้ออกแบบ CLO ของหนึ่งรายวิชาให้สอดคล้องกับ PLO ของหลักสูตร โดยใช้ข้อมูลหลักสูตร:
 ชื่อหลักสูตร: สาขาวิชาวิทยการคอมพิวเตอร์
 รายละเอียด PLO ของหลักสูตร:
-[PLO: เนื้อหา + Domain + Learning Level]
+[PLO ที่ให้ไปจะอยู่ในรูปแบบ: เนื้อหา + Domain + Learning Level]
 ' .$plo->map(function ($item) {
         return $item->plo.': '.$item->description.' + Domain: '.$item->domain.' + Learning Level: '.$item->learning_level;
     })->implode("\n").'

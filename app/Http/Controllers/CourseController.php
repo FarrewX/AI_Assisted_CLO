@@ -98,7 +98,7 @@ class CourseController extends Controller
 
         $cy = Courseyears::where('course_id', $courseId)
             ->where('user_id', $user->user_id)
-            ->orderByDesc('year')
+            ->where('year', $request->year)
             ->first();
 
         if ($cy) {
@@ -112,44 +112,91 @@ class CourseController extends Controller
         return response()->json(['message' => 'startprompt updated']);
     }
 
-    public function savePrompt(Request $request)
+    public function getPrompt(Request $request)
     {
-        $data = $request->json()->all();
-
-        $validator = Validator::make($data, [
-            'course_id' => 'required',
-            'prompt' => 'required|string',
-        ]);
-        if ($validator->fails()) {
-            return response()->json(['message' => 'ข้อมูลไม่ถูกต้อง'], 422);
-        }
-
         $user = Auth::user();
+
+        $request->validate([
+            'course_id' => 'required|string',
+            'year'      => 'required|integer',
+        ]);
+
         $cy = DB::table('courseyears')
-            ->where('course_id', $data['course_id'])
+            ->where('course_id', $request['course_id'])
             ->where('user_id', $user->user_id)
-            ->orderByDesc('year')
+            ->where('year', $request['year'])
             ->first();
 
         if (!$cy) {
             return response()->json(['message' => 'ไม่พบข้อมูลรายวิชา'], 404);
         }
 
-        DB::table('prompts')->insert([
-            'ref_id'     => $cy->id,
-            'course_id'  => $data['course_id'],
-            'course_text'=> $data['prompt'],
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        // เช็คว่า prompts มีข้อมูลอยู่แล้วหรือยัง
+        $prompt = DB::table('prompts')
+            ->where('course_id', $request->course_id)
+            ->where('ref_id', function($q) use ($user, $request) {
+                $q->select('id')
+                ->from('courseyears')
+                ->where('course_id', $request->course_id)
+                ->where('user_id', $user->user_id)
+                ->where('year', $request->year)
+                ->limit(1);
+            })
+            ->first();
 
         DB::table('statuses')->updateOrInsert(
             ['ref_id' => $cy->id],
             [
-                'generated'  => now(),
-                'updated_at' => now(),
-            ]
+                'startprompt' => now(),
+                'updated_at'  => now(),
+                ]
         );
+            
+        if ($prompt) {
+            return response()->json(['prompt' => $prompt->course_text]);
+        }
+                
+        // ถ้าไม่มี prompts → ดึงจาก courses
+        $course = DB::table('courses')->where('course_id', $request->course_id)->first();
+
+        return response()->json(['prompt' => $course->course_text ?? $course->course_detail_th ?? '']);
+    }
+
+    public function savePrompt(Request $request)
+    {
+        $data = $request->validate([
+            'course_id' => 'required|string',
+            'year'      => 'required|integer',
+            'prompt'    => 'required|string',
+        ]);
+
+        $user = Auth::user();
+
+        $cy = DB::table('courseyears')
+            ->where('course_id', $data['course_id'])
+            ->where('user_id', $user->user_id)
+            ->where('year', $data['year'])
+            ->first();
+
+        if (!$cy) {
+            return response()->json(['message' => 'ไม่พบข้อมูลรายวิชา'], 404);
+        }
+
+        DB::table('prompts')
+            ->updateOrInsert(
+                ['ref_id' => $cy->id, 'course_id' => $data['course_id']],
+                ['course_text' => $data['prompt'], 'updated_at' => now()]
+            );
+
+        DB::table('statuses')->updateOrInsert(
+                ['ref_id' => $cy->id],
+                [
+                    'generated'  => now(),
+                    'updated_at' => now(),
+                ]
+            );
+            
+        return response()->json(['message' => 'Prompt saved successfully']);
     }
 
 }
