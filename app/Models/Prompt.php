@@ -9,14 +9,10 @@ class Prompt extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id','course_id','name','course_text'];
-
-    public function user() {
-        return $this->belongsTo(User::class, 'user_id', 'user_id');
-    }
+    protected $fillable = ['ref_id','course_id','course_text'];
 
     public function courseYear()
     {
-        return $this->belongsTo(Courseyears::class, 'course_id', 'course_id');
+        return $this->belongsTo(Courseyears::class, 'ref_id', 'id');
     }
 }

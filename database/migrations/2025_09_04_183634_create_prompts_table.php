@@ -19,6 +19,10 @@ return new class extends Migration
 
             $table->foreign('ref_id')->references('id')->on('courseyears')->onDelete('cascade');
         });
+
+        Schema::table('prompts', function (Blueprint $table) {
+            $table->text('course_text')->change();
+        });
     }
 
     /**

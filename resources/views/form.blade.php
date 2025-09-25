@@ -99,6 +99,7 @@
             <option value="" disabled selected>-- กรุณาเลือกรายวิชา --</option>
             @foreach ($courses as $course)
               <option value="{{ $course->course_id }}"
+                data-year="{{ $course->year }}"
                 data-detail="{{ $course->course_detail_th }}"
                 data-coursetext="{{ $course->course_text }}">
                 {{ $course->course_id }} - {{ $course->course_name }} (ปี {{ $course->year }})
@@ -169,29 +170,27 @@
 
 <script>
 document.getElementById('course').addEventListener('change', function () {
-  let selectedOption = this.options[this.selectedIndex];
-  let courseText = selectedOption.getAttribute('data-coursetext') || '';
-  let detail = selectedOption.getAttribute('data-detail') || '';
-  document.getElementById('prompt').value = courseText ? courseText : detail;
-
-    // อัปเดต startprompt status
+    let selectedOption = this.options[this.selectedIndex];
     let courseId = this.value;
-    if (courseId) {
-      fetch('/updatestartprompt', {
+    let year = parseInt(selectedOption.getAttribute('data-year'), 10);
+
+    if (!courseId || !year) return;
+
+    fetch('/getprompt', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
         },
-        body: JSON.stringify({ course_id: courseId })
-      })
-      .then(res => res.json())
-      .then(data => {
-        console.log('startprompt updated:', data);
-      })
-      .catch(err => console.error('Error updating startprompt:', err));
-    }
-  });
+        body: JSON.stringify({ course_id: courseId, year: year })
+    })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById('prompt').value = data.prompt || '';
+    })
+    .catch(err => console.error(err));
+});
 
 
 function showPopup(message) {
@@ -235,33 +234,36 @@ function openPreview() {
 }
 function closePreview() { document.getElementById("previewModal").classList.add("hidden"); }
 function closeOnBackground(event) { if (event.target.id === "previewModal") closePreview(); }
+
 function submitForm() {
-  // ส่ง prompt ไปบันทึกก่อน
-  let courseId = document.getElementById("course").value;
-  let prompt = document.getElementById("prompt").value.trim();
-  if (!courseId || !prompt) {
-    document.getElementById("eloForm").submit();
-    return;
-  }
-  fetch('/saveprompt', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRF-TOKEN': '{{ csrf_token() }}'
-    },
-    body: JSON.stringify({
-      course_id: courseId,
-      prompt: prompt
+    let courseSelect = document.getElementById("course");
+    let courseId = courseSelect.value;
+    let year = parseInt(courseSelect.options[courseSelect.selectedIndex].getAttribute('data-year'), 10);
+    let prompt = document.getElementById("prompt").value.trim();
+
+    if (!courseId || !prompt) {
+        alert("กรุณากรอกข้อมูลให้ครบ");
+        return;
+    }
+    fetch('/saveprompt', {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({ 
+          course_id: courseId,
+           year: year,
+           prompt: prompt
+          })
     })
-  })
-  .then(res => res.json())
-  .then(data => {
-    // ไม่ว่าบันทึกจะสำเร็จหรือไม่ ให้ submit form ต่อ
-    document.getElementById("eloForm").submit();
-  })
-  .catch(() => {
-    document.getElementById("eloForm").submit();
-  });
+    .then(res => res.json())
+    .then(data => {
+        // console.log(data.message);
+        document.getElementById("eloForm").submit();
+    })
+    .catch(err => console.error(err));
 }
 
 // จำกัดจำนวนการเลือก PLO ตามจำนวน CLO ที่เลือก
