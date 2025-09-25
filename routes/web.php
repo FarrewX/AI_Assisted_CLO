@@ -8,6 +8,9 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PlosController;
 use App\Http\Controllers\CourseyearsController;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\NotificationMail;
+use App\Http\Controllers\EmailController;
 
 // หน้า login/register ไม่ต้องล็อกอิน
 Route::get('/login', [AuthController::class, "login"])->name('login');
@@ -59,9 +62,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/clo', function () {
         return view('clo');
     })->name('clo');
-
+    
     Route::get('/courses', [CourseyearsController::class, 'index'])->name('courses')->middleware('admin');
 });
+
+    Route::get('/send-test', [EmailController::class, 'showForm']);
+    Route::post('/send-test', [EmailController::class, 'send'])->name('send.email');
 
 Route::post('/plos/update/{id}', [PlosController::class, 'update'])->name('plos.update')->middleware('admin');
 Route::post('/plos/create', [PlosController::class, 'create'])->name('plos.create')->middleware('admin');

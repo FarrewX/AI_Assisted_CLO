@@ -22,7 +22,7 @@
     <div class="w-[90%] max-w-[1000px] mx-auto">
       <button 
         class="float-right bg-orange-500 hover:bg-orange-600 text-white font-bold px-5 py-2 rounded transition mb-3"
-        onclick="location.href='message'">
+        onclick="location.href='send-test'">
         ส่งแจ้งเตือน
       </button>
   
