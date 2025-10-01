@@ -54,6 +54,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/notification', [NotificationController::class, 'index'])
         ->name('notification')
         ->middleware('admin');
+        $user = Auth::user();
 
     Route::get('/message', function () {
         return view('message');
