@@ -51,33 +51,43 @@
                     </form>
                 </h3>
 
-                @forelse ($courses as $course)
+                @forelse ($courses->groupBy('course_id') as $courseId => $courseGroup)
                     @php
-                        $total = 4; // มี 4 step
-                        $completed = 0;
-                        foreach (['startprompt','generated','downloaded','success'] as $status) {
-                            if ($course->$status) $completed++;
-                        }
-                        $progress = ($completed / $total) * 100;
-
-                        $status_text = match($completed) {
-                            0 => 'ยังไม่เริ่ม',
-                            1 => 'เริ่มแล้ว',
-                            2 => 'กำลังดำเนินการ',
-                            3 => 'เกือบเสร็จ',
-                            4 => 'เสร็จสิ้น',
-                            default => ''
-                        };
+                        $courseRow = $courseGroup->first();
+                        $termsGroup = $courseGroup->groupBy('term');
                     @endphp
 
-                    <div class="mb-6">
-                        <div class="flex justify-between">
-                            <span>• {{ $course->course_name }}</span>
-                            <span class="text-gray-500 text-sm">- {{ $status_text }}</span>
-                        </div>
-                        <div class="w-full bg-gray-100 rounded-full h-3 mt-1">
-                            <div class="bg-green-500 h-3 rounded-full" style="width: {{ $progress }}%"></div>
-                        </div>
+                    <div class="mb-6 border p-3 rounded-lg bg-gray-50">
+                        <div class="font-semibold mb-2">• {{ $courseRow->course_name }}</div>
+
+                        @foreach($termsGroup as $term => $cloItems)
+                            <div class="ml-4 mb-2">
+                                <div class="font-medium text-gray-700">ภาคเรียน: {{ $term }}</div>
+                                <ul class="ml-4 list-disc">
+                                    @foreach($cloItems as $item)
+                                        <li>
+                                            CLO: {{ $item->clo }}
+                                            @php
+                                                $progress = collect([$item->startprompt, $item->generated, $item->downloaded, $item->success])
+                                                            ->filter()->count() / 4 * 100;
+                                                $status_text = match(collect([$item->startprompt, $item->generated, $item->downloaded, $item->success])->filter()->count()) {
+                                                    0 => 'ยังไม่เริ่ม',
+                                                    1 => 'เริ่มแล้ว',
+                                                    2 => 'กำลังดำเนินการ',
+                                                    3 => 'เกือบเสร็จ',
+                                                    4 => 'เสร็จสิ้น',
+                                                    default => ''
+                                                };
+                                            @endphp
+                                            <span class="text-gray-500 text-sm">- {{ $status_text }}</span>
+                                            <div class="w-full bg-gray-100 rounded-full h-2 mt-1">
+                                                <div class="bg-green-500 h-2 rounded-full" style="width: {{ $progress }}%"></div>
+                                            </div>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endforeach
                     </div>
                 @empty
                     <p class="text-gray-500">คุณยังไม่มีรายวิชาในระบบ</p>

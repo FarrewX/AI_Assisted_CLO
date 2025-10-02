@@ -73,9 +73,9 @@ Route::post('/plos/update/{id}', [PlosController::class, 'update'])->name('plos.
 Route::post('/plos/create', [PlosController::class, 'create'])->name('plos.create')->middleware('admin');
 Route::delete('/plos/delete/{id}', [PlosController::class, 'destroy'])->name('plos.destroy')->middleware('admin');
 
-Route::post('/courses/{courseId}/teachers', [CourseyearsController::class, 'store'])->name('teachers.store')->middleware('admin');
-Route::put('/courses/{courseId}/teachers/{id}', [CourseyearsController::class, 'update'])->name('teachers.update')->middleware('admin');
-Route::delete('/courses/{courseId}/teachers/{id}', [CourseyearsController::class, 'destroy'])->name('teachers.destroy')->middleware('admin');
+Route::post('/courses/{courseId}/professor', [CourseyearsController::class, 'store'])->name('professor.store')->middleware('admin');
+Route::put('/courses/{courseId}/professor/{id}', [CourseyearsController::class, 'update'])->name('professor.update')->middleware('admin');
+Route::delete('/courses/{courseId}/professor/{id}', [CourseyearsController::class, 'destroy'])->name('professor.destroy')->middleware('admin');
 
 Route::post('/updatestartprompt', [CourseController::class, 'updateStartPrompt']);
 Route::post('/getprompt', [CourseController::class, 'getPrompt']);

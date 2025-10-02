@@ -15,8 +15,8 @@ return new class extends Migration
             $table->string('course_id')->primary();
             $table->string('course_name');
             $table->string('course_name_en');
-            $table->string('course_detail_th');
-            $table->string('course_detail_en');
+            $table->string('course_detail_th', 1000);
+            $table->string('course_detail_en', 1000);
             $table->timestamps();
         });
     }

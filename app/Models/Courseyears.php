@@ -14,7 +14,7 @@ class Courseyears extends Model
     protected $keyType = 'int';
 
     protected $table = 'courseyears';
-    protected $fillable = ['id','user_id','course_id','year'];
+    protected $fillable = ['id','user_id','course_id','year','term','clo',];
 
     public function course()
     {
@@ -29,5 +29,10 @@ class Courseyears extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id', 'user_id');
+    }
+
+    public function status()
+    {
+        return $this->hasOne(Status::class, 'ref_id', 'id');
     }
 }

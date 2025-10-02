@@ -13,14 +13,16 @@ return new class extends Migration
     {
         Schema::create('courseyears', function (Blueprint $table) {
             $table->id();
-            $table->string('user_id')->default('unknown');
-            $table->string('course_id');
+            $table->string('user_id',20)->default('unknown');
+            $table->string('course_id',20);
+            $table->string('term',10);
+            $table->string('clo',10);
             $table->year('year');
             $table->timestamps();
 
             $table->foreign('user_id')->references('user_id')->on('users')->onDelete('cascade');
             $table->foreign('course_id')->references('course_id')->on('courses')->onDelete('cascade');
-            $table->unique(['course_id', 'year']);
+            $table->unique(['user_id', 'course_id', 'year', 'term', 'clo']);
         });
     }
 

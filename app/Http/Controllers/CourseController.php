@@ -25,7 +25,7 @@ class CourseController extends Controller
 
         $selectedYear = $request->input('year', now()->year);
 
-        $courses = DB::table('courses as c')
+        $courses = collect(DB::table('courses as c')
             ->leftJoin('courseyears as cy', 'c.course_id', '=', 'cy.course_id')
             ->leftJoin('statuses as s', 'cy.id', '=', 's.ref_id')
             ->where('cy.user_id', $user->user_id)
@@ -33,12 +33,15 @@ class CourseController extends Controller
             ->select(
                 'c.course_id',
                 'c.course_name',
+                'cy.year',
+                'cy.term',
+                'cy.clo',
                 's.startprompt',
                 's.generated',
                 's.downloaded',
                 's.success'
             )
-            ->get();
+            ->get());
 
         return view('home', compact('courses', 'user', 'selectedYear'));
     }

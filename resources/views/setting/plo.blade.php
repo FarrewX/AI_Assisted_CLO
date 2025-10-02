@@ -31,7 +31,7 @@
                         <th class="border px-4 py-2">Description</th>
                         <th class="border px-4 py-2 w-35">Domain</th>
                         <th class="border px-4 py-2 w-40">Learning Level</th>
-                        <th class="border px-4 py-2 w-30">Action</th>
+                        <th class="border px-4 py-2 w-40">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -49,8 +49,9 @@
                         <td class="px-4 py-2">
                             <textarea class="desc-input px-2 py-1 w-full resize-none" rows="1" style="overflow:hidden" readonly>{{ $plo->learning_level }}</textarea>
                         </td>
-                        <td class="px-4 py-2 text-center">
+                        <td class="px-4 py-2 text-center space-y-5 space-x-5">
                             <button class="edit-btn bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded">แก้ไข</button>
+                            <button class="delete-btn bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">ลบ</button>
                         </td>
                     </tr>
                     @endforeach
@@ -107,7 +108,6 @@
                     <textarea id="edit-level" class="border px-2 py-1 w-full rounded resize-none" rows="2"></textarea>
                 </div>
                 <button id="edit-plo-save" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded mr-2">บันทึก</button>
-                <button id="edit-plo-delete" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded mr-2">ลบ</button>
                 <button id="edit-plo-cancel" class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded">ยกเลิก</button>
             </div>
         </div>
@@ -225,29 +225,29 @@
         };
 
         // ลบ PLO
-        document.getElementById('edit-plo-delete').onclick = function() {
-            const plo = document.getElementById('edit-plo').value.trim();
-            showConfirm('คุณต้องการลบ PLO นี้หรือไม่?', function() {
-                var xhr = new XMLHttpRequest();
-                xhr.open('DELETE', '/plos/delete/' + plo, true);
-                xhr.setRequestHeader('X-CSRF-TOKEN', '{{ csrf_token() }}');
-                xhr.onreadystatechange = function() {
-                    if (xhr.readyState === 4) {
-                        if (xhr.status === 200) {
-                            showPopup('ลบ PLO สำเร็จ');
-                            if (currentEditTr) {
-                                currentEditTr.remove();
+        document.querySelectorAll('.delete-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const tr = this.closest('tr');
+                const plo = tr.dataset.id; // หรือ tr.querySelector('.plo-input').value;
+
+                showConfirm('คุณต้องการลบ PLO นี้หรือไม่?', function() {
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('DELETE', '/plos/delete/' + plo, true);
+                    xhr.setRequestHeader('X-CSRF-TOKEN', '{{ csrf_token() }}');
+                    xhr.onreadystatechange = function() {
+                        if (xhr.readyState === 4) {
+                            if (xhr.status === 200) {
+                                showPopup('ลบ PLO สำเร็จ');
+                                tr.remove();
+                            } else {
+                                showPopup('เกิดข้อผิดพลาด');
                             }
-                            document.getElementById('edit-plo-modal').classList.add('hidden');
-                            setTimeout(() => location.reload(), 1000);
-                        } else {
-                            showPopup('เกิดข้อผิดพลาด');
                         }
-                    }
-                };
-                xhr.send();
+                    };
+                    xhr.send();
+                });
             });
-        };
+        });
 
         // Add PLO Modal logic
         const nextPloNumber = {{ $nextPloNumber }};
