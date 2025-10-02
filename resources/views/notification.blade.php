@@ -3,53 +3,74 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-
   <title>ELO_Generator</title>
 
-  <!-- Fonts -->
-  <link rel="preconnect" href="https://fonts.bunny.net">
-  <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
-
-  <!-- Styles / Scripts -->
   @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
-      @vite(['resources/css/app.css', 'resources/js/app.js'])
-  @else
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
   @endif
 </head>
 <body>
   @include('component.navbar')
+
   <div class="bg-white mt-20">
     <div class="w-[90%] max-w-[1000px] mx-auto">
+
+      <!-- ปุ่มส่งแจ้งเตือน -->
       <button 
         class="float-right bg-orange-500 hover:bg-orange-600 text-white font-bold px-5 py-2 rounded transition mb-3"
         onclick="location.href='send-test'">
         ส่งแจ้งเตือน
       </button>
   
+      <!-- ตารางรายวิชา -->
       <table class="w-full border border-gray-300 border-collapse bg-white mt-5">
         <thead>
           <tr class="bg-gray-100">
             <th class="px-4 py-3 border border-gray-300 text-left">รหัสวิชา</th>
             <th class="px-4 py-3 border border-gray-300 text-left">รายชื่อวิชา</th>
-            <th class="px-4 py-3 border border-gray-300 text-left">อาจารย์รายวิชา</th>
-            <th class="px-4 py-3 border border-gray-300 text-left">สถานะงาน</th>
+            <th class="px-4 py-3 border border-gray-300 text-left">อาจารย์ผู้สอน</th>
+            <th class="px-4 py-3 border border-gray-300 text-left">สถานะ</th>
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td class="px-4 py-3 border border-gray-300">00000001</td>
-            <td class="px-4 py-3 border border-gray-300">การออกแบบอัลกอริทึมและการเขียนโปรแกรมเชิงขั้นตอน...</td>
-            <td class="px-4 py-3 border border-gray-300">อาจารย์เอ</td>
-            <td class="px-4 py-3 border border-gray-300">ยังไม่เสร็จ</td>
-          </tr>
-          <tr>
-            <td class="px-4 py-3 border border-gray-300">00000002</td>
-            <td class="px-4 py-3 border border-gray-300">หลักการและเทคนิคการพัฒนาโปรแกรมคอมพิวเตอร์...</td>
-            <td class="px-4 py-3 border border-gray-300">อาจารย์บี</td>
-            <td class="px-4 py-3 border border-gray-300">ยังไม่เริ่ม</td>
-          </tr>
+          @forelse($courses as $course)
+            @php
+              $total = 4; // มี 4 step
+              $completed = 0;
+
+              foreach (['startprompt','generated','downloaded','success'] as $status) {
+                  if ($course->$status) $completed++;
+              }
+
+              $progress = ($completed / $total) * 100;
+
+              $status_text = match($completed) {
+                  0 => 'ยังไม่เริ่ม',
+                  1 => 'เริ่มแล้ว',
+                  2 => 'กำลังดำเนินการ',
+                  3 => 'เกือบเสร็จ',
+                  4 => 'เสร็จสิ้น',
+                  default => ''
+              };
+            @endphp
+
+            <tr>
+              <td class="px-4 py-3 border border-gray-300">{{ $course->course_id }}</td>
+              <td class="px-4 py-3 border border-gray-300">{{ $course->course_name }}</td>
+              <td class="px-4 py-3 border border-gray-300">{{ Auth::user()->name ?? 'สมมติ' }}</td>
+              <td class="px-4 py-3 border border-gray-300">{{ $status_text }}</td>
+            </tr>
+          @empty
+            <tr>
+              <td colspan="4" class="px-4 py-3 text-center text-gray-500">
+                ไม่พบรายวิชา
+              </td>
+            </tr>
+          @endforelse
         </tbody>
       </table>
+
     </div>
   </div>
 </body>
+</html>
