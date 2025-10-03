@@ -18,7 +18,7 @@
       <!-- ปุ่มส่งแจ้งเตือน -->
       <button 
         class="float-right bg-orange-500 hover:bg-orange-600 text-white font-bold px-5 py-2 rounded transition mb-3"
-        onclick="location.href='send-test'">
+        onclick="location.href='send-email'">
         ส่งแจ้งเตือน
       </button>
   

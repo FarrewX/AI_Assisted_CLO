@@ -9,3 +9,56 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+/* ทำ preview ให้มีขนาด A4 บนหน้าจอ */
+.a4 {
+    width: 210mm;
+    min-height: 297mm;
+    padding: 20mm;
+    background: white;
+    box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    margin: 20px auto;
+    box-sizing: border-box;
+}
+.doc-table { width:100%; border-collapse: collapse; margin-top: 8px;}
+.doc-table td { border: 1px solid #ccc; padding: 8px; vertical-align: top; }
+@media (max-width: 900px) {
+    .a4 { width: 100%; min-height: auto; padding: 16px; margin: 10px; }
+}
+.download-btn { position: fixed; right: 24px; top: 24px; z-index: 50; }
+
+/* กำหนดขนาด A4 สำหรับ print / preview */
+        .a4 {
+            width: 210mm;      /* A4 width */
+            min-height: 297mm; /* A4 height */
+            padding: 20mm;
+            margin: 10mm auto;
+            background: white;
+            box-shadow: 0 0 5px rgba(0,0,0,0.1);
+            box-sizing: border-box;
+        }
+
+        table.doc-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        table.doc-table td, table.doc-table th {
+            border: 1px solid #999;
+            padding: 6px;
+        }
+
+        table.doc-table th {
+            background-color: #f0f0f0;
+            text-align: center;
+        }
+
+        @media print {
+            body {
+                background: none;
+            }
+            .a4 {
+                box-shadow: none;
+                margin: 0;
+            }
+        }

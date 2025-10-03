@@ -10,7 +10,7 @@ class EmailController extends Controller
     // แสดงฟอร์ม
     public function showForm()
     {
-        return view('email'); // ใช้ view email.blade.php
+        return view('email');
     }
 
     // ส่งอีเมล
