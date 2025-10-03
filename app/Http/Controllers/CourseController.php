@@ -78,6 +78,8 @@ class CourseController extends Controller
             'c.course_name',
             'c.course_detail_th',
             'cy.year',
+            'cy.term',
+            'cy.clo',
             's.startprompt',
             's.generated',
             's.downloaded',
@@ -85,6 +87,7 @@ class CourseController extends Controller
             'lp.course_text'
         )
         ->orderBy('cy.year', 'asc')
+        ->orderBy('cy.term', 'desc')
         ->get();
 
         return $courses;
@@ -95,13 +98,15 @@ class CourseController extends Controller
         $courseId = $request->course_id;
         $user = Auth::user();
 
-        if (!$courseId) {
-            return response()->json(['error' => 'course_id is required'], 400);
+        if (!$courseId || !$request->year || !$request->term || !$request->clo) {
+            return response()->json(['error' => 'course_id, year, term, and clo are required'], 400);
         }
 
         $cy = Courseyears::where('course_id', $courseId)
             ->where('user_id', $user->user_id)
             ->where('year', $request->year)
+            ->where('term', $request->term)
+            ->where('clo', $request->clo)
             ->first();
 
         if ($cy) {
@@ -122,19 +127,23 @@ class CourseController extends Controller
         $request->validate([
             'course_id' => 'required|string',
             'year'      => 'required|integer',
+            'term'      => 'required|string',
+            'clo'       => 'required|string',
         ]);
 
         $cy = DB::table('courseyears')
-            ->where('course_id', $request['course_id'])
+            ->where('course_id', $request->course_id)
             ->where('user_id', $user->user_id)
-            ->where('year', $request['year'])
+            ->where('year', $request->year)
+            ->where('term', $request->term)
+            ->where('clo', $request->clo)
             ->first();
 
         if (!$cy) {
             return response()->json(['message' => 'ไม่พบข้อมูลรายวิชา'], 404);
         }
 
-        // เช็คว่า prompts มีข้อมูลอยู่แล้วหรือยัง
+        // เช็คว่ามี prompt อยู่แล้วหรือยัง
         $prompt = DB::table('prompts')
             ->where('course_id', $request->course_id)
             ->where('ref_id', function($q) use ($user, $request) {
@@ -152,14 +161,14 @@ class CourseController extends Controller
             [
                 'startprompt' => now(),
                 'updated_at'  => now(),
-                ]
+            ]
         );
             
         if ($prompt) {
             return response()->json(['prompt' => $prompt->course_text]);
         }
                 
-        // ถ้าไม่มี prompts → ดึงจาก courses
+        // ถ้าไม่มี → ดึงจาก courses
         $course = DB::table('courses')->where('course_id', $request->course_id)->first();
 
         return response()->json(['prompt' => $course->course_text ?? $course->course_detail_th ?? '']);
@@ -170,6 +179,8 @@ class CourseController extends Controller
         $data = $request->validate([
             'course_id' => 'required|string',
             'year'      => 'required|integer',
+            'term'      => 'required|string',
+            'clo'       => 'required|string',
             'prompt'    => 'required|string',
         ]);
 
@@ -179,6 +190,8 @@ class CourseController extends Controller
             ->where('course_id', $data['course_id'])
             ->where('user_id', $user->user_id)
             ->where('year', $data['year'])
+            ->where('term', $data['term'])
+            ->where('clo', $data['clo'])
             ->first();
 
         if (!$cy) {
@@ -192,12 +205,12 @@ class CourseController extends Controller
             );
 
         DB::table('statuses')->updateOrInsert(
-                ['ref_id' => $cy->id],
-                [
-                    'generated'  => now(),
-                    'updated_at' => now(),
-                ]
-            );
+            ['ref_id' => $cy->id],
+            [
+                'generated'  => now(),
+                'updated_at' => now(),
+            ]
+        );
             
         return response()->json(['message' => 'Prompt saved successfully']);
     }

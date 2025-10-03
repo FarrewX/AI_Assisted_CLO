@@ -77,20 +77,6 @@
       <form id="eloForm" action="/generate" method="POST" class="space-y-4">
         @csrf
 
-        <!-- เลือก มคอ -->
-        <div class="flex items-center gap-6">
-          <label class="flex items-center gap-2">
-            <input type="radio" id="clo3" name="sec_clo" value="clo3"
-                   class="w-4 h-4 text-blue-600">
-            <span class="text-gray-700">มคอ.3</span>
-          </label>
-          <label class="flex items-center gap-2">
-            <input type="radio" id="clo5" name="sec_clo" value="clo5"
-                   class="w-4 h-4 text-blue-600">
-            <span class="text-gray-700">มคอ.5</span>
-          </label>
-        </div>
-
         <!-- รายวิชา -->
         <div>
           <label for="course" class="block font-semibold text-gray-700 mb-1">เลือกรายวิชา :</label>
@@ -100,9 +86,11 @@
             @foreach ($courses as $course)
               <option value="{{ $course->course_id }}"
                 data-year="{{ $course->year }}"
+                data-term="{{ $course->term }}"
+                data-clo="{{ $course->clo }}"
                 data-detail="{{ $course->course_detail_th }}"
                 data-coursetext="{{ $course->course_text }}">
-                {{ $course->course_id }} - {{ $course->course_name }} (ปี {{ $course->year }})
+                {{ $course->course_id }} - {{ $course->course_name }} (มคอ{{$course->clo}} ภาคเรียน{{$course->term}}/{{ $course->year }})
               </option>
             @endforeach
           </select>
@@ -173,6 +161,8 @@ document.getElementById('course').addEventListener('change', function () {
     let selectedOption = this.options[this.selectedIndex];
     let courseId = this.value;
     let year = parseInt(selectedOption.getAttribute('data-year'), 10);
+    let term = selectedOption.getAttribute('data-term');
+    let clo = selectedOption.getAttribute('data-clo');
 
     if (!courseId || !year) return;
 
@@ -183,7 +173,7 @@ document.getElementById('course').addEventListener('change', function () {
             'Content-Type': 'application/json',
             'X-CSRF-TOKEN': '{{ csrf_token() }}'
         },
-        body: JSON.stringify({ course_id: courseId, year: year })
+        body: JSON.stringify({ course_id: courseId, year: year, term: term, clo: clo })
     })
     .then(res => res.json())
     .then(data => {
@@ -204,7 +194,6 @@ document.getElementById('popup-close').onclick = function() {
 // Preview Modal
 function openPreview() {
   let prompt = document.getElementById("prompt").value.trim();
-  let sec_clo = document.querySelector('input[name="sec_clo"]:checked');
   let courseSelect = document.getElementById("course");
   let numClo = document.getElementById("numClo").value;
   let ploChecked = Array.from(document.querySelectorAll('.selectPlo:checked'));
@@ -212,19 +201,25 @@ function openPreview() {
     return cb.parentElement.querySelector('span').textContent.trim();
   });
 
-  if (!sec_clo) { showPopup("กรุณาเลือก มคอ.3 หรือ มคอ.5"); return; }
   if (!courseSelect.value) { showPopup("กรุณาเลือกรายวิชา"); return; }
   if (!prompt) { showPopup("กรุณากรอกรายละเอียดรายวิชา"); return; }
   if (!numClo) { showPopup("กรุณาเลือกจำนวน CLO ที่ต้องการ"); return; }
   if (ploChecked.length === 0) { showPopup("กรุณาเลือกอย่างน้อย 1 PLO"); return; }
 
   document.getElementById("previewModal").classList.remove("hidden");
-  let selectedText = courseSelect.options[courseSelect.selectedIndex].text;
+  // ดึงค่าจาก option ที่เลือก
+  let selectedOption = courseSelect.options[courseSelect.selectedIndex];
+  let selectedText = selectedOption.text.replace(/\(.*?\)/, "").trim();
+  let year = selectedOption.getAttribute('data-year');
+  let term = selectedOption.getAttribute('data-term');
+  let clo  = selectedOption.getAttribute('data-clo');
 
   // preview main info
   let content = `
-    <p><b>มคอ:</b> ${sec_clo.value}</p>
     <p><b>รายวิชา:</b> ${selectedText}</p>
+    <p><b>ปีการศึกษา:</b> ${year}</p>
+    <p><b>ภาคเรียน:</b> ${term}</p>
+    <p><b>มคอ:</b> ${clo}</p>
     <p><b>รายละเอียด:</b> ${prompt}</p>
     <p><b>จำนวน CLO:</b> ${numClo}</p>
     <p><b>PLO ที่เลือก:</b> ${ploLabels.join(', ')}</p>
@@ -239,6 +234,8 @@ function submitForm() {
     let courseSelect = document.getElementById("course");
     let courseId = courseSelect.value;
     let year = parseInt(courseSelect.options[courseSelect.selectedIndex].getAttribute('data-year'), 10);
+    let term = String(courseSelect.options[courseSelect.selectedIndex].getAttribute('data-term'));
+    let clo  = String(courseSelect.options[courseSelect.selectedIndex].getAttribute('data-clo'));
     let prompt = document.getElementById("prompt").value.trim();
 
     if (!courseId || !prompt) {
@@ -254,8 +251,10 @@ function submitForm() {
         },
         body: JSON.stringify({ 
           course_id: courseId,
-           year: year,
-           prompt: prompt
+          year: year,
+          term: term,
+          clo: clo,
+          prompt: prompt
           })
     })
     .then(res => res.json())

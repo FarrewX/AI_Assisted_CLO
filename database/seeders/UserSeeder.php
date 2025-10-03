@@ -11,9 +11,9 @@ class UserSeeder extends Seeder
     public function run(): void
     {
         User::updateOrInsert(
-            ['user_id' => 'unknown'], // ถ้ามีแล้วจะ update
+            ['user_id' => 'unknown'],
             [
-                'role_id' => '0',
+                'role_id' => '1',
                 'name' => 'Unknown User',
                 'email' => 'unknown@example.com',
                 'password' => Hash::make('password'),

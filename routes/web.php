@@ -67,8 +67,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/courses', [CourseyearsController::class, 'index'])->name('courses')->middleware('admin');
 });
 
-    Route::get('/send-test', [EmailController::class, 'showForm']);
-    Route::post('/send-test', [EmailController::class, 'send'])->name('send.email');
+Route::get('/send-email', [EmailController::class, 'showForm'])->middleware('admin');
+Route::post('/send-email', [EmailController::class, 'send'])->name('send.email')->middleware('admin');
 
 Route::post('/plos/update/{id}', [PlosController::class, 'update'])->name('plos.update')->middleware('admin');
 Route::post('/plos/create', [PlosController::class, 'create'])->name('plos.create')->middleware('admin');
