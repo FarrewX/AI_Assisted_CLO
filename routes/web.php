@@ -46,16 +46,13 @@ Route::middleware('auth')->group(function () {
         return view('guide');
     })->name('guide');
 
-    Route::get('/setting', function () {
-        return view('setting');
-    })->name('setting')->middleware('admin');
+    Route::get('/management', function () {
+        return view('management');
+    })->name('management')->middleware('admin');
 
     Route::get('/plos', [PlosController::class, 'index'])->name('plos.index')->middleware('admin');
 
-    Route::get('/notification', [NotificationController::class, 'index'])
-        ->name('notification')
-        ->middleware('admin');
-        $user = Auth::user();
+    Route::get('/notification', [NotificationController::class, 'index'])->name('notification')->middleware('admin');
 
     Route::get('/message', function () {
         return view('message');

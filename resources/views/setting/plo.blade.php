@@ -49,8 +49,8 @@
                         <td class="px-4 py-2">
                             <textarea class="desc-input px-2 py-1 w-full resize-none" rows="1" style="overflow:hidden" readonly>{{ $plo->learning_level }}</textarea>
                         </td>
-                        <td class="px-4 py-2 text-center space-y-5 space-x-5">
-                            <button class="edit-btn bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded">แก้ไข</button>
+                        <td class="px-4 py-2 text-center space-x-2">
+                            <button class="edit-btn bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 space-y-3 rounded">แก้ไข</button>
                             <button class="delete-btn bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">ลบ</button>
                         </td>
                     </tr>
