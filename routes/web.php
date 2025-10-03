@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\NotificationMail;
 use App\Http\Controllers\EmailController;
+use App\Http\Controllers\DocumentController;
 
 // หน้า login/register ไม่ต้องล็อกอิน
 Route::get('/login', [AuthController::class, "login"])->name('login');
@@ -65,10 +66,14 @@ Route::middleware('auth')->group(function () {
     })->name('clo');
     
     Route::get('/courses', [CourseyearsController::class, 'index'])->name('courses')->middleware('admin');
+
+    Route::get('/genarate-docx', [DocumentController::class, 'preview'])->name('doc.preview');
+
+    Route::get('/export-docx', [DocumentController::class, 'exportForm'])->name('export.docx');  
 });
 
-    Route::get('/send-test', [EmailController::class, 'showForm']);
-    Route::post('/send-test', [EmailController::class, 'send'])->name('send.email');
+Route::get('/send-test', [EmailController::class, 'showForm']);
+Route::post('/send-test', [EmailController::class, 'send'])->name('send.email');
 
 Route::post('/plos/update/{id}', [PlosController::class, 'update'])->name('plos.update')->middleware('admin');
 Route::post('/plos/create', [PlosController::class, 'create'])->name('plos.create')->middleware('admin');
