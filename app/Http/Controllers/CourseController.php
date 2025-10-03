@@ -84,7 +84,9 @@ class CourseController extends Controller
             's.generated',
             's.downloaded',
             's.success',
-            'lp.course_text'
+            'lp.course_text',
+            'lp.ref_id',
+            
         )
         ->orderBy('cy.year', 'asc')
         ->orderBy('cy.term', 'desc')

@@ -15,4 +15,9 @@ class Prompt extends Model
     {
         return $this->belongsTo(Courseyears::class, 'ref_id', 'id');
     }
+
+    public function generate()
+    {
+        return $this->hasMany(Courseyears::class, 'ref_id', 'ref_id');
+    }
 }

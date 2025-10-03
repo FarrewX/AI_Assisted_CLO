@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\NotificationMail;
 use App\Http\Controllers\EmailController;
 use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\GenerateController;
 
 // หน้า login/register ไม่ต้องล็อกอิน
 Route::get('/login', [AuthController::class, "login"])->name('login');
@@ -37,6 +38,8 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::post('/generate', [OllamaController::class, 'generateText']);
+    Route::get('/generate/show',  [GenerateController::class, 'showGenerated'])->name('show.generated');
+    Route::post('/generate/save', [GenerateController::class, 'saveGeneratedText'])->name('save.generate');
 
     Route::get('/about', function () {
         return view('about');
@@ -66,7 +69,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/genarate-docx', [DocumentController::class, 'preview'])->name('doc.preview');
 
-    Route::get('/export-docx', [DocumentController::class, 'exportForm'])->name('export.docx');  
+    Route::get('/export-docx', [DocumentController::class, 'exportForm'])->name('export.docx');
 });
 
 Route::get('/send-email', [EmailController::class, 'showForm'])->middleware('admin');

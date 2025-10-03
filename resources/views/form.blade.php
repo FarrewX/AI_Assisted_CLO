@@ -74,7 +74,7 @@
     <div class="bg-white p-6 rounded-xl shadow-md w-[500px] relative">
       <h2 class="text-center text-[30px] font-bold text-gray-800 mb-4">ELO_Generate</h2>
 
-      <form id="eloForm" action="/generate" method="POST" class="space-y-4">
+      <form id="eloForm" method="POST" class="space-y-4">
         @csrf
 
         <!-- รายวิชา -->
@@ -230,6 +230,8 @@ function openPreview() {
 function closePreview() { document.getElementById("previewModal").classList.add("hidden"); }
 function closeOnBackground(event) { if (event.target.id === "previewModal") closePreview(); }
 
+let aiCallCount = 0;
+
 function submitForm() {
     let courseSelect = document.getElementById("course");
     let courseId = courseSelect.value;
@@ -249,18 +251,48 @@ function submitForm() {
             'Content-Type': 'application/json',
             'X-CSRF-TOKEN': '{{ csrf_token() }}'
         },
-        body: JSON.stringify({ 
-          course_id: courseId,
-          year: year,
-          term: term,
-          clo: clo,
-          prompt: prompt
-          })
+        body: JSON.stringify({ course_id: courseId, year, term, clo, prompt })
     })
     .then(res => res.json())
     .then(data => {
-        // console.log(data.message);
-        document.getElementById("eloForm").submit();
+        //เรียก AI
+        return fetch('/generate', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({ course_id: courseId, year, term, clo, prompt })
+        },aiCallCount++);
+    })
+    .then(res => res.json())
+    .then(data => {
+        //ดึงข้อความ AI
+        const generatedText = data.response?.choices?.[0]?.text || '';
+        console.log("AI generated text:", generatedText);
+
+        return fetch('/generate/save', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                course_id: courseId,
+                year,
+                term,
+                clo,
+                ai_response: generatedText
+            })
+        })
+        .then(res => res.json())
+        .then(saveData => {
+            console.log("Saved AI response:", saveData.message);
+            console.log("AI ถูกเรียกทั้งหมด:", aiCallCount);
+            window.location.href = '/generate/show';
+        });
     })
     .catch(err => console.error(err));
 }
