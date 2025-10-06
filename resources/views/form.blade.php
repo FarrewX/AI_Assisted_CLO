@@ -76,12 +76,11 @@
 
       <form id="eloForm" method="POST" class="space-y-4">
         @csrf
-
         <!-- รายวิชา -->
         <div>
           <label for="course" class="block font-semibold text-gray-700 mb-1">เลือกรายวิชา :</label>
           <select id="course" name="course"
-              class="w-full p-2 border border-gray-300 rounded-md">
+            class="w-full p-2 border border-gray-300 rounded-md">
             <option value="" disabled selected>-- กรุณาเลือกรายวิชา --</option>
             @foreach ($courses as $course)
               <option value="{{ $course->course_id }}"
@@ -158,13 +157,48 @@
 
 
 <script>
-document.getElementById('course').addEventListener('change', function () {
-    let selectedOption = this.options[this.selectedIndex];
-    let courseId = this.value;
-    let year = parseInt(selectedOption.getAttribute('data-year'), 10);
-    let term = selectedOption.getAttribute('data-term');
-    let clo = selectedOption.getAttribute('data-clo');
+document.addEventListener('DOMContentLoaded', function () {
+    const params = new URLSearchParams(window.location.search);
+    const courseId = params.get('course_id');
+    const year = params.get('year');
+    const term = params.get('term');
+    const clo = params.get('clo');
 
+    const courseSelect = document.getElementById('course');
+
+    if (courseSelect && courseId) {
+        // เลือก option ที่ตรง courseId + year + term + clo
+        const option = Array.from(courseSelect.options).find(opt =>
+          opt.value.toString() === courseId.toString() &&
+          opt.getAttribute('data-year').toString() === year.toString() &&
+          opt.getAttribute('data-term').toString() === term.toString() &&
+          opt.getAttribute('data-clo').toString() === clo.toString()
+        );
+        if (option) {
+          option.selected = true;
+          fetchPrompt(
+              courseId,
+              option.getAttribute('data-year'),
+              option.getAttribute('data-term'),
+              option.getAttribute('data-clo')
+          );
+        }
+    }
+});
+
+document.getElementById('course').addEventListener('change', function () {
+    const selectedOption = this.options[this.selectedIndex];
+    const courseId = this.value;
+    const year = selectedOption.getAttribute('data-year');
+    const term = selectedOption.getAttribute('data-term');
+    const clo = selectedOption.getAttribute('data-clo');
+
+    if (!courseId || !year) return;
+
+    fetchPrompt(courseId, year, term, clo);
+});
+
+function fetchPrompt(courseId, year, term, clo) {
     if (!courseId || !year) return;
 
     fetch('/getprompt', {
@@ -181,8 +215,7 @@ document.getElementById('course').addEventListener('change', function () {
         document.getElementById('prompt').value = data.prompt || '';
     })
     .catch(err => console.error(err));
-});
-
+}
 
 function showPopup(message) {
     document.getElementById('popup-message').textContent = message;

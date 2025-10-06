@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CourseController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Http\Request;
 use App\Http\Controllers\OllamaController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PlosController;
@@ -27,12 +28,11 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/', [CourseController::class, 'index'])->name('home');
     
-    Route::get('/form', function () {
+    Route::get('/form', function (Request $request) {
         $user = Auth::user();
 
-        $courses = app(\App\Http\Controllers\CourseController::class)->formdata($user);
+        $courses = app(\App\Http\Controllers\CourseController::class)->formdata($request);
         $plos = app(\App\Http\Controllers\PlosController::class)->plos();
-
 
         return view('form', compact('courses', 'plos'));
     });

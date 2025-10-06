@@ -65,33 +65,64 @@
                                 <div class="font-medium text-gray-700">ภาคเรียน: {{ $term }}</div>
                                 <ul class="ml-4 list-disc">
                                     @foreach($cloItems as $item)
-                                        <li>
-                                            CLO: {{ $item->clo }}
+                                        <li class="mb-3">
                                             @php
-                                                $progress = collect([$item->startprompt, $item->generated, $item->downloaded, $item->success])
-                                                            ->filter()->count() / 4 * 100;
-                                                $status_text = match(collect([$item->startprompt, $item->generated, $item->downloaded, $item->success])->filter()->count()) {
+                                                $stepCount = collect([$item->startprompt, $item->generated, $item->downloaded, $item->success])->filter()->count();
+                                                $progress = $stepCount / 4 * 100;
+                                                $status_text = match($stepCount) {
                                                     0 => 'ยังไม่เริ่ม',
-                                                    1 => 'เริ่มแล้ว',
-                                                    2 => 'กำลังดำเนินการ',
-                                                    3 => 'เกือบเสร็จ',
-                                                    4 => 'เสร็จสิ้น',
+                                                    1 => 'prompt แล้ว',
+                                                    2 => 'generated แล้ว',
+                                                    3 => 'ดาวน์โหลดแล้ว',
+                                                    4 => 'เสร็จสมบูรณ์',
+                                                    default => ''
+                                                };
+                                                
+                                                // ลิงก์แต่ละสถานะ
+                                                $link = match($stepCount) {
+                                                    0 => url('/form?course_id=' . $item->course_id . '&year=' . $item->year . '&term=' . $item->term . '&clo=' . $item->clo),
+                                                    1 => url('/form?course_id=' . $item->course_id . '&year=' . $item->year . '&term=' . $item->term . '&clo=' . $item->clo),
+                                                    2 => url('/preview?course_id=' . $item->course_id . '&year=' . $item->year . '&term=' . $item->term . '&clo=' . $item->clo),
+                                                    3 => url(),
+                                                    4 => null,
+                                                    default => null
+                                                };
+
+                                                $btnLabel = match($stepCount) {
+                                                    0 => 'เริ่มต้น',
+                                                    1 => 'สร้างต่อ',
+                                                    2 => 'แก้ไข',
+                                                    3 => 'ตรวจสอบ',
+                                                    4 => 'preview',
                                                     default => ''
                                                 };
                                             @endphp
-                                            <span class="text-gray-500 text-sm">- {{ $status_text }}</span>
-                                            <div class="w-full bg-gray-100 rounded-full h-2 mt-1">
+
+                                            <div class="flex items-center justify-between right-0">
+                                                <span class="text-gray-1000 text-s">CLO: {{ $item->clo }} 
+                                                    <span class="text-gray-500 text-sm">- {{ $status_text }}</span>
+                                                </span>
+                                                @if ($link)
+                                                    <a href="{{ $link }}"
+                                                    class="text-sm bg-blue-400 hover:bg-blue-500 text-white px-3 py-1 rounded transition">
+                                                        {{ $btnLabel }}
+                                                    </a>
+                                                @endif
+                                            </div>
+
+                                            <div class="bg-gray-100 rounded-full h-2 mt-1">
                                                 <div class="bg-green-500 h-2 rounded-full" style="width: {{ $progress }}%"></div>
                                             </div>
                                         </li>
                                     @endforeach
-                                </ul>
+                                </ul> <br>
                             </div>
                         @endforeach
                     </div>
                 @empty
                     <p class="text-gray-500">คุณยังไม่มีรายวิชาในระบบ</p>
                 @endforelse
+
             </div>
         </div>
     </body>

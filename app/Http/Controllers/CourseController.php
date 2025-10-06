@@ -46,7 +46,7 @@ class CourseController extends Controller
         return view('home', compact('courses', 'user', 'selectedYear'));
     }
 
-    public function formdata()
+    public function formdata(Request $request)
     {
         $user = Auth::user();
         $currentYear = now()->year;
@@ -88,8 +88,10 @@ class CourseController extends Controller
             'lp.ref_id',
             
         )
-        ->orderBy('cy.year', 'asc')
-        ->orderBy('cy.term', 'desc')
+        ->orderBy('cy.year', 'desc')
+        ->orderBy('cy.term', 'asc')
+        ->orderBy('cy.clo', 'asc')
+
         ->get();
 
         return $courses;

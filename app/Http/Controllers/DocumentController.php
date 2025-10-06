@@ -46,7 +46,7 @@ class DocumentController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        return view('component/preview', compact('Generates', 'course_id', 'year', 'term', 'clo'));
+        return view('component/preview', compact('Generates', 'course_id', 'year', 'term', 'clo', 'content'));
 
     }
 
