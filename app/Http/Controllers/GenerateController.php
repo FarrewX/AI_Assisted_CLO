@@ -48,15 +48,50 @@ class GenerateController extends Controller
         ]);
 
         return response()->json(['message' => 'บันทึก generated เรียบร้อยแล้ว']);
-        return view('/generate/show');
-    }
 
-    public function showGenerated()
-    {
-        $Generates = DB::table('generates')->orderByDesc('created_at')->get();
-        // return view('generate', compact('Generates'));
-        return response()->json([
-            $Generates,
+        return redirect()->route('preview', [
+            'course_id' => $request->course_id,
+            'year' => $request->year,
+            'term' => $request->term,
+            'clo' => $request->clo
         ]);
     }
+
+    // public function showGenerated(Request $request)
+    // {
+    //     $user = Auth::user();
+
+    //     $course_id = $request->query('course_id');
+    //     $year = (int) $request->query('year');
+    //     $term = $request->query('term');
+    //     $clo = $request->query('clo');
+
+    //     if (!$course_id || !$year || !$term || !$clo) {
+    //         abort(400, 'Missing required parameters');
+    //     }
+
+    //     $cy = DB::table('courseyears')
+    //         ->where('course_id', $course_id)
+    //         ->where('user_id', $user->user_id)
+    //         ->where('year', $year)
+    //         ->where('term', $term)
+    //         ->where('clo', $clo)
+    //         ->first();
+
+    //     if (!$cy) return response()->json(['message' => 'ไม่พบ courseyear'], 404);
+
+    //     $promptRow = DB::table('prompts')
+    //         ->where('ref_id', $cy->id)
+    //         ->first();
+
+    //     if (!$promptRow) return response()->json(['message' => 'ไม่พบ prompt'], 404);
+
+    //     $Generates = DB::table('generates')
+    //         ->where('ref_id', $promptRow->ref_id)
+    //         ->orderByDesc('created_at')
+    //         ->get();
+
+    //     return view('doc.preview', compact('Generates', 'course_id', 'year', 'term', 'clo'));
+
+    // }
 }

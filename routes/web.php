@@ -38,7 +38,7 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::post('/generate', [OllamaController::class, 'generateText']);
-    Route::get('/generate/show',  [GenerateController::class, 'showGenerated'])->name('show.generated');
+    // Route::get('/generate/show', [GenerateController::class, 'showGenerated'])->name('show.generated');
     Route::post('/generate/save', [GenerateController::class, 'saveGeneratedText'])->name('save.generate');
 
     Route::get('/about', function () {
@@ -67,22 +67,25 @@ Route::middleware('auth')->group(function () {
     
     Route::get('/courses', [CourseyearsController::class, 'index'])->name('courses')->middleware('admin');
 
-    Route::get('/genarate-docx', [DocumentController::class, 'preview'])->name('doc.preview');
+    Route::get('/preview', [DocumentController::class, 'preview'])->name('preview');
 
     Route::get('/export-docx', [DocumentController::class, 'exportForm'])->name('export.docx');
+
+    Route::post('/updatestartprompt', [CourseController::class, 'updateStartPrompt']);
+    Route::post('/getprompt', [CourseController::class, 'getPrompt']);
+    Route::post('/saveprompt', [CourseController::class, 'savePrompt'])->name('save.prompt');
 });
 
-Route::get('/send-email', [EmailController::class, 'showForm'])->middleware('admin');
-Route::post('/send-email', [EmailController::class, 'send'])->name('send.email')->middleware('admin');
+Route::middleware('admin')->group(function () {
+    Route::get('/send-email', [EmailController::class, 'showForm']);
+    Route::post('/send-email', [EmailController::class, 'send'])->name('send.email');
 
-Route::post('/plos/update/{id}', [PlosController::class, 'update'])->name('plos.update')->middleware('admin');
-Route::post('/plos/create', [PlosController::class, 'create'])->name('plos.create')->middleware('admin');
-Route::delete('/plos/delete/{id}', [PlosController::class, 'destroy'])->name('plos.destroy')->middleware('admin');
+    Route::post('/plos/update/{id}', [PlosController::class, 'update'])->name('plos.update');
+    Route::post('/plos/create', [PlosController::class, 'create'])->name('plos.create');
+    Route::delete('/plos/delete/{id}', [PlosController::class, 'destroy'])->name('plos.destroy');
 
-Route::post('/courses/{courseId}/professor', [CourseyearsController::class, 'store'])->name('professor.store')->middleware('admin');
-Route::put('/courses/{courseId}/professor/{id}', [CourseyearsController::class, 'update'])->name('professor.update')->middleware('admin');
-Route::delete('/courses/{courseId}/professor/{id}', [CourseyearsController::class, 'destroy'])->name('professor.destroy')->middleware('admin');
+    Route::post('/courses/{courseId}/professor', [CourseyearsController::class, 'store'])->name('professor.store');
+    Route::put('/courses/{courseId}/professor/{id}', [CourseyearsController::class, 'update'])->name('professor.update');
+    Route::delete('/courses/{courseId}/professor/{id}', [CourseyearsController::class, 'destroy'])->name('professor.destroy');
 
-Route::post('/updatestartprompt', [CourseController::class, 'updateStartPrompt']);
-Route::post('/getprompt', [CourseController::class, 'getPrompt']);
-Route::post('/saveprompt', [CourseController::class, 'savePrompt'])->name('save.prompt');
+});

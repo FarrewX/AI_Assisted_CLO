@@ -5,18 +5,53 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\IOFactory;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class DocumentController extends Controller
 {
     // แสดง preview (HTML)
-    public function preview()
+    public function preview(Request $request)
     {
         $content = $this->documentContent();
-        return view('genarate-docx', compact('content'));
+        $user = Auth::user();
+
+        $course_id = $request->query('course_id');
+        $year = (int) $request->query('year');
+        $term = $request->query('term');
+        $clo = $request->query('clo');
+
+        if (!$course_id || !$year || !$term || !$clo) {
+            abort(400, 'Missing required parameters');
+        }
+
+        $cy = DB::table('courseyears')
+            ->where('course_id', $course_id)
+            ->where('user_id', $user->user_id)
+            ->where('year', $year)
+            ->where('term', $term)
+            ->where('clo', $clo)
+            ->first();
+
+        if (!$cy) return response()->json(['message' => 'ไม่พบ courseyear'], 404);
+
+        $promptRow = DB::table('prompts')
+            ->where('ref_id', $cy->id)
+            ->first();
+
+        if (!$promptRow) return response()->json(['message' => 'ไม่พบ prompt'], 404);
+
+        $Generates = DB::table('generates')
+            ->where('ref_id', $promptRow->ref_id)
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('component/preview', compact('Generates', 'course_id', 'year', 'term', 'clo'));
+
     }
 
     // สร้าง .docx และดาวน์โหลด
-        public function exportForm()
+    public function exportForm()
     {
         $content = $this->documentContent();
 

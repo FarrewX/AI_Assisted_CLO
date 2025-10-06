@@ -85,6 +85,7 @@
             <option value="" disabled selected>-- กรุณาเลือกรายวิชา --</option>
             @foreach ($courses as $course)
               <option value="{{ $course->course_id }}"
+                data-coursename="{{ $course->course_name }}"
                 data-year="{{ $course->year }}"
                 data-term="{{ $course->term }}"
                 data-clo="{{ $course->clo }}"
@@ -234,16 +235,25 @@ let aiCallCount = 0;
 
 function submitForm() {
     let courseSelect = document.getElementById("course");
-    let courseId = courseSelect.value;
-    let year = parseInt(courseSelect.options[courseSelect.selectedIndex].getAttribute('data-year'), 10);
-    let term = String(courseSelect.options[courseSelect.selectedIndex].getAttribute('data-term'));
-    let clo  = String(courseSelect.options[courseSelect.selectedIndex].getAttribute('data-clo'));
     let prompt = document.getElementById("prompt").value.trim();
+    let numClo = document.getElementById("numClo").value;
+    let ploChecked = Array.from(document.querySelectorAll('.selectPlo:checked'));
+    let ploLabels = ploChecked.map(cb => cb.parentElement.querySelector('span').textContent.trim());
+
+    // ดึงค่า course ที่เลือก
+    let selectedOption = courseSelect.options[courseSelect.selectedIndex];
+    let courseId = courseSelect.value;
+    let coursename = selectedOption.getAttribute('data-coursename');
+    let year = parseInt(selectedOption.getAttribute('data-year'), 10);
+    let term = selectedOption.getAttribute('data-term');
+    let clo  = selectedOption.getAttribute('data-clo');
+    let selectedText = selectedOption.text.replace(/\(.*?\)/, "").trim();
 
     if (!courseId || !prompt) {
         alert("กรุณากรอกข้อมูลให้ครบ");
         return;
     }
+    
     fetch('/saveprompt', {
         method: 'POST',
         headers: {
@@ -263,13 +273,14 @@ function submitForm() {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
             },
-            body: JSON.stringify({ course_id: courseId, year, term, clo, prompt })
+            body: JSON.stringify({ courseId, prompt, coursename, numClo, ploLabels, year, term, clo })
         },aiCallCount++);
     })
     .then(res => res.json())
     .then(data => {
         //ดึงข้อความ AI
         const generatedText = data.response?.choices?.[0]?.text || '';
+        console.log("Prompt string:", data.prompt_string);
         console.log("AI generated text:", generatedText);
 
         return fetch('/generate/save', {
@@ -289,9 +300,8 @@ function submitForm() {
         })
         .then(res => res.json())
         .then(saveData => {
-            console.log("Saved AI response:", saveData.message);
             console.log("AI ถูกเรียกทั้งหมด:", aiCallCount);
-            window.location.href = '/generate/show';
+            window.location.href = `/preview?course_id=${courseId}&year=${year}&term=${term}&clo=${clo}`;
         });
     })
     .catch(err => console.error(err));
