@@ -322,6 +322,7 @@ function submitForm() {
 
         if (jsonMatch) {
             let jsonString = jsonMatch[1] ? jsonMatch[1].trim() : jsonMatch[0].trim();
+            let cloCounter = 0;
             // ตัด ```json ออก
             jsonString = jsonString.replace(/^```json/i, '').replace(/```$/, '').trim();
 
