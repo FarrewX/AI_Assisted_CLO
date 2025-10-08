@@ -35,13 +35,9 @@ class CourseyearsController extends Controller
 
     public function store(Request $request, $courseId)
     {
-        // เช็คcourse + year + term + clo
-        $exists = Courseyears::where('course_id', $courseId)
-            ->where('year', $request->year)
-            ->where('term', $request->term)
-            ->where('clo', $request->clo)
-            ->where('user_id', $request->user_id)
-            ->doesntExist();
+        if (empty($request->term) || empty($request->clo)) {
+            return back()->with('error', 'กรุณากรอกภาคเรียนและมคอก่อนเพิ่มอาจารย์');
+        }
 
         $duplicateUser = Courseyears::where('course_id', $courseId)
             ->where('year', $request->year)

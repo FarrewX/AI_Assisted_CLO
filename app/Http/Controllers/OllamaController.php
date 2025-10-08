@@ -31,7 +31,7 @@ Course description:'.$prompt.'
 
 เงื่อนไขการออกแบบ CLO:
 - จำนวน CLO ที่ต้องการ:'.$num_clo.'
-- เลือกให้ CLO เหล่านี้สอดคล้องกับ PLO เฉพาะที่ต้องการ(ตอบเฉพาะ PLO และเอาแค่ตัวเลขเท่านั้น เช่น PLO1): โดยจะมี'. implode(', ', (array)$select_plo) .'
+- เลือกให้ CLO เหล่านี้สอดคล้องกับ PLO เฉพาะที่ต้องการ: โดยจะมี'. implode(', ', (array)$select_plo) .'
 - รูปแบบการเขียน CLO: Action Verb - Object - Qualification Phase (ตามหลัก SMART)
 - Learning’s Level ของ CLO สามารถเท่ากับหรือต่ำกว่า PLO ที่สอดคล้อง
 - ต้องกำหนด Domain ของ CLO ให้ตรงกับ Domain ของ PLO
@@ -39,8 +39,16 @@ Course description:'.$prompt.'
 - ต้องอธิบายเหตุผลประกอบการกำหนด Learning’s Level และ Assessment Method
 
 **รูปแบบคำตอบที่ต้องการ:**
-ตารางที่ประกอบด้วย:
-| CLO | PLO ที่รองรับ | Domain | Learning’s Level | Assessment Method | เหตุผล |';
+json ที่ประกอบด้วย:
+"CLO 1" : {
+    CLO : (เป็นคำอธิบาย CLO)
+    PLO ที่รองรับ : (CLO นี้สอดคล้องกับ PLO ไหน ให้เอามา 1 PLO เอาเฉพาะ PLO ที่เป็นตัวเลขเท่านั้น เช่น PLO1 และเลือกมาจาก"โดยจะมี"ที่ระบุไว้ข้างต้นเท่านั้น)
+    Domain : (Domain ของ CLO)
+    Learning’s Level : (Learning’s Level ของ CLO)
+    Assessment Method : (วิธีการประเมินผล)
+    เหตุผล : (เหตุผลประกอบการกำหนด Learning’s Level และ Assessment Method)
+}, ... (จำนวน CLO ตามที่ระบุ)
+';
 
         $response = Http::post('http://localhost:11434/v1/completions', [
             'model' => 'elo_generator',
