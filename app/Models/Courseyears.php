@@ -14,7 +14,7 @@ class Courseyears extends Model
     protected $keyType = 'int';
 
     protected $table = 'courseyears';
-    protected $fillable = ['id','user_id','course_id','year','term','clo',];
+    protected $fillable = ['id','user_id','course_id','year','term','TQF',];
 
     public function course()
     {

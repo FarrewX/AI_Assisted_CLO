@@ -35,14 +35,14 @@ class CourseyearsController extends Controller
 
     public function store(Request $request, $courseId)
     {
-        if (empty($request->term) || empty($request->clo)) {
+        if (empty($request->term) || empty($request->TQF)) {
             return back()->with('error', 'กรุณากรอกภาคเรียนและมคอก่อนเพิ่มอาจารย์');
         }
 
         $duplicateUser = Courseyears::where('course_id', $courseId)
             ->where('year', $request->year)
             ->where('term', $request->term)
-            ->where('clo', $request->clo)
+            ->where('TQF', $request->TQF)
             ->where('user_id', $request->user_id)
             ->exists();
 
@@ -55,7 +55,7 @@ class CourseyearsController extends Controller
             'course_id' => $courseId,
             'year'      => $request->year,
             'term'      => $request->term,
-            'clo'       => $request->clo,
+            'TQF'       => $request->TQF,
         ]);
 
         return back()->with('success', 'เพิ่มอาจารย์สำเร็จ');
@@ -63,11 +63,11 @@ class CourseyearsController extends Controller
 
     public function update(Request $request, $courseId, $id)
     {
-        // ตรวจสอบเฉพาะ user ซ้ำใน same course + year + term + clo
+        // ตรวจสอบเฉพาะ user ซ้ำใน same course + year + term + TQF
         $duplicateUser = Courseyears::where('course_id', $courseId)
             ->where('year', $request->year)
             ->where('term', $request->term)
-            ->where('clo', $request->clo)
+            ->where('TQF', $request->TQF)
             ->where('user_id', $request->user_id)
             ->where('id', '!=', $id)
             ->exists();
@@ -81,7 +81,7 @@ class CourseyearsController extends Controller
         $record->user_id = $request->user_id;
         $record->year    = $request->year;
         $record->term    = $request->term;
-        $record->clo     = $request->clo;
+        $record->TQF     = $request->TQF;
         $record->save();
 
         return back()->with('success', 'อัพเดทสำเร็จ');

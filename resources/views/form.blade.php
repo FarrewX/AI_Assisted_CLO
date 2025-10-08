@@ -87,10 +87,10 @@
                 data-coursename="{{ $course->course_name }}"
                 data-year="{{ $course->year }}"
                 data-term="{{ $course->term }}"
-                data-clo="{{ $course->clo }}"
+                data-TQF="{{ $course->TQF }}"
                 data-detail="{{ $course->course_detail_th }}"
                 data-coursetext="{{ $course->course_text }}">
-                {{ $course->course_id }} - {{ $course->course_name }} (มคอ{{$course->clo}} ภาคเรียน{{$course->term}}/{{ $course->year }})
+                {{ $course->course_id }} - {{ $course->course_name }} (มคอ{{$course->TQF}} ภาคเรียน{{$course->term}}/{{ $course->year }})
               </option>
             @endforeach
           </select>
@@ -162,17 +162,17 @@ document.addEventListener('DOMContentLoaded', function () {
     const courseId = params.get('course_id');
     const year = params.get('year');
     const term = params.get('term');
-    const clo = params.get('clo');
+    const TQF = params.get('TQF');
 
     const courseSelect = document.getElementById('course');
 
     if (courseSelect && courseId) {
-        // เลือก option ที่ตรง courseId + year + term + clo
+        // เลือก option ที่ตรง courseId + year + term + TQF
         const option = Array.from(courseSelect.options).find(opt =>
           opt.value.toString() === courseId.toString() &&
           opt.getAttribute('data-year').toString() === year.toString() &&
           opt.getAttribute('data-term').toString() === term.toString() &&
-          opt.getAttribute('data-clo').toString() === clo.toString()
+          opt.getAttribute('data-TQF').toString() === TQF.toString()
         );
         if (option) {
           option.selected = true;
@@ -180,7 +180,7 @@ document.addEventListener('DOMContentLoaded', function () {
               courseId,
               option.getAttribute('data-year'),
               option.getAttribute('data-term'),
-              option.getAttribute('data-clo')
+              option.getAttribute('data-TQF')
           );
         }
     }
@@ -191,14 +191,14 @@ document.getElementById('course').addEventListener('change', function () {
     const courseId = this.value;
     const year = selectedOption.getAttribute('data-year');
     const term = selectedOption.getAttribute('data-term');
-    const clo = selectedOption.getAttribute('data-clo');
+    const TQF = selectedOption.getAttribute('data-TQF');
 
     if (!courseId || !year) return;
 
-    fetchPrompt(courseId, year, term, clo);
+    fetchPrompt(courseId, year, term, TQF);
 });
 
-function fetchPrompt(courseId, year, term, clo) {
+function fetchPrompt(courseId, year, term, TQF) {
     if (!courseId || !year) return;
 
     fetch('/getprompt', {
@@ -208,7 +208,7 @@ function fetchPrompt(courseId, year, term, clo) {
             'Content-Type': 'application/json',
             'X-CSRF-TOKEN': '{{ csrf_token() }}'
         },
-        body: JSON.stringify({ course_id: courseId, year: year, term: term, clo: clo })
+        body: JSON.stringify({ course_id: courseId, year: year, term: term, TQF: TQF })
     })
     .then(res => res.json())
     .then(data => {
@@ -246,14 +246,14 @@ function openPreview() {
   let selectedText = selectedOption.text.replace(/\(.*?\)/, "").trim();
   let year = selectedOption.getAttribute('data-year');
   let term = selectedOption.getAttribute('data-term');
-  let clo  = selectedOption.getAttribute('data-clo');
+  let TQF  = selectedOption.getAttribute('data-TQF');
 
   // preview main info
   let content = `
     <p><b>รายวิชา:</b> ${selectedText}</p>
     <p><b>ปีการศึกษา:</b> ${year}</p>
     <p><b>ภาคเรียน:</b> ${term}</p>
-    <p><b>มคอ:</b> ${clo}</p>
+    <p><b>มคอ:</b> ${TQF}</p>
     <p><b>รายละเอียด:</b> ${prompt}</p>
     <p><b>จำนวน CLO:</b> ${numClo}</p>
     <p><b>PLO ที่เลือก:</b> ${ploLabels.join(', ')}</p>
@@ -279,7 +279,7 @@ function submitForm() {
     let coursename = selectedOption.getAttribute('data-coursename');
     let year = parseInt(selectedOption.getAttribute('data-year'), 10);
     let term = selectedOption.getAttribute('data-term');
-    let clo  = selectedOption.getAttribute('data-clo');
+    let TQF  = selectedOption.getAttribute('data-TQF');
     let selectedText = selectedOption.text.replace(/\(.*?\)/, "").trim();
 
     if (!courseId || !prompt) {
@@ -294,7 +294,7 @@ function submitForm() {
             'Content-Type': 'application/json',
             'X-CSRF-TOKEN': '{{ csrf_token() }}'
         },
-        body: JSON.stringify({ course_id: courseId, year, term, clo, prompt })
+        body: JSON.stringify({ course_id: courseId, year, term, TQF, prompt })
     })
     .then(res => res.json())
     .then(data => {
@@ -306,7 +306,7 @@ function submitForm() {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
             },
-            body: JSON.stringify({ courseId, prompt, coursename, numClo, ploLabels, year, term, clo })
+            body: JSON.stringify({ courseId, prompt, coursename, numClo, ploLabels, year, term, TQF })
         },aiCallCount++);
     })
     .then(res => res.json())
@@ -327,14 +327,14 @@ function submitForm() {
                 course_id: courseId,
                 year,
                 term,
-                clo,
+                TQF,
                 ai_response: generatedText
             })
         })
         .then(res => res.json())
         .then(saveData => {
             console.log("AI ถูกเรียกทั้งหมด:", aiCallCount);
-            window.location.href = `/preview?course_id=${courseId}&year=${year}&term=${term}&clo=${clo}`;
+            // window.location.href = `/preview?course_id=${courseId}&year=${year}&term=${term}&TQF=${TQF}`;
         });
     })
     .catch(err => console.error(err));

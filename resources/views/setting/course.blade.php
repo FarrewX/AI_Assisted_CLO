@@ -63,7 +63,7 @@
                                     <span class="term-display">{{ $t->term }}</span>
                                 </td>
                                 <td class="border px-4 py-2">
-                                    <span class="clo-display">{{ $t->clo }}</span>
+                                    <span class="TQF-display">{{ $t->TQF }}</span>
                                 </td>
                                 <td class="border px-4 py-2 text-center space-y-2 space-x-2">
                                     <button type="button" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded edit-btn"
@@ -72,7 +72,7 @@
                                         data-user-id="{{ $t->user->user_id }}"
                                         data-year="{{ $t->year }}"
                                         data-term="{{ $t->term }}"
-                                        data-clo="{{ $t->clo }}"
+                                        data-TQF="{{ $t->TQF }}"
                                         data-update-url="{{ route('professor.update', [$courseId, $t->id]) }}"
                                     >แก้ไข</button>
 
@@ -122,7 +122,7 @@
                         </select>
                         <input type="number" name="year" class="border px-2 py-1 rounded w-24" placeholder="ปี" value="{{ date('Y') }}">
                         <input type="text" name="term" class="border px-2 py-1 rounded w-24" placeholder="ภาคเรียน" value="">
-                        <input type="text" name="clo" class="border px-2 py-1 rounded w-24" placeholder="มคอ" value="">
+                        <input type="text" name="TQF" class="border px-2 py-1 rounded w-24" placeholder="มคอ" value="">
                         <button class="bg-green-500 text-white px-3 py-1 rounded ml-2">เพิ่ม</button>
                     </form>
                 </div>
@@ -142,7 +142,7 @@
                                 </select>
                                 <input type="number" name="year" id="edit-year-input" class="border px-2 py-1 rounded w-full mb-2" required>
                                 <input type="text" name="term" id="edit-term-input" class="border px-2 py-1 rounded w-full mb-2" placeholder="ภาคเรียน" required>
-                                <input type="text" name="clo" id="edit-clo-input" class="border px-2 py-1 rounded w-full mb-2" placeholder="มคอ" required>
+                                <input type="text" name="TQF" id="edit-TQF-input" class="border px-2 py-1 rounded w-full mb-2" placeholder="มคอ" required>
                             </div>
                             <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded mr-2">บันทึก</button>
                             <button type="button" id="edit-cancel" class="bg-gray-400 text-white px-4 py-2 rounded">ยกเลิก</button>
@@ -179,13 +179,13 @@
                     const name = btn.getAttribute('data-name');
                     const year = btn.getAttribute('data-year');
                     const term = btn.getAttribute('data-term');
-                    const clo = btn.getAttribute('data-clo');
+                    const TQF = btn.getAttribute('data-TQF');
                     const url = btn.getAttribute('data-update-url');
                     const userId = btn.getAttribute('data-user-id');
 
                     document.getElementById('edit-year-input').value = year;
                     document.getElementById('edit-term-input').value = term;
-                    document.getElementById('edit-clo-input').value = clo;
+                    document.getElementById('edit-TQF-input').value = TQF;
                     form.action = url;
 
                     let userSelect = document.getElementById('edit-user-input');
@@ -209,7 +209,7 @@
                 var userId = $('#edit-user-input').val();
                 var year = $('#edit-year-input').val();
                 var term = $('#edit-term-input').val();
-                var clo = $('#edit-clo-input').val();
+                var TQF = $('#edit-TQF-input').val();
                 var currentId = null;
 
                 // หา id ของแถวที่กำลังแก้ไข (จาก form action)
@@ -225,16 +225,16 @@
                     var rowUser = $(this).find('td:first').text().trim();
                     var rowYear = $(this).find('.year-display').text().trim();
                     var rowTerm = $(this).find('.term-display').text().trim();
-                    var rowClo  = $(this).find('.clo-display').text().trim();
+                    var rowTQF  = $(this).find('.TQF-display').text().trim();
                     var editBtn = $(this).find('.edit-btn');
                     var rowId   = editBtn.data('id') ? editBtn.data('id').toString() : '';
 
-                    // เงื่อนไขซ้ำ: same user + same year + same term + same clo
+                    // เงื่อนไขซ้ำ: same user + same year + same term + same TQF
                     if (
                         rowUser === $('#edit-user-input option:selected').text().trim() &&
                         rowYear === year &&
                         rowTerm === term &&
-                        rowClo === clo &&
+                        rowTQF === TQF &&
                         rowId !== currentId
                     ) {
                         isDuplicate = true;

@@ -19,9 +19,9 @@ class DocumentController extends Controller
         $course_id = $request->query('course_id');
         $year = (int) $request->query('year');
         $term = $request->query('term');
-        $clo = $request->query('clo');
+        $TQF = $request->query('TQF');
 
-        if (!$course_id || !$year || !$term || !$clo) {
+        if (!$course_id || !$year || !$term || !$TQF) {
             abort(400, 'Missing required parameters');
         }
 
@@ -30,7 +30,7 @@ class DocumentController extends Controller
             ->where('user_id', $user->user_id)
             ->where('year', $year)
             ->where('term', $term)
-            ->where('clo', $clo)
+            ->where('TQF', $TQF)
             ->first();
 
         if (!$cy) return response()->json(['message' => 'ไม่พบ courseyear'], 404);
@@ -46,7 +46,7 @@ class DocumentController extends Controller
             ->orderByDesc('created_at')
             ->get();
 
-        return view('component/preview', compact('Generates', 'course_id', 'year', 'term', 'clo', 'content'));
+        return view('component/preview', compact('Generates', 'course_id', 'year', 'term', 'TQF', 'content'));
 
     }
 

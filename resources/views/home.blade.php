@@ -29,11 +29,11 @@
             <div class="flex space-x-6 mb-10">
                 <a href="{{ url('/form') }}" 
                 class="px-6 py-3 bg-sky-300 text-black font-bold rounded-lg shadow hover:bg-sky-400">
-                    + สร้าง CLO ใหม่
+                    + สร้าง TQF ใหม่
                 </a>
-                <a href="{{ url('/clo/all') }}" 
+                <a href="{{ url('/TQF/all') }}" 
                 class="px-6 py-3 bg-emerald-400 text-white font-bold rounded-lg shadow hover:bg-emerald-500">
-                    CLO ทั้งหมดที่ดาวน์โหลด
+                    TQF ทั้งหมดที่ดาวน์โหลด
                 </a>
             </div>
 
@@ -60,11 +60,11 @@
                     <div class="mb-6 border p-3 rounded-lg bg-gray-50">
                         <div class="font-semibold mb-2">• {{ $courseRow->course_name }}</div>
 
-                        @foreach($termsGroup as $term => $cloItems)
+                        @foreach($termsGroup as $term => $TQFItems)
                             <div class="ml-4 mb-2">
                                 <div class="font-medium text-gray-700">ภาคเรียน: {{ $term }}</div>
                                 <ul class="ml-4 list-disc">
-                                    @foreach($cloItems as $item)
+                                    @foreach($TQFItems as $item)
                                         <li class="mb-3">
                                             @php
                                                 $stepCount = collect([$item->startprompt, $item->generated, $item->downloaded, $item->success])->filter()->count();
@@ -80,9 +80,9 @@
                                                 
                                                 // ลิงก์แต่ละสถานะ
                                                 $link = match($stepCount) {
-                                                    0 => url('/form?course_id=' . $item->course_id . '&year=' . $item->year . '&term=' . $item->term . '&clo=' . $item->clo),
-                                                    1 => url('/form?course_id=' . $item->course_id . '&year=' . $item->year . '&term=' . $item->term . '&clo=' . $item->clo),
-                                                    2 => url('/preview?course_id=' . $item->course_id . '&year=' . $item->year . '&term=' . $item->term . '&clo=' . $item->clo),
+                                                    0 => url('/form?course_id=' . $item->course_id . '&year=' . $item->year . '&term=' . $item->term . '&TQF=' . $item->TQF),
+                                                    1 => url('/form?course_id=' . $item->course_id . '&year=' . $item->year . '&term=' . $item->term . '&TQF=' . $item->TQF),
+                                                    2 => url('/preview?course_id=' . $item->course_id . '&year=' . $item->year . '&term=' . $item->term . '&TQF=' . $item->TQF),
                                                     3 => url(),
                                                     4 => null,
                                                     default => null
@@ -99,7 +99,7 @@
                                             @endphp
 
                                             <div class="flex items-center justify-between right-0">
-                                                <span class="text-gray-1000 text-s">CLO: {{ $item->clo }} 
+                                                <span class="text-gray-1000 text-s">TQF: {{ $item->TQF }} 
                                                     <span class="text-gray-500 text-sm">- {{ $status_text }}</span>
                                                 </span>
                                                 @if ($link)

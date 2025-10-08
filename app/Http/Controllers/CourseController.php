@@ -35,7 +35,7 @@ class CourseController extends Controller
                 'c.course_name',
                 'cy.year',
                 'cy.term',
-                'cy.clo',
+                'cy.TQF',
                 's.startprompt',
                 's.generated',
                 's.downloaded',
@@ -79,7 +79,7 @@ class CourseController extends Controller
             'c.course_detail_th',
             'cy.year',
             'cy.term',
-            'cy.clo',
+            'cy.TQF',
             's.startprompt',
             's.generated',
             's.downloaded',
@@ -90,7 +90,7 @@ class CourseController extends Controller
         )
         ->orderBy('cy.year', 'desc')
         ->orderBy('cy.term', 'asc')
-        ->orderBy('cy.clo', 'asc')
+        ->orderBy('cy.TQF', 'asc')
 
         ->get();
 
@@ -102,15 +102,15 @@ class CourseController extends Controller
         $courseId = $request->course_id;
         $user = Auth::user();
 
-        if (!$courseId || !$request->year || !$request->term || !$request->clo) {
-            return response()->json(['error' => 'course_id, year, term, and clo are required'], 400);
+        if (!$courseId || !$request->year || !$request->term || !$request->TQF) {
+            return response()->json(['error' => 'course_id, year, term, and TQF are required'], 400);
         }
 
         $cy = Courseyears::where('course_id', $courseId)
             ->where('user_id', $user->user_id)
             ->where('year', $request->year)
             ->where('term', $request->term)
-            ->where('clo', $request->clo)
+            ->where('TQF', $request->TQF)
             ->first();
 
         if ($cy) {
@@ -132,7 +132,7 @@ class CourseController extends Controller
             'course_id' => 'required|string',
             'year'      => 'required|integer',
             'term'      => 'required|string',
-            'clo'       => 'required|string',
+            'TQF'       => 'required|string',
         ]);
 
         $cy = DB::table('courseyears')
@@ -140,7 +140,7 @@ class CourseController extends Controller
             ->where('user_id', $user->user_id)
             ->where('year', $request->year)
             ->where('term', $request->term)
-            ->where('clo', $request->clo)
+            ->where('TQF', $request->TQF)
             ->first();
 
         if (!$cy) {
@@ -184,7 +184,7 @@ class CourseController extends Controller
             'course_id' => 'required|string',
             'year'      => 'required|integer',
             'term'      => 'required|string',
-            'clo'       => 'required|string',
+            'TQF'       => 'required|string',
             'prompt'    => 'required|string',
         ]);
 
@@ -195,7 +195,7 @@ class CourseController extends Controller
             ->where('user_id', $user->user_id)
             ->where('year', $data['year'])
             ->where('term', $data['term'])
-            ->where('clo', $data['clo'])
+            ->where('TQF', $data['TQF'])
             ->first();
 
         if (!$cy) {

@@ -17,7 +17,7 @@ class GenerateController extends Controller
             'course_id' => 'required|string',
             'year' => 'required|integer',
             'term' => 'required|string',
-            'clo' => 'required|string',
+            'TQF' => 'required|string',
             'ai_response' => 'required|string',
         ]);
 
@@ -28,7 +28,7 @@ class GenerateController extends Controller
             ->where('user_id', $user->user_id)
             ->where('year', $request->year)
             ->where('term', $request->term)
-            ->where('clo', $request->clo)
+            ->where('TQF', $request->TQF)
             ->first();
 
         if (!$cy) return response()->json(['message' => 'ไม่พบ courseyear'], 404);
@@ -53,45 +53,7 @@ class GenerateController extends Controller
             'course_id' => $request->course_id,
             'year' => $request->year,
             'term' => $request->term,
-            'clo' => $request->clo
+            'TQF' => $request->TQF
         ]);
     }
-
-    // public function showGenerated(Request $request)
-    // {
-    //     $user = Auth::user();
-
-    //     $course_id = $request->query('course_id');
-    //     $year = (int) $request->query('year');
-    //     $term = $request->query('term');
-    //     $clo = $request->query('clo');
-
-    //     if (!$course_id || !$year || !$term || !$clo) {
-    //         abort(400, 'Missing required parameters');
-    //     }
-
-    //     $cy = DB::table('courseyears')
-    //         ->where('course_id', $course_id)
-    //         ->where('user_id', $user->user_id)
-    //         ->where('year', $year)
-    //         ->where('term', $term)
-    //         ->where('clo', $clo)
-    //         ->first();
-
-    //     if (!$cy) return response()->json(['message' => 'ไม่พบ courseyear'], 404);
-
-    //     $promptRow = DB::table('prompts')
-    //         ->where('ref_id', $cy->id)
-    //         ->first();
-
-    //     if (!$promptRow) return response()->json(['message' => 'ไม่พบ prompt'], 404);
-
-    //     $Generates = DB::table('generates')
-    //         ->where('ref_id', $promptRow->ref_id)
-    //         ->orderByDesc('created_at')
-    //         ->get();
-
-    //     return view('doc.preview', compact('Generates', 'course_id', 'year', 'term', 'clo'));
-
-    // }
 }

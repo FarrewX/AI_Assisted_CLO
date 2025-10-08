@@ -61,9 +61,9 @@ Route::middleware('auth')->group(function () {
         return view('message');
     })->name('message');
 
-    Route::get('/clo', function () {
-        return view('clo');
-    })->name('clo');
+    Route::get('/TQF', function () {
+        return view('TQF');
+    })->name('TQF');
     
     Route::get('/courses', [CourseyearsController::class, 'index'])->name('courses')->middleware('admin');
 
