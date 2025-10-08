@@ -155,7 +155,7 @@
   </div>
 </div>
 
-
+<script src="https://cdn.jsdelivr.net/npm/json5@2.2.3/dist/index.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const params = new URLSearchParams(window.location.search);
@@ -310,11 +310,76 @@ function submitForm() {
         },aiCallCount++);
     })
     .then(res => res.json())
-    .then(data => {
-        //ดึงข้อความ AI
-        const generatedText = data.response?.choices?.[0]?.text || '';
+    .then(data => { 
+        // ดึงข้อความ AI
+        let generatedText = data.response?.choices?.[0]?.text || '';
         console.log("Prompt string:", data.prompt_string);
         console.log("AI generated text:", generatedText);
+
+        // พยายามจับ JSON/HJSON block ไม่ว่าจะอยู่ใน ```json หรือไม่
+        const jsonMatch = generatedText.match(/```json([\s\S]*?)```/i) || generatedText.match(/\{[\s\S]*\}/);
+        let jsonData = null;
+
+        if (jsonMatch) {
+            let jsonString = jsonMatch[1] ? jsonMatch[1].trim() : jsonMatch[0].trim();
+            // ตัด ```json ออก
+            jsonString = jsonString.replace(/^```json/i, '').replace(/```$/, '').trim();
+
+            jsonString = jsonString
+                .replace(/["“”]/g, '"')
+                .replace(/['‘’]/g, "'")
+                .replace(/\n\s*/g, ' ')
+                .replace(/\s{2,}/g, ' ')
+                .replace(/[“”]/g, '"')
+                .replace(/[‘’]/g, "'")
+                .replace(/\r?\n/g, ' ')
+                .replace(/:\s*([A-Za-zก-๙0-9_]+)\s*([,}\]])/g, ': "$1"$2')
+                .replace(/,\s*(?=[}\]])/g, '')
+                .replace(/"([^"]*?)'([^"]*?)"/g, (m, g1, g2) => `"${g1}\\'"${g2}"`)
+                .replace(/:\s*"([^"]*?)'([^"]*?)"/g, (m, g1, g2) => `: "${g1}\\'${g2}"`)
+                .replace(/\\'"+s/g, "'s")
+                .replace(/\\'"/g, "'")
+                .replace(/"\\'s/g, "'s")
+                .replace(/}\s*,\s*{\s*"/g, (match) => {
+                    cloCounter++;
+                    if (cloCounter <= numClo) {
+                        return `}, "CLO ${cloCounter}": { "`;
+                    }
+                    return match;
+                })
+                .replace(
+                    /"Assessment Method"\s*:\s*([^,\]}]+)/g,
+                    (m, g1) => `"Assessment Method": "${g1.trim().replace(/[)\s]+$/g, '')}"`
+                )
+                .replace(/\)\s*,/g, ',')
+                .replace(/\)\s*}/g, '}')
+                .replace(/""([^"]+?)""/g, '"$1"')
+                .replace(/"(\s*)"เหตุผล":/g, '", "เหตุผล":')
+                .replace(/,\s*}/g, '}')
+                .trim();
+
+              if (!jsonString.startsWith('{')) jsonString = '{' + jsonString;
+              if (!jsonString.endsWith('}')) jsonString = jsonString + '}';
+              for (const key in jsonData) {
+                if (jsonData[key]["Learning’s Level"]) {
+                    jsonData[key]["Learning's Level"] = jsonData[key]["Learning’s Level"];
+                    delete jsonData[key]["Learning’s Level"];
+                }
+              }
+
+            try {
+                jsonData = JSON5.parse(jsonString);
+                console.log("✅ Parsed JSON5:", jsonData);
+            } catch (e) {
+                console.error("❌ JSON5 parse error:", e.message);
+                console.log("💬 Raw string after normalization:", jsonString);
+                jsonData = null; // fallback เก็บ text แทน
+            }
+        } else {
+            console.warn("⚠️ ไม่พบ JSON/HJSON ในข้อความ AI");
+        }
+
+        const aiResponseToSave = jsonData ? JSON.stringify(jsonData, null, 2) : generatedText;
 
         return fetch('/generate/save', {
             method: 'POST',
@@ -328,14 +393,14 @@ function submitForm() {
                 year,
                 term,
                 TQF,
-                ai_response: generatedText
+                ai_response: aiResponseToSave
             })
         })
         .then(res => res.json())
         .then(saveData => {
             console.log("AI ถูกเรียกทั้งหมด:", aiCallCount);
-            // window.location.href = `/preview?course_id=${courseId}&year=${year}&term=${term}&TQF=${TQF}`;
-        });
+        })
+        .catch(err => console.error(err));
     })
     .catch(err => console.error(err));
 }
