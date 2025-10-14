@@ -47,13 +47,16 @@ class GenerateController extends Controller
             'updated_at' => now(),
         ]);
 
-        return response()->json(['message' => 'บันทึก generated เรียบร้อยแล้ว']);
+        // return response()->json(['message' => 'บันทึก generated เรียบร้อยแล้ว']);
 
-        return redirect()->route('preview', [
-            'course_id' => $request->course_id,
-            'year' => $request->year,
-            'term' => $request->term,
-            'TQF' => $request->TQF
+        return response()->json([
+            'redirect' => route('preview', [
+                'course_id' => $request->course_id,
+                'year' => $request->year,
+                'term' => $request->term,
+                'TQF' => $request->TQF
+            ]),
+            'message' => 'บันทึก generated เรียบร้อยแล้ว'
         ]);
     }
 }

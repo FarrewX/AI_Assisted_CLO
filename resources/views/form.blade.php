@@ -153,7 +153,24 @@
       </div>
     </div>
   </div>
+
+  <!-- Popup Loading -->
+  <div id="loadingPopup" class="hidden fixed inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col items-center">
+      <div class="loader border-4 border-blue-500 border-t-transparent rounded-full w-10 h-10 animate-spin mb-3"></div>
+      <p class="text-gray-700 font-semibold text-lg">กำลัง Generate...</p>
+    </div>
+  </div>
 </div>
+
+<style>
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+</style>
 
 <script src="https://cdn.jsdelivr.net/npm/json5@2.2.3/dist/index.min.js"></script>
 <script>
@@ -286,6 +303,8 @@ function submitForm() {
         alert("กรุณากรอกข้อมูลให้ครบ");
         return;
     }
+
+    showLoadingPopup();
     
     fetch('/saveprompt', {
         method: 'POST',
@@ -370,17 +389,27 @@ function submitForm() {
 
             try {
                 jsonData = JSON5.parse(jsonString);
-                console.log("✅ Parsed JSON5:", jsonData);
+                console.log("Parsed JSON5:", jsonData);
             } catch (e) {
-                console.error("❌ JSON5 parse error:", e.message);
-                console.log("💬 Raw string after normalization:", jsonString);
+                console.error("JSON5 parse error:", e.message);
+                console.log("Raw string after normalization:", jsonString);
                 jsonData = null; // fallback เก็บ text แทน
             }
         } else {
             console.warn("⚠️ ไม่พบ JSON/HJSON ในข้อความ AI");
         }
 
-        const aiResponseToSave = jsonData ? JSON.stringify(jsonData, null, 2) : generatedText;
+        //ตัด ```json ออกถ้ามี
+        let aiResponseToSave = '';
+        if (jsonData) {
+            aiResponseToSave = JSON.stringify(jsonData, null, 2);
+        } else {
+            aiResponseToSave = generatedText
+                .replace(/^[\s\S]*?```json/i, '')
+                .replace(/^[\s\S]*?json/i, '')
+                .replace(/```[\s\S]*$/, '')
+                .trim();
+        }
 
         return fetch('/generate/save', {
             method: 'POST',
@@ -397,13 +426,37 @@ function submitForm() {
                 ai_response: aiResponseToSave
             })
         })
-        .then(res => res.json())
+        .then(res => {
+          // ตรวจ header ว่าเป็น JSON หรือไม่
+          const contentType = res.headers.get('content-type') || '';
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          
+          if (contentType.includes('application/json')) {
+            return res.json();
+          } else {
+            // ถ้า server ตอบ HTML (redirect หรือ error page)
+            return res.text().then(text => {
+              console.warn('Server returned HTML instead of JSON:', text.slice(0, 100));
+              return { message: 'HTML response (redirect or error page)' };
+            });
+          }
+        })
         .then(saveData => {
             console.log("AI ถูกเรียกทั้งหมด:", aiCallCount);
+            hideLoadingPopup();
+            window.location.href = saveData.redirect;
         })
         .catch(err => console.error(err));
     })
     .catch(err => console.error(err));
+}
+
+function showLoadingPopup() {
+  document.getElementById('loadingPopup').classList.remove('hidden');
+}
+
+function hideLoadingPopup() {
+  document.getElementById('loadingPopup').classList.add('hidden');
 }
 
 // จำกัดจำนวนการเลือก PLO ตามจำนวน CLO ที่เลือก

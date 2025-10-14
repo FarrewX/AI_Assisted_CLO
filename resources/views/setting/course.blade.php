@@ -121,8 +121,17 @@
                             @endforeach
                         </select>
                         <input type="number" name="year" class="border px-2 py-1 rounded w-24" placeholder="ปี" value="{{ date('Y') }}">
-                        <input type="text" name="term" class="border px-2 py-1 rounded w-24" placeholder="ภาคเรียน" value="">
-                        <input type="text" name="TQF" class="border px-2 py-1 rounded w-24" placeholder="มคอ" value="">
+                        <select name="term" class="border px-2 py-1 rounded w-24">
+                            <option value="">ภาคเรียน</option>
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                        </select>
+                        <select name="TQF" class="border px-2 py-1 rounded w-24">
+                            <option value="">มคอ</option>
+                            <option value="3">3</option>
+                            <option value="5" disabled>5</option>
+                        </select>
                         <button class="bg-green-500 text-white px-3 py-1 rounded ml-2">เพิ่ม</button>
                     </form>
                 </div>
@@ -140,9 +149,21 @@
                                         <option value="{{ $user->user_id }}">{{ $user->name }}</option>
                                     @endforeach
                                 </select>
+                                <p>ภาคเรียน</p>
+                                <select name="term" id="edit-term-input" class="border px-2 py-1 rounded w-full mb-2" required>
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                </select>
+
+                                <p>ปีการศึกษา</p>
                                 <input type="number" name="year" id="edit-year-input" class="border px-2 py-1 rounded w-full mb-2" required>
-                                <input type="text" name="term" id="edit-term-input" class="border px-2 py-1 rounded w-full mb-2" placeholder="ภาคเรียน" required>
-                                <input type="text" name="TQF" id="edit-TQF-input" class="border px-2 py-1 rounded w-full mb-2" placeholder="มคอ" required>
+
+                                <p>มคอ</p>
+                                <select name="TQF" id="edit-TQF-input" class="border px-2 py-1 rounded w-full mb-2" required>
+                                    <option value="3">3</option>
+                                    <option value="5" disabled>5</option>
+                                </select>
                             </div>
                             <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded mr-2">บันทึก</button>
                             <button type="button" id="edit-cancel" class="bg-gray-400 text-white px-4 py-2 rounded">ยกเลิก</button>

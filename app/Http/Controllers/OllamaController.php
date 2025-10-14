@@ -43,8 +43,8 @@ json ที่ประกอบด้วย:
 "CLO 1" : {
     CLO : (เป็นคำอธิบาย CLO)
     PLO ที่รองรับ : (CLO นี้สอดคล้องกับ PLO ไหน ให้เอามา 1 PLO เอาเฉพาะ PLO ที่เป็นตัวเลขเท่านั้น เช่น PLO1 และเลือกมาจาก"โดยจะมี"ที่ระบุไว้ข้างต้นเท่านั้น)
-    Domain : (Domain ของ CLO)
-    Learning’s Level : (Learning’s Level ของ CLO)
+    Domain : (Domain ของ CLO ให้เอามาจาก [PLO ที่ให้ไปจะอยู่ในรูปแบบ: เนื้อหา + Domain + Learning Level] ที่เป็น Domain อันที่มีข้อมูล Skills Ethics Characters Knowledge)
+    Learning’s Level : (Learning Level ของ CLO ให้เอามาจาก [PLO ที่ให้ไปจะอยู่ในรูปแบบ: เนื้อหา + Domain + Learning Level] ที่เป็น Learning Level อันที่มีข้อมูล Precising Characterizing Valuating Evaluating Articulation)
     Assessment Method : (วิธีการประเมินผล)
     เหตุผล : (เหตุผลประกอบการกำหนด Learning’s Level และ Assessment Method)
 }, ... (จำนวน CLO ตามที่ระบุ)
