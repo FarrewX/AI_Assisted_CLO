@@ -21,15 +21,19 @@
         <div class="bg-white flex flex-col items-center gap-5" style="margin-top: 100px;">
             <h1 class="text-2xl font-bold mb-6">การจัดการ</h1>
             <div class="flex flex-wrap gap-4 justify-center w-full max-w-3xl">
-                <a href="{{ url('/plos') }}" 
+                <a href="{{ url('/management/plos') }}" 
                     class="px-6 py-3 bg-sky-300 text-black font-bold rounded-lg shadow hover:bg-sky-400 flex-1 min-w-[160px] max-w-[calc(20%-1rem)] text-center">
                         จัดการ PLOs
                 </a>
-                <a href="{{ url('/courses') }}" 
+                <a href="{{ url('/management/courses') }}" 
                     class="px-6 py-3 bg-sky-300 text-black font-bold rounded-lg shadow hover:bg-sky-400 flex-1 min-w-[160px] max-w-[calc(20%-1rem)] text-center">
                         จัดการ course
                 </a>
-                <a href="{{ url('/users') }}" 
+                <a href="{{ url('/management/email') }}"
+                    class="px-6 py-3 bg-sky-300 text-black font-bold rounded-lg shadow hover:bg-sky-400 flex-1 min-w-[160px] max-w-[calc(20%-1rem)] text-center">
+                        จัดการการส่ง Email
+                </a>
+                <a href="{{ url('/management/users') }}" 
                     class="px-6 py-3 bg-sky-300 text-black font-bold rounded-lg shadow hover:bg-sky-400 flex-1 min-w-[160px] max-w-[calc(20%-1rem)] text-center">
                         จัดการ ผู้ใช้
                 </a>

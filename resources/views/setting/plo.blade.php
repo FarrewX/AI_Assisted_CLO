@@ -191,7 +191,7 @@
             const level = document.getElementById('edit-level').value.trim();
             showConfirm('คุณต้องการบันทึกการเปลี่ยนแปลงนี้หรือไม่?', function() {
                 var xhr = new XMLHttpRequest();
-                xhr.open('POST', '/plos/update/' + plo, true);
+                xhr.open('POST', '/management/plos/update/' + plo, true);
                 xhr.setRequestHeader('Content-Type', 'application/json');
                 xhr.setRequestHeader('X-CSRF-TOKEN', '{{ csrf_token() }}');
                 xhr.onreadystatechange = function() {
@@ -232,7 +232,7 @@
 
                 showConfirm('คุณต้องการลบ PLO นี้หรือไม่?', function() {
                     var xhr = new XMLHttpRequest();
-                    xhr.open('DELETE', '/plos/delete/' + plo, true);
+                    xhr.open('DELETE', '/management/plos/delete/' + plo, true);
                     xhr.setRequestHeader('X-CSRF-TOKEN', '{{ csrf_token() }}');
                     xhr.onreadystatechange = function() {
                         if (xhr.readyState === 4) {
@@ -270,7 +270,7 @@
                 showPopup('กรุณากรอกข้อมูลให้ครบถ้วน');
                 return;
             }
-            axios.post('/plos/create', {
+            axios.post('/management/plos/create', {
                 plo: plo,
                 description: desc,
                 domain: domain,

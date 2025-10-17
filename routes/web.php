@@ -49,14 +49,6 @@ Route::middleware('auth')->group(function () {
         return view('guide');
     })->name('guide');
 
-    Route::get('/management', function () {
-        return view('management');
-    })->name('management')->middleware('admin');
-
-    Route::get('/plos', [PlosController::class, 'index'])->name('plos.index')->middleware('admin');
-
-    Route::get('/notification', [NotificationController::class, 'index'])->name('notification')->middleware('admin');
-
     Route::get('/message', function () {
         return view('message');
     })->name('message');
@@ -64,8 +56,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/TQF', function () {
         return view('TQF');
     })->name('TQF');
-    
-    Route::get('/courses', [CourseyearsController::class, 'index'])->name('courses')->middleware('admin');
 
     Route::get('/preview', [DocumentController::class, 'preview'])->name('preview');
 
@@ -76,16 +66,25 @@ Route::middleware('auth')->group(function () {
     Route::post('/saveprompt', [CourseController::class, 'savePrompt'])->name('save.prompt');
 });
 
-Route::middleware('admin')->group(function () {
+Route::middleware(['auth', 'admin'])->group(function () {
+    Route::get('/management', function () {
+        return view('management');
+    })->name('management');
+
+    Route::get('/notification', [NotificationController::class, 'index'])->name('notification');
+
     Route::get('/send-email', [EmailController::class, 'showForm']);
     Route::post('/send-email', [EmailController::class, 'send'])->name('send.email');
+    Route::get('/management/email', [EmailController::class, 'index'])->name('management.gmail');
+    Route::post('/management/email', [EmailController::class, 'save'])->name('email.save');
 
-    Route::post('/plos/update/{id}', [PlosController::class, 'update'])->name('plos.update');
-    Route::post('/plos/create', [PlosController::class, 'create'])->name('plos.create');
-    Route::delete('/plos/delete/{id}', [PlosController::class, 'destroy'])->name('plos.destroy');
+    Route::get('/management/plos', [PlosController::class, 'index'])->name('plos.index');
+    Route::post('/management/plos/update/{id}', [PlosController::class, 'update'])->name('plos.update');
+    Route::post('/management/plos/create', [PlosController::class, 'create'])->name('plos.create');
+    Route::delete('/management/plos/delete/{id}', [PlosController::class, 'destroy'])->name('plos.destroy');
 
-    Route::post('/courses/{courseId}/professor', [CourseyearsController::class, 'store'])->name('professor.store');
-    Route::put('/courses/{courseId}/professor/{id}', [CourseyearsController::class, 'update'])->name('professor.update');
-    Route::delete('/courses/{courseId}/professor/{id}', [CourseyearsController::class, 'destroy'])->name('professor.destroy');
-
+    Route::get('/management/courses', [CourseyearsController::class, 'index'])->name('courses');
+    Route::post('/management/courses/{courseId}/professor', [CourseyearsController::class, 'store'])->name('professor.store');
+    Route::put('/management/courses/{courseId}/professor/{id}', [CourseyearsController::class, 'update'])->name('professor.update');
+    Route::delete('/management/courses/{courseId}/professor/{id}', [CourseyearsController::class, 'destroy'])->name('professor.destroy');
 });

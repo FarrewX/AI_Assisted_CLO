@@ -14,12 +14,13 @@
 
   <div class="bg-white mt-20">
     <div class="w-[90%] max-w-[1000px] mx-auto">
-
       <!-- ปุ่มส่งแจ้งเตือน -->
       <button 
-        class="float-right bg-orange-500 hover:bg-orange-600 text-white font-bold px-5 py-2 rounded transition mb-3"
-        onclick="location.href='send-email'">
-        ส่งแจ้งเตือน
+          class="float-right font-bold px-5 py-2 rounded transition mb-3
+                {{ $courses->isEmpty() ? 'bg-gray-400 cursor-not-allowed' : 'bg-orange-500 hover:bg-orange-600 text-white' }}"
+          onclick="{{ $courses->isEmpty() ? 'return false;' : "location.href='send-email'" }}"
+          {{ $courses->isEmpty() ? 'disabled' : '' }}>
+          ส่งแจ้งเตือน
       </button>
   
       <!-- ตารางรายวิชา -->
@@ -29,6 +30,8 @@
             <th class="px-4 py-3 border border-gray-300 text-left">รหัสวิชา</th>
             <th class="px-4 py-3 border border-gray-300 text-left">รายชื่อวิชา</th>
             <th class="px-4 py-3 border border-gray-300 text-left">อาจารย์ผู้สอน</th>
+            <th class="px-4 py-3 border border-gray-300 text-left">ปีการศึกษา</th>
+            <th class="px-4 py-3 border border-gray-300 text-left">มคอ.</th>
             <th class="px-4 py-3 border border-gray-300 text-left">สถานะ</th>
           </tr>
         </thead>
@@ -57,13 +60,15 @@
             <tr>
               <td class="px-4 py-3 border border-gray-300">{{ $course->course_id }}</td>
               <td class="px-4 py-3 border border-gray-300">{{ $course->course_name }}</td>
-              <td class="px-4 py-3 border border-gray-300">{{ Auth::user()->name ?? 'สมมติ' }}</td>
+              <td class="px-4 py-3 border border-gray-300">{{ $course->name }}</td>
+              <td class="px-4 py-3 border border-gray-300">{{ $course->term }}/{{ $course->year }}</td>
+              <td class="px-4 py-3 border border-gray-300">{{ $course->TQF }}</td>
               <td class="px-4 py-3 border border-gray-300">{{ $status_text }}</td>
             </tr>
           @empty
             <tr>
-              <td colspan="4" class="px-4 py-3 text-center text-gray-500">
-                ไม่พบรายวิชา
+              <td colspan="6" class="px-4 py-3 text-center text-gray-500">
+                ไม่พบข้อมูล
               </td>
             </tr>
           @endforelse
