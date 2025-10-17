@@ -79,7 +79,7 @@
                         1️⃣ เข้า <a href="https://myaccount.google.com/security" target="_blank" class="text-blue-600 underline">บัญชี Google → Security</a><br>
                         2️⃣ เปิด 2-Step Verification<br>
                         3️⃣ ไปที่ <a href="https://myaccount.google.com/apppasswords" target="_blank" class="text-blue-600 underline">App Passwords</a><br>
-                        4️⃣ เลือก App = Mail, Device = Other → ตั้งชื่อเช่น Laravel ELO<br>
+                        4️⃣ เลือก App = Mail, Device = Other → ตั้งชื่อเช่น ELO generator<br>
                         5️⃣ คัดลอก “รหัส 16 ตัว” มาวางในช่องนี้
                     </div>
                 </div>
