@@ -74,3 +74,5 @@ ollama create elo_generator -f Modelfile
 ollama run elo_generator
 
 (https://github.com/ollama/ollama/blob/main/README.md)
+
+composer require phpoffice/phpword
