@@ -60,6 +60,9 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
 
+## run composer install
+- composer install
+
 ## how install Ollama??
 
 - download Ollama (https://ollama.com/download)
@@ -75,5 +78,5 @@ ollama run elo_generator
 
 (https://github.com/ollama/ollama/blob/main/README.md)
 
-- phpWord
+## phpWord
 (https://phpoffice.github.io/PHPWord/install.html)

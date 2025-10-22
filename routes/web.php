@@ -59,7 +59,7 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/preview', [DocumentController::class, 'preview'])->name('preview');
 
-    Route::get('/export-docx', [DocumentController::class, 'exportForm'])->name('export.docx');
+    Route::get('/export-docx', [DocumentController::class, 'exportdocx'])->name('export.docx');
 
     Route::post('/updatestartprompt', [CourseController::class, 'updateStartPrompt']);
     Route::post('/getprompt', [CourseController::class, 'getPrompt']);
