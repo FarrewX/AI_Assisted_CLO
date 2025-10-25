@@ -9,198 +9,557 @@ use PhpOffice\PhpWord\SimpleType\Jc;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use PhpOffice\PhpWord\Shared\Converter;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class DocumentController extends Controller
 {
-    // แสดง preview (HTML)
     public function preview(Request $request)
     {
         $user = Auth::user();
-
         $course_id = $request->query('course_id');
         $year = (int) $request->query('year');
         $term = $request->query('term');
         $TQF = $request->query('TQF');
 
-        if (!$course_id || !$year || !$term || !$TQF) {
-            abort(400, 'Missing required parameters');
+        if (!$course_id || !$year || $term === null || $TQF === null || !$user) {
+            abort(400, 'Missing required parameters or not authenticated');
         }
 
-        $cy = DB::table('courseyears')
-            ->where('course_id', $course_id)
-            ->where('user_id', $user->user_id)
-            ->where('year', $year)
-            ->where('term', $term)
-            ->where('TQF', $TQF)
+        $context = DB::table('courseyears as cy')
+            ->leftJoin('users as u', 'cy.user_id', '=', 'u.user_id')
+            ->leftJoin('courses as c', 'cy.course_id', '=', 'c.course_id')
+            ->leftJoin('prompts as p', 'cy.id', '=', 'cy.id')
+            ->leftJoin('generates as g', 'p.ref_id', '=', 'g.ref_id')
+            ->where('cy.user_id', $user->user_id)
+            ->where('cy.course_id', $course_id)
+            ->where('cy.year', $year)
+            ->where('cy.term', $term)
+            ->where('cy.TQF', $TQF)
+            ->select(
+                'cy.id',
+                'u.name',
+                'c.course_id',
+                'c.course_name',
+                'c.course_name_en',
+                'c.course_detail_th',
+                'c.course_detail_en',
+                'cy.year',
+                'cy.term',
+                'g.ai_text',
+            )
             ->first();
+            
+        if (!$context) {
+            abort(404, 'TQF Document (CourseYear) not found for this user.');
+        }
 
-        if (!$cy) return response()->json(['message' => 'ไม่พบ courseyear'], 404);
+        $curricula = DB::table('curricula')->where('ref_id', $context->id)->first();
+        
+        $feedback = null;
+        $plans = null;
+        $generates = null;
+        
+        if ($curricula) {
+            $curriculaRefId = $curricula->ref_id;
 
-        $promptRow = DB::table('prompts')
-            ->where('ref_id', $cy->id)
-            ->first();
+            $feedback = DB::table('feedback')->where('ref_id', $curriculaRefId)->first();
+            $plans = DB::table('plans')->where('ref_id', $curriculaRefId)->first();
 
-        if (!$promptRow) return response()->json(['message' => 'ไม่พบ prompt'], 404);
+            $latestPrompt = DB::table('prompts')
+                            ->where('ref_id', $context->id)
+                            ->orderBy('updated_at', 'desc')
+                            ->first();
+            if($latestPrompt && property_exists($latestPrompt, 'id')){
+                 $generates = DB::table('generates')
+                            ->where('ref_id', $latestPrompt->id)
+                            ->orderBy('updated_at', 'desc')
+                            ->first();
+            }
+        }
 
-        $Generates = DB::table('generates')
-            ->where('ref_id', $promptRow->ref_id)
-            ->orderByDesc('created_at')
-            ->get();
+        // Combine all data into one object
+        $data = (array) $context;
 
-        return view('component/preview', compact('Generates', 'course_id', 'year', 'term', 'TQF', ));
+        if ($curricula) {
+            $curriculaArray = (array) $curricula;
+            $curriculaArray['outcome_statement'] = isset($curricula->outcome_statement) ? json_decode($curricula->outcome_statement, true) : [];
+            $curriculaArray['curriculum_map_data'] = isset($curricula->curriculum_map_data) ? json_decode($curricula->curriculum_map_data, true) : [];
+            $curriculaArray['course_accord'] = isset($curricula->course_accord) ? json_decode($curricula->course_accord, true) : [];
+            $data = array_merge($data, $curriculaArray);
+        } else {
+             $data['outcome_statement'] = [];
+             $data['curriculum_map_data'] = [];
+             $data['course_accord'] = [];
+        }
 
+        if ($feedback) {
+             $feedbackArray = (array) $feedback;
+             // Decode research JSON
+             $feedbackArray['research'] = isset($feedback->research) ? json_decode($feedback->research, true) : [];
+             $data = $data + $feedbackArray;
+        } else {
+             $data['research'] = [];
+        }
+        if ($plans) {
+             $plansArray = (array) $plans;
+             // Decode JSON columns from plans
+             $plansArray['teaching_methods'] = isset($plans->teaching_methods) ? json_decode($plans->teaching_methods, true) : null;
+             $plansArray['lesson_plan'] = isset($plans->lesson_plan) ? json_decode($plans->lesson_plan, true) : [];
+             $plansArray['assessment_strategies'] = isset($plans->assessment_strategies) ? json_decode($plans->assessment_strategies, true) : [];
+             $plansArray['rubrics'] = isset($plans->rubrics) ? json_decode($plans->rubrics, true) : [];
+             $plansArray['grading_criteria'] = isset($plans->grading_criteria) ? json_decode($plans->grading_criteria, true) : [];
+             $data = $data + $plansArray;
+        } else {
+             $data['teaching_methods'] = null;
+             $data['lesson_plan'] = [];
+             $data['assessment_strategies'] = [];
+             $data['rubrics'] = [];
+             $data['grading_criteria'] = [];
+        }
+         if ($generates) {
+             if (property_exists($generates, 'ai_text')) {
+                 $data['ai_text'] = $generates->ai_text;
+             }
+        }
+
+        // แปลงกลับเป็น Object
+        $data = (object) $data;
+
+        if(isset($data->lesson_plan)) $data->plan_data = $data->lesson_plan;
+        if(isset($data->assessment_strategies)) $data->assessment_data = $data->assessment_strategies;
+
+        return view('component/preview', compact('data'));
     }
 
-    // สร้าง .docx และดาวน์โหลด
+    public function savedataedit(Request $request)
+    {
+        $validated = $request->validate([
+            'course_id' => 'required',
+            'year'      => 'required',
+            'term'      => 'required',
+            'TQF'       => 'required',
+            'field'     => 'required|string',
+            'value'     => 'nullable',
+        ]);
+
+        $user = Auth::user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        try {
+            $courseYear = DB::table('courseyears')
+                ->where('course_id', $validated['course_id'])
+                ->where('user_id', $user->user_id)
+                ->where('year', $validated['year'])
+                ->where('term', $validated['term'])
+                ->where('TQF', $validated['TQF'])
+                ->select('id')
+                ->first();
+        } catch (\Exception $e) {
+             return response()->json([
+                'success' => false,
+                'message' => 'Error querying courseyears table.',
+                'error'   => $e->getMessage()
+            ], 500);
+        }
+
+        if (!$courseYear) {
+            return response()->json(['message' => 'TQF Document (CourseYear) not found.'], 404);
+        }
+
+        $courseYearId = $courseYear->id;
+
+        $field = $validated['field'];
+        $value = $validated['value'];
+        $targetTable = '';
+
+        try {
+            $curriculaConditions = ['ref_id' => $courseYearId];
+            $courseInfo = DB::table('courses')->where('course_id', $validated['course_id'])->first();
+            $courseName = $courseInfo ? $courseInfo->course_name_en : 'Unknown Course';
+            $curriculaDefaults = [
+                'curriculum_name' => 'วิทยาศาสตรบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์',
+                'faculty'         => 'วิทยาศาสตร์',
+                'major'           => 'วิทยาการคอมพิวเตอร์',
+                'campus'          => 'เชียงใหม่',
+                 'credits'         => '0(0-0-0)',
+                 'curriculum_year' => $validated['year']
+            ];
+            $curriculaId = $this->updateOrCreateWithDB('curricula', $curriculaConditions, [], $curriculaDefaults);
+
+
+            // ตรรกะการกระจายข้อมูล (Data Router)
+            if (in_array($field, [
+                'feedback', 'improvement', 'agreement', 'agreement',
+                'research_subjects', 'academic_service', 'art_culture',
+            ]))
+            {
+                $targetTable = 'feedback';
+                $conditions = ['ref_id' => $curriculaId];
+                $dbField = ($field === 'agreement') ? 'agreement' : $field;
+                $dataToUpdate = [$dbField => $value];
+                $this->updateOrCreateWithDB($targetTable, $conditions, $dataToUpdate);
+                return response()->json(['success' => true, 'message' => "Field '{$field}' updated in '{$targetTable}'."]);
+
+            } else if (Str::startsWith($field, 'plan_') || in_array($field, ['grade_correction', 'art_culture'])) {
+                $targetTable = 'plans';
+                $conditions = ['ref_id' => $curriculaId];
+                // Use the field name directly (e.g., 'grade_correction')
+                $dataToUpdate = [$field => $value];
+                $this->updateOrCreateWithDB($targetTable, $conditions, $dataToUpdate);
+                return response()->json(['success' => true, 'message' => "Field '{$field}' updated in '{$targetTable}'."]);
+
+            } else if (Str::startsWith($field, 'rubric_')) {
+                $targetTable = 'rubrics';
+                $conditions = ['ref_id' => $curriculaId];
+                $dataToUpdate = [$field => $value];
+                $this->updateOrCreateWithDB($targetTable, $conditions, $dataToUpdate);
+                return response()->json(['success' => true, 'message' => "Field '{$field}' updated in '{$targetTable}'."]);
+
+            } else if ($field === 'ai_text') {
+                $targetTable = 'generates';
+                 $latestPrompt = DB::table('prompts')->where('ref_id', $courseYearId)->orderBy('updated_at', 'desc')->first();
+                if ($latestPrompt && property_exists($latestPrompt, 'id')) {
+                    $promptId = $latestPrompt->id;
+                    $latestGenerate = DB::table('generates')->where('ref_id', $promptId)->orderBy('updated_at', 'desc')->first();
+                    if ($latestGenerate && property_exists($latestGenerate, 'id')) {
+                        $generateId = $latestGenerate->id;
+                        DB::table('generates')->where('id', $generateId)->update(['ai_text' => $value, 'updated_at' => now()]);
+                        return response()->json(['success' => true, 'message' => "Field '{$field}' updated in '{$targetTable}'."]);
+                    } else { Log::warning("No 'generates' record found for prompt ID: " . $promptId); }
+                } else { Log::warning("No 'prompts' record found for courseYear ID: " . $courseYearId); }
+                 return response()->json(['success' => false, 'message' => "Could not find related record to update '{$field}'."], 404);
+
+            } else if ($field === 'section6_data') {
+                $targetTable = 'plans';
+                $conditions = ['ref_id' => $curriculaId];
+
+                $decodedValue = null;
+                $jsonValue = '{}'; 
+
+                // Decode the incoming value (which might already be an object/array or a JSON string)
+                if (is_string($value)) {
+                    try {
+                        // Attempt to decode if it's a non-empty string
+                        if(!empty(trim($value))) {
+                             $decodedValue = json_decode($value, true);
+                             // Check if decoding failed or resulted in non-array
+                             if (json_last_error() !== JSON_ERROR_NONE || !is_array($decodedValue)) {
+                                Log::warning("Failed to decode section6_data string or result is not an array: " . $value);
+                                $decodedValue = [];
+                             }
+                        } else {
+                             $decodedValue = [];
+                        }
+                    } catch (\Exception $e) {
+                         Log::error("Exception during section6_data JSON decode: " . $e->getMessage());
+                         $decodedValue = [];
+                    }
+                } elseif (is_array($value) || is_object($value)) {
+                    // If Laravel already decoded it, convert object to associative array
+                    $decodedValue = json_decode(json_encode($value), true);
+                     if (!is_array($decodedValue)) {
+                          Log::warning("Could not convert decoded section6_data to array.");
+                          $decodedValue = [];
+                     }
+                } else {
+                     Log::warning("Received section6_data is not string, array, or object.");
+                     $decodedValue = [];
+                }
+
+                // Filter out empty CLO entries
+                $filteredData = [];
+                if(is_array($decodedValue)) {
+                    foreach ($decodedValue as $cloKey => $cloData) {
+                        // Check if cloData structure is valid and if both arrays are empty
+                         if (is_array($cloData) && count($cloData) === 2 && isset($cloData[0]['วิธีการสอน']) && isset($cloData[1]['การประเมินผล'])) {
+                            $teachingMethods = $cloData[0]['วิธีการสอน'];
+                            $assessmentMethods = $cloData[1]['การประเมินผล'];
+
+                            // Keep the entry only if at least one array is NOT empty
+                            if (!empty($teachingMethods) || !empty($assessmentMethods)) {
+                                $filteredData[$cloKey] = $cloData;
+                            }
+                        } else {
+                             Log::warning("Invalid structure found for CLO key '{$cloKey}' in section6_data, skipping.");
+                        }
+                    }
+                }
+
+                // Sort the filtered data by CLO key numerically
+                uksort($filteredData, function ($a, $b) {
+                    preg_match('/(\d+)/', $a, $matchesA);
+                    preg_match('/(\d+)/', $b, $matchesB);
+                    $numA = isset($matchesA[1]) ? intval($matchesA[1]) : PHP_INT_MAX;
+                    $numB = isset($matchesB[1]) ? intval($matchesB[1]) : PHP_INT_MAX;
+                    return $numA <=> $numB;
+                });
+
+                // Encode the filtered and sorted data back to JSON string
+                if (!empty($filteredData)) {
+                    $jsonValue = json_encode($filteredData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+                } else {
+                    $jsonValue = '{}';
+                }
+
+                // The column to store the JSON is 'teaching_methods'
+                $dataToUpdate = ['teaching_methods' => $jsonValue];
+
+                // Use updateOrCreate to handle both existing and new plan entries
+                $this->updateOrCreateWithDB($targetTable, $conditions, $dataToUpdate);
+                return response()->json(['success' => true, 'message' => "Field '{$field}' (JSON) updated in '{$targetTable}'.teaching_methods."]);
+
+            } else if ($field === 'section7_data') {
+                $targetTable = 'plans';
+                $conditions = ['ref_id' => $curriculaId];
+                $decodedValue = $this->prepareJsonValue($value);
+                $jsonToSave = json_encode($decodedValue, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+                $dataToUpdate = ['lesson_plan' => $jsonToSave];
+                $this->updateOrCreateWithDB($targetTable, $conditions, $dataToUpdate);
+                return response()->json(['success' => true, 'message' => "Field '{$field}' updated in '{$targetTable}'.lesson_plan."]);
+
+            } else if ($field === 'section8_1_data') {
+                $targetTable = 'plans';
+                $conditions = ['ref_id' => $curriculaId];
+                $decodedValue = $this->prepareJsonValue($value);
+                $jsonToSave = json_encode($decodedValue, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+                $dataToUpdate = ['assessment_strategies' => $jsonToSave];
+                $this->updateOrCreateWithDB($targetTable, $conditions, $dataToUpdate);
+                return response()->json(['success' => true, 'message' => "Field '{$field}' updated in '{$targetTable}'.assessment_strategies."]);
+
+            } else if ($field === 'section8_2_data') {
+                $targetTable = 'plans';
+                $conditions = ['ref_id' => $curriculaId];
+                $decodedValue = $this->prepareJsonValue($value);
+                $jsonToSave = json_encode($decodedValue, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+                $dataToUpdate = ['rubrics' => $jsonToSave];
+                $this->updateOrCreateWithDB($targetTable, $conditions, $dataToUpdate);
+                return response()->json(['success' => true, 'message' => "Field '{$field}' updated in '{$targetTable}'.rubrics."]);
+
+            } else if ($field === 'section9_1_data') {
+                $targetTable = 'feedback';
+                $conditions = ['ref_id' => $curriculaId];
+                $decodedValue = $this->prepareJsonValue($value);
+                $jsonToSave = json_encode($decodedValue, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+                $dataToUpdate = ['research' => $jsonToSave];
+                $this->updateOrCreateWithDB($targetTable, $conditions, $dataToUpdate);
+                return response()->json(['success' => true, 'message' => "Field '{$field}' updated in '{$targetTable}'.research."]);
+
+            } // section 10
+            else if (Str::startsWith($field, 'grade_')) {
+                $targetTable = 'plans';
+                $conditions = ['ref_id' => $curriculaId];
+                $jsonColumn = 'grading_criteria';
+
+                // Get current JSON data
+                $currentPlans = DB::table($targetTable)->where($conditions)->first();
+                $gradingData = ($currentPlans && $currentPlans->grading_criteria) ? json_decode($currentPlans->grading_criteria, true) : [];
+                if (!is_array($gradingData)) $gradingData = [];
+
+                // $field is 'grade_A_level', 'grade_A_criteria', etc.
+                $gradingData[$field] = $value;
+
+                // Prepare data to save
+                $jsonToSave = json_encode($gradingData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+                $dataToUpdate = [$jsonColumn => $jsonToSave];
+
+                // Save
+                $this->updateOrCreateWithDB($targetTable, $conditions, $dataToUpdate);
+                return response()->json(['success' => true, 'message' => "Field '{$field}' updated in JSON column '{$jsonColumn}'."]);
+
+            } // Section 5
+            else if (Str::startsWith($field, 'plo') || Str::startsWith($field, 'curriculum_map_')) {
+
+                $targetTable = 'curricula';
+                $conditions = ['ref_id' => $curriculaId];
+                $currentData = DB::table($targetTable)->where($conditions)->first();
+                // Initialize arrays if data doesn't exist yet
+                $outcomeStatementData = $currentData && $currentData->outcome_statement ? json_decode($currentData->outcome_statement, true) : [];
+                $courseAccordData     = $currentData && $currentData->course_accord ? json_decode($currentData->course_accord, true) : [];
+                $curriculumMapData    = $currentData && $currentData->curriculum_map_data ? json_decode($currentData->curriculum_map_data, true) : [];
+
+                $processedValue = $value;
+                if (Str::contains($field, ['_specific', '_generic', '_check'])) {
+                    $processedValue = filter_var($value, FILTER_VALIDATE_BOOLEAN);
+                }
+
+                $jsonColumn = null;
+                $jsonDataToSave = null;
+
+                // Section 5.3
+                if (Str::startsWith($field, 'plo_map_')) {
+                    $jsonColumn = 'course_accord';
+                     if (preg_match('/plo_map_r(\d+)_c(\d+)_(\w+)/', $field, $matches)) {
+                        $rowIndex = (int)$matches[1]; $colIndex = (int)$matches[2]; $attribute = $matches[3]; $ploDbIndex = $colIndex + 1;
+                        if (!isset($courseAccordData[$rowIndex]) || !is_array($courseAccordData[$rowIndex])) $courseAccordData[$rowIndex] = [];
+                        if (!isset($courseAccordData[$rowIndex][$ploDbIndex]) || !is_array($courseAccordData[$rowIndex][$ploDbIndex])) $courseAccordData[$rowIndex][$ploDbIndex] = ['check' => false, 'level' => ''];
+                        $courseAccordData[$rowIndex][$ploDbIndex][$attribute] = $processedValue;
+                        $jsonDataToSave = $courseAccordData;
+                    } else { Log::warning("Could not parse plo_map field name: {$field}"); }
+
+                } 
+                // Section 5.2 
+                else if (Str::startsWith($field, 'curriculum_map_')) { 
+                    $jsonColumn = 'curriculum_map_data';
+                     if (preg_match('/curriculum_map_r(\d+)_c(\d+)/', $field, $matches)) {
+                        $rowIndex = (int)$matches[1]; $colIndex = (int)$matches[2];
+                        if (!isset($curriculumMapData[$rowIndex]) || !is_array($curriculumMapData[$rowIndex])) $curriculumMapData[$rowIndex] = [];
+                        // Store as object
+                        $curriculumMapData[$rowIndex][strval($colIndex)] = $processedValue;
+                        $jsonDataToSave = $curriculumMapData;
+                    } else { Log::warning("Could not parse curriculum_map field name: {$field}"); }
+
+                }
+                // Section 5.1
+                else if (Str::startsWith($field, 'plo')) { 
+                    $jsonColumn = 'outcome_statement';
+                     if (preg_match('/plo(\d+)_(\w+)/', $field, $matches)) {
+                        $ploIndex = (int)$matches[1]; $attribute = $matches[2];
+                        while (count($outcomeStatementData) <= $ploIndex) { $outcomeStatementData[] = null; }
+                        if (!isset($outcomeStatementData[$ploIndex]) || !is_array($outcomeStatementData[$ploIndex])) {
+                             $outcomeStatementData[$ploIndex] = ['outcome' => null, 'specific' => false, 'generic' => false, 'level' => null, 'type' => null];
+                        }
+                        $outcomeStatementData[$ploIndex][$attribute] = $processedValue;
+
+                        // Filter empty PLOs *after* updating
+                        $filteredOutcomeStatementData = array_filter($outcomeStatementData, function($plo) {
+                            if (empty($plo)) return false;
+                            foreach ($plo as $val) { if (!in_array($val, [null, '', false], true)) return true; }
+                            return false;
+                        });
+                        // Re-index array keys sequentially if needed after filtering, though json_encode handles sparse arrays
+                        $jsonDataToSave = $filteredOutcomeStatementData;
+
+                    } else { Log::warning("Could not parse plo field name: {$field}"); }
+                }
+                // Save updated JSON if a column was identified and data prepared
+                if ($jsonColumn && $jsonDataToSave !== null) {
+                    DB::table($targetTable)->where($conditions)->update([
+                        $jsonColumn => json_encode($jsonDataToSave, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT),
+                        'updated_at' => now()
+                    ]);
+                    return response()->json(['success' => true, 'message' => "Field '{$field}' updated in JSON column '{$jsonColumn}'."]);
+                } else {
+                     // If parsing failed or no data to save, return appropriate message
+                    Log::warning("JSON column update skipped for field: {$field}");
+                    return response()->json(['success' => false, 'message' => "Could not process update for field '{$field}'."], 400);
+                }
+
+            } else {
+                // ค่า Default: บันทึกลงตาราง 'curricula'
+                $targetTable = 'curricula';
+                $conditions = ['ref_id' => $curriculaId];
+                $dataToUpdate = [$field => $value];
+                $this->updateOrCreateWithDB($targetTable, $conditions, $dataToUpdate);
+                return response()->json(['success' => true, 'message' => "Field '{$field}' updated in '{$targetTable}'."]);
+            }
+
+            // Fallback (should not be reached anymore)
+             Log::error("Fell through all conditions in savedataedit for field: {$field}");
+             return response()->json(['success' => false, 'message' => "Internal logic error for field '{$field}'."], 500);
+
+
+        } catch (\Exception $e) {
+            Log::error("Error in savedataedit: " . $e->getMessage() . "\n" . $e->getTraceAsString());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update TQF.',
+                'error'   => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    private function prepareJsonValue($value)
+    {
+         if (is_string($value)) {
+            try {
+                if(!empty(trim($value))) {
+                    $decoded = json_decode($value, true); 
+                    if (json_last_error() === JSON_ERROR_NONE) {
+                        return $decoded;
+                    } else {
+                        Log::warning("Failed to decode JSON value string: " . $value . " - Error: " . json_last_error_msg());
+                        return $value; // Return original string if decode fails
+                    }
+                } else {
+                    return []; // Treat empty string as empty data (array)
+                }
+            } catch (\Exception $e) {
+                Log::error("Exception during JSON decode: " . $e->getMessage());
+                return $value; // Return original string on exception
+            }
+        }
+        if (is_array($value) || is_object($value)) {
+            return json_decode(json_encode($value), true);
+        }
+        Log::warning("Received non-string/array/object value for JSON field.");
+        return $value ?? [];
+    }
+    private function updateOrCreateWithDB($tableName, $conditions, $dataToUpdate, $defaults = [])
+    {
+        $existingRecord = DB::table($tableName)->where($conditions)->first();
+        if ($existingRecord) {
+            if (!empty($dataToUpdate)) {
+                 $filteredDataToUpdate = array_diff_key($dataToUpdate, $conditions);
+                 if (!empty($filteredDataToUpdate)) {
+                    $filteredDataToUpdate['updated_at'] = now();
+                    DB::table($tableName)->where($conditions)->update($filteredDataToUpdate);
+                 }
+            }
+            return $existingRecord->id ?? $existingRecord->ref_id;
+        } else {
+             $defaultsToMerge = array_diff_key($defaults, $conditions, $dataToUpdate);
+             $dataToInsert = array_merge($defaultsToMerge, $conditions, $dataToUpdate);
+             $dataToInsert['created_at'] = now();
+            $dataToInsert['updated_at'] = now();
+             DB::table($tableName)->insert($dataToInsert);
+            return $conditions['id'] ?? $conditions['ref_id'];
+        }
+    }
+
+    private function updateLearningOutcomeDescription($code, $description)
+    {
+        try {
+             DB::table('learning_outcomes')
+                ->where('code', $code)
+                ->update([
+                    'description' => $description,
+                ]);
+             Log::info("Updated description for code: {$code}");
+             return true;
+        } catch (\Exception $e) {
+             Log::error("Failed to update description for code {$code}: " . $e->getMessage());
+             return false;
+        }
+    }
+
+    // ดาวน์โหลด.docx 
     public function exportdocx()
     {
-        // --- 1. (สำคัญ) นี่คือข้อมูลจำลอง (DUMMY DATA) ---
-        // คุณต้องแทนที่ส่วนนี้ด้วยการดึงข้อมูลจริงจาก Database
+        // ข้อมูลจำลอง (DUMMY DATA)
         $data = [
-            'logo_path' => public_path('image/mjulogo.jpg'), // (ต้องแก้ Path ให้ถูกต้อง)
+            'logo_path' => public_path('image/mjulogo.jpg'),
             'title' => 'มหาวิทยาลัยแม่โจ้',
             'subtitle' => 'มคอ. 3 รายละเอียดรายวิชา',
             'fileName' => 'มคอ-3-รายละเอียดรายวิชา',
-
-            // -- ข้อมูลส่วนหัว --
-            'faculty' => 'วิทยาศาสตร์',
-            'major' => 'วิทยาการคอมพิวเตอร์',
-            'curriculum_year' => '2565',
-            'campus' => 'เชียงใหม่',
-            'term' => '1',
-            'academic_year' => '2568', // ปี พ.ศ. ที่คำนวณแล้ว
 
             // -- ปรัชญา --
             'philosophy' => 'มุ่งมั่นพัฒนาบัณฑิตสู่ความเป็นผู้อุดมด้วยปัญญา อดทน สู้งาน เป็นผู้มีคุณธรรมและจริยธรรม เพื่อความเจริญรุ่งเรืองวัฒนาของสังคมไทยที่มีการเกษตรเป็นรากฐาน',
             'philosophy_education' => 'จัดการศึกษาเพื่อเสริมสร้างปัญญา ในรูปแบบการเรียนรู ้จากการปฏิบัติที ่บูรณาการกับการทำงานตามอมตะโอวาท งานหนักไม่เคยฆ่าคน มุ่งให้ผู้เรียน มีทักษะการเรียนรู้ตลอดชีวิต',
             'philosophy_curriculum' => 'จัดการศึกษาเพื่อการพัฒนาเทคโนโลยี และส่งเสริมการสร้างนวัตกรรม เรียนรู้จากการปฏิบัติที่บูรณาการกับการทำงาน',
-
-            // -- หมวดที่ 1 --
-            's1_course_name' => 'วิทยาการข้อมูล Datascience',
-            's1_course_id' => '10301351',
-            's1_credits' => '3 (2-3-5)', // (ค่าจาก input)
-            's1_curriculum_name' => 'วิทยาศาสตรบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์', // (ค่าจาก input)
-            's1_course_types' => [ // (ค่าจาก checkbox)
-                'specific' => true, 'core' => false, 'major_required' => false,
-                'major_elective' => false, 'free_elective' => false
-            ],
-            's1_prerequisites' => 'ไม่มี', // (ค่าจาก input)
-            's1_instructors' => 'Admin2',
-            's1_revision_term' => '1', // (ค่าจาก checkbox)
-            's1_revision_year' => '2568', // (ค่าจาก span)
-            's1_hours' => [
-                'theory' => '30', 'practice' => '45',
-                'self_study' => '75', 'field_trip' => '50'
-            ],
-
-            // -- หมวดที่ 2 --
-            's2_description' => 'เนื้อหาคำอธิบายรายวิชา ที่ดึงมาจากฐานข้อมูล...',
-            's2_clos' => 'เนื้อหา CLOs ที่ดึงมาจากฐานข้อมูล...',
-
-            // -- หมวดที่ 3 --
-            's3_feedback' => 'ข้อเสนอแนะจาก มคอ.5 (มาจาก DB)',
-            's3_improvement' => 'การปรับปรุง (มาจาก DB)',
-            
-            // -- หมวดที่ 4 --
-            's4_agreement' => 'รายละเอียดข้อตกลงร่วมกัน... (มาจาก DB)',
-            
-            // -- หมวดที่ 5 --
-            's5_1_plos' => [
-                ['id' => 1, 'outcome' => 'PLO 1 Outcome Statement...', 'specific' => true, 'generic' => false, 'level' => 'U', 'type' => 'K'],
-                ['id' => 2, 'outcome' => 'PLO 2 Outcome Statement...', 'specific' => false, 'generic' => true, 'level' => 'E', 'type' => 'S'],
-                ['id' => 3, 'outcome' => 'PLO 3 Outcome Statement...', 'specific' => true, 'generic' => false, 'level' => 'C', 'type' => 'AR'],
-                ['id' => 4, 'outcome' => 'PLO 4 Outcome Statement...', 'specific' => true, 'generic' => false, 'level' => 'AP', 'type' => 'Rs'],
-            ],
-            's5_2_mapping_data' => [
-                // (ข้อมูล ● ○ จากตาราง 5.2)
-                // 0 = &nbsp;, 1 = ●, 2 = ○
-                // ข้อมูลนี้ควรมี 29 ช่อง ตามจำนวนคอลัมน์
-                [1, 0, 0, 0, 1, 0, 0, 2, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 1]
-            ],
-            's5_3_clos_plo_mapping' => [
-                ['clo_id' => 'CLO1', 'clo_desc' => 'ประเมินวิธีการวิเคราะห์ข้อมูล...', 'plo1' => '✓', 'plo2' => '', 'plo3' => '✓', 'plo4' => ''],
-                ['clo_id' => 'CLO2', 'clo_desc' => 'สร้างต้นแบบเพื่อการทำงาน...', 'plo1' => '', 'plo2' => '✓', 'plo3' => '', 'plo4' => '✓'],
-                ['clo_id' => 'CLO3', 'clo_desc' => 'สร้างการทำงานหรือการรู้จัก...', 'plo1' => '', 'plo2' => '', 'plo3' => '✓', 'plo4' => ''],
-            ],
-
-            // -- หมวดที่ 6 --
-            's6_clos_teaching' => [
-                ['clo' => 'CLO1: [คำอธิบาย]', 'teaching' => 'บรรยาย, อภิปราย', 'assessment' => 'สอบย่อย, สอบกลางภาค'],
-                ['clo' => 'CLO2: [คำอธิบาย]', 'teaching' => 'ทำโครงงานกลุ่ม', 'assessment' => 'คะแนนโครงงาน, การนำเสนอ'],
-                ['clo' => 'CLO3: [คำอธิบาย]', 'teaching' => 'กรณีศึกษา', 'assessment' => 'รายงานกรณีศึกษา'],
-            ],
-
-            // -- หมวดที่ 7 --
-            's7_lesson_plan' => [
-                ['week' => 1, 'topic' => 'แนะนำ...', 'objective' => '...', 'activity' => '...', 'media' => '...', 'eval' => '...', 'clo' => '1'],
-                ['week' => 2, 'topic' => 'การวิเคราะห์...', 'objective' => '...', 'activity' => '...', 'media' => '...', 'eval' => '...', 'clo' => '1, 2'],
-                // (เพิ่มข้อมูลจนครบตามจำนวนสัปดาห์)
-            ],
-
-            // -- หมวดที่ 8 --
-            's8_1_assessment_strategies' => [
-                ['method' => 'สอบกลางภาค', 'tool' => 'ข้อสอบอัตนัย', 'ratio' => '30', 'clos' => '1, 2'],
-                ['method' => 'โครงงาน', 'tool' => 'Rubric (ตาม 8.2)', 'ratio' => '40', 'clos' => '2, 3'],
-                ['method' => 'สอบปลายภาค', 'tool' => 'ข้อสอบ', 'ratio' => '30', 'clos' => '1, 3'],
-            ],
-            's8_2_rubrics' => [
-                [
-                    'title' => 'ก. การประเมินการปฏิบัติงาน (Performance)',
-                    'header' => 'คำอธิบายเกณฑ์การให้คะแนนการปฏิบัติงาน',
-                    'levels' => [
-                        ['level' => 5, 'desc' => 'แสดงถึงความเข้าใจปัญหา ...'],
-                        ['level' => 4, 'desc' => '[ใส่คำอธิบายสำหรับระดับ 4]'],
-                        ['level' => 3, 'desc' => '[ใส่คำอธิบายสำหรับระดับ 3]'],
-                        ['level' => 2, 'desc' => '[ใส่คำอธิบายสำหรับระดับ 2]'],
-                        ['level' => 1, 'desc' => '[ใส่คำอธิบายสำหรับระดับ 1]'],
-                        ['level' => 0, 'desc' => 'ไม่ส่งผลงาน'],
-                    ]
-                ],
-                [
-                    'title' => 'ข. การประเมินการนำเสนอ (Presentation)',
-                    'header' => 'คำอธิบายเกณฑ์การให้คะแนนการนำเสนอ',
-                    'levels' => [
-                        ['level' => 5, 'desc' => 'นำเสนอได้ชัดเจน...'],
-                        //... (เพิ่ม level/desc)
-                        ['level' => 0, 'desc' => 'ไม่นำเสนอ'],
-                    ]
-                ],
-            ],
-            
-            // -- หมวดที่ 9 --
-            's9_references' => [
-                'สื่อการเรียนรู้ 1...',
-                'สื่อการเรียนรู้ 2...',
-            ],
-            's9_research' => 'รายละเอียดงานวิจัยที่นำมาสอน...',
-            's9_academic_service' => 'รายละเอียดการบริการวิชาการ...',
-            's9_culture' => 'รายละเอียดงานทำนุบำรุงศิลปวัฒนธรรม...',
-            
-            // -- หมวดที่ 10 --
-            's10_grading_criteria' => [
-                ['grade' => 'A', 'criteria' => '80.00% ขึ้นไป'],
-                ['grade' => 'B+', 'criteria' => '75.00% - 79.99%'],
-                ['grade' => 'B', 'criteria' => '70.00% - 74.99%'],
-                ['grade' => 'C+', 'criteria' => '65.00% - 69.99%'],
-                ['grade' => 'C', 'criteria' => '60.00% - 64.99%'],
-                ['grade' => 'D+', 'criteria' => '55.00% - 59.99%'],
-                ['grade' => 'D', 'criteria' => '50.00% - 54.99%'],
-                ['grade' => 'F', 'criteria' => 'ต่ำกว่า 50.00%'],
-            ],
-
-            // -- หมวดที่ 11 --
-            's11_grade_correction' => 'รายละเอียดขั้นตอนการแก้ไขคะแนน...',
         ];
-        // --- สิ้นสุดส่วนข้อมูลจำลอง ---
 
 
         try {
-            // 2. สร้างอ็อบเจกต์ PhpWord
+            // สร้างอ็อบเจกต์ PhpWord
             $phpWord = new PhpWord();
-            $phpWord->setDefaultFontName('TH Sarabun New'); // (ต้องติดตั้งฟอนต์นี้บนเซิร์ฟเวอร์)
+            $phpWord->setDefaultFontName('TH Sarabun New');
             $phpWord->setDefaultFontSize(16);
 
-            // 3. ตั้งค่าหน้ากระดาษ (A4, ขอบ 2.5cm)
+            // ตั้งค่าหน้ากระดาษ (A4, ขอบ 2.5cm)
             $cmMargin = 2.5;
             $section = $phpWord->addSection([
                 'paperSize'   => 'A4',
@@ -211,7 +570,7 @@ class DocumentController extends Controller
                 'marginRight' => Converter::cmToTwip($cmMargin),
             ]);
 
-            // 4. --- เริ่มสร้างเอกสาร ---
+            // เริ่มสร้างเอกสาร
 
             // === ส่วนหัว (Logo และ Title) ===
             if (file_exists($data['logo_path'])) {
@@ -273,24 +632,24 @@ class DocumentController extends Controller
             $table1->addCell(7500, ['gridSpan' => 3])->addText($data['s1_course_name']);
             
             $table1->addRow();
-            $table1->addCell(2500, $thStyle)->addText('2. รหัสวิชา', $thFont, $cellCenter);
+            $table1->addCell(2500, $thStyle)->addText('รหัสวิชา', $thFont, $cellCenter);
             $table1->addCell(7500, ['gridSpan' => 3])->addText($data['s1_course_id']);
             
             $table1->addRow();
-            $table1->addCell(2500, $thStyle)->addText('3. จำนวนหน่วยกิต', $thFont, $cellCenter);
+            $table1->addCell(2500, $thStyle)->addText('จำนวนหน่วยกิต', $thFont, $cellCenter);
             $table1->addCell(7500, ['gridSpan' => 3])->addText($data['s1_credits']);
             
             $table1->addRow();
-            $table1->addCell(2500, $thStyle)->addText('4. หลักสูตร', $thFont, $cellCenter);
+            $table1->addCell(2500, $thStyle)->addText('หลักสูตร', $thFont, $cellCenter);
             $table1->addCell(7500, ['gridSpan' => 3])->addText($data['s1_curriculum_name']);
 
             // (แปลง Checkboxes เป็น Text)
             $typesText = '';
-            $typesText .= ($data['s1_course_types']['specific'] ? '[✓]' : '[ ]') . ' วิชาเฉพาะ ';
-            $typesText .= ($data['s1_course_types']['core'] ? '[✓]' : '[ ]') . ' กลุ่มวิชาแกน ';
-            $typesText .= ($data['s1_course_types']['major_required'] ? '[✓]' : '[ ]') . ' เอกบังคับ ';
-            $typesText .= ($data['s1_course_types']['major_elective'] ? '[✓]' : '[ ]') . ' เอกเลือก ';
-            $typesText .= ($data['s1_course_types']['free_elective'] ? '[✓]' : '[ ]') . ' วิชาเลือกเสรี';
+            $typesText .= ($data['course_types']['specific'] ? '[✓]' : '[ ]') . ' วิชาเฉพาะ ';
+            $typesText .= ($data['course_types']['core'] ? '[✓]' : '[ ]') . ' กลุ่มวิชาแกน ';
+            $typesText .= ($data['course_types']['major_required'] ? '[✓]' : '[ ]') . ' เอกบังคับ ';
+            $typesText .= ($data['course_types']['major_elective'] ? '[✓]' : '[ ]') . ' เอกเลือก ';
+            $typesText .= ($data['course_types']['free_elective'] ? '[✓]' : '[ ]') . ' วิชาเลือกเสรี';
             $table1->addRow();
             $table1->addCell(2500, $thStyle)->addText('5. ประเภทของรายวิชา', $thFont, $cellCenter);
             $table1->addCell(7500, ['gridSpan' => 3])->addText($typesText);
@@ -331,11 +690,11 @@ class DocumentController extends Controller
             $table2->addRow();
             $cell2_1 = $table2->addCell(10000);
             $cell2_1->addText('2.1 คำอธิบายรายวิชา', ['bold' => true]);
-            $cell2_1->addText(htmlspecialchars($data['s2_description']));
+            $cell2_1->addText(htmlspecialchars($data['description']));
             $table2->addRow();
             $cell2_2 = $table2->addCell(10000);
             $cell2_2->addText('2.2 ผลลัพธ์การเรียนรู้ระดับรายวิชา (Course learning Outcome) CLOs', ['bold' => true]);
-            $cell2_2->addText(htmlspecialchars($data['s2_clos']));
+            $cell2_2->addText(htmlspecialchars($data['clos']));
 
             // === หมวดที่ 3 : การปรับปรุง ===
             $section->addTextBreak(1);
@@ -345,19 +704,19 @@ class DocumentController extends Controller
             $table3->addCell(5000, $thStyle)->addText('ข้อเสนอแนะ', $thFont);
             $table3->addCell(5000, $thStyle)->addText('การปรับปรุง', $thFont);
             $table3->addRow();
-            $table3->addCell(5000)->addText(htmlspecialchars($data['s3_feedback']));
-            $table3->addCell(5000)->addText(htmlspecialchars($data['s3_improvement']));
+            $table3->addCell(5000)->addText(htmlspecialchars($data['feedback']));
+            $table3->addCell(5000)->addText(htmlspecialchars($data['improvement']));
 
             // === หมวดที่ 4 : ข้อตกลงร่วมกัน ===
             $section->addTextBreak(1);
             $section->addText('หมวดที่ 4: ข้อตกลงร่วมกันระหว่างผู้สอนและผู้เรียน', ['bold' => true, 'size' => 16, 'bgColor' => 'DBEAFE']);
-            $section->addText(htmlspecialchars($data['s4_agreement']));
+            $section->addText(htmlspecialchars($data['agreement']));
 
             // === หมวดที่ 5 : ความสอดคล้อง ===
             $section->addTextBreak(1);
             $section->addText('หมวดที่ 5: ความสอดคล้องระหว่างผลลัพธ์การเรียนรู้ระดับหลักสูตร (PLOs) กับ ผลลัพธ์การเรียนรู้ระดับรายวิชา (CLOs) และผลทักษะการเรียนรู้ตลอดชีวิต (LLLs)', ['bold' => true, 'size' => 16, 'bgColor' => 'DBEAFE']);
             
-            // --- 5.1 PLOs ---
+            // 5.1 PLOs
             $section->addText('5.1 ผลลัพธ์การเรียนรู้ของหลักสูตร', ['bold' => true, 'size' => 14]);
             $table5_1 = $section->addTable('MainTable');
             $table5_1->addRow();
@@ -378,7 +737,7 @@ class DocumentController extends Controller
                 $table5_1->addCell(1500, $vAlignCenter)->addText($plo['type'], null, $cellCenter);
             }
             
-            // --- 5.2 Mapping ---
+            // 5.2 Mapping
             $section->addTextBreak(1);
             $section->addText('5.2 มาตรฐานผลการเรียนรู้รายวิชา (Curriculum Mapping)', ['bold' => true, 'size' => 14]);
             $table5_2 = $section->addTable('MainTable');
@@ -413,7 +772,7 @@ class DocumentController extends Controller
                 }
             }
 
-            // --- 5.3 CLO-PLO Mapping ---
+            // 5.3 CLO-PLO Mapping
             $section->addTextBreak(1);
             $section->addText('5.3 ความสอดคล้องของรายวิชากับ PLOs, CLOs และ LLLs', ['bold' => true, 'size' => 14]);
             $table5_3 = $section->addTable('MainTable');
@@ -478,7 +837,7 @@ class DocumentController extends Controller
             // === หมวดที่ 8 : การประเมิน ===
             $section->addTextBreak(1);
             $section->addText('หมวดที่ 8 : การประเมินการบรรลุผลลัพธ์การเรียนรู้รายวิชา (CLOs)', ['bold' => true, 'size' => 16, 'bgColor' => 'DBEAFE']);
-            // --- 8.1 กลยุทธ์ ---
+            // 8.1 กลยุทธ์
             $section->addText('8.1 กลยุทธ์การประเมิน', ['bold' => true, 'size' => 14]);
             $table8_1 = $section->addTable('MainTable');
             $table8_1->addRow();
@@ -495,7 +854,7 @@ class DocumentController extends Controller
                 $table8_1->addCell(2500, $vAlignCenter)->addText($strategy['clos'], null, $cellCenter);
             }
             
-            // --- 8.2 Rubrics ---
+            // 8.2 Rubrics
             $section->addTextBreak(1);
             $section->addText('8.2 วิธีการประเมิน แบบรูบริค (Rubric) หรือ อื่นๆ (ถ้ามี)', ['bold' => true, 'size' => 14]);
             
@@ -552,7 +911,7 @@ class DocumentController extends Controller
             $section->addText(htmlspecialchars($data['s11_grade_correction']));
 
 
-            // 5. --- สิ้นสุดการสร้างเอกสาร ---
+            // 5. สิ้นสุดการสร้างเอกสาร
             
             // 6. บันทึกไฟล์และส่งให้ดาวน์โหลด
             $fileName = $data['fileName'] . '.docx';

@@ -64,6 +64,9 @@ Route::middleware('auth')->group(function () {
     Route::post('/updatestartprompt', [CourseController::class, 'updateStartPrompt']);
     Route::post('/getprompt', [CourseController::class, 'getPrompt']);
     Route::post('/saveprompt', [CourseController::class, 'savePrompt'])->name('save.prompt');
+
+    Route::patch('/savedataedit', [DocumentController::class, 'savedataedit']);
+    Route::get('/getdataedit', [DocumentController::class, 'getInitialData']);
 });
 
 Route::middleware(['auth', 'admin'])->group(function () {

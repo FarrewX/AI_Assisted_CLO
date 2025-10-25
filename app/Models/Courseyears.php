@@ -35,4 +35,9 @@ class Courseyears extends Model
     {
         return $this->hasOne(Status::class, 'ref_id', 'id');
     }
+
+    public function curriculum()
+    {
+        return $this->hasOne(Curriculum::class, 'ref_id', 'id');
+    }
 }

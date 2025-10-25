@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>แบบฟอร์ม มคอ.3</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -18,1162 +19,1698 @@
             }
         }
     </script>
-    
-    </head>
-
+</head>
 <body>
-<div class="flex justify-center py-6 bg-gray-100 font-sans text-base">
-    <div class="fixed top-4 right-4 flex gap-3 z-50">
-        <button type="button" onclick="window.history.back()"
-            class="px-4 py-2 bg-blue-300 hover:bg-blue-400 text-gray-900 rounded-md shadow">
-            <a href="/export-docx" class="download-button">
-                ดาวน์โหลดไฟล์ .docx 
-            </a>
-        </button>
-    </div>
-    <div class="bg-white w-[210mm] min-h-[297mm] p-[25mm] shadow-md mb-5 mx-auto">
-        <div class="flex justify-center mb-4">
-            <img src="/image/mjulogo.jpg" 
-                alt="โลโก้ MJU" 
-                class="h-20 w-20 rounded-full object-cover">
+    <div class="flex justify-center py-6 bg-gray-100 font-sans text-base">
+        <div class="fixed top-4 right-4 flex gap-3 z-50">
+            <button type="button" onclick="window.history.back()"
+                class="px-4 py-2 bg-blue-300 hover:bg-blue-400 text-gray-900 rounded-md shadow">
+                <a href="/export-docx" class="download-button">
+                    ดาวน์โหลดไฟล์ .docx 
+                </a>
+            </button>
         </div>
-    
-        <h1 class="text-center text-[20px] font-bold">มหาวิทยาลัยแม่โจ้</h1>
-        <h2 class="text-center font-semibold mb-6">มคอ. 3 รายละเอียดรายวิชา</h2>
-    
-        <div class="justify-center mb-2 text-[16px]">
-            <div class="flex flex-wrap items-baseline">
-                <div class="flex items-baseline mr-6 mb-2">
-                    <label class="whitespace-nowrap font-semibold">คณะ</label>
-                    <span class="px-2 min-w-[150px] border-b border-dotted border-gray-500 text-center">วิทยาศาสตร์</span>
-                    <!-- <span class="px-2 min-w-[150px] border-b border-dotted border-gray-500 text-center">{{--{{ faculty }}--}}</span> -->
-
-                    <label class="ml-2 whitespace-nowrap font-semibold">สาขาวิชา</label>
-                    <span class="px-2 min-w-[200px] border-b border-dotted border-gray-500 text-center">วิทยาการคอมพิวเตอร์</span>
-                    <!-- <span class="px-2 min-w-[200px] border-b border-dotted border-gray-500 text-center">{{--{{ major }}--}}</span> -->
-
-                    <label class="ml-2 whitespace-nowrap font-semibold">หลักสูตรปรับปรุง พ.ศ.</label>
-                    <span name="curriculum_year" id="curriculum_year" class="w-[70px] border-b border-dotted border-gray-500 text-center">2565</span>
-                    <!-- <span name="curriculum_year" id="curriculum_year" class="w-[70px] border-b border-dotted border-gray-500 text-center">{{--{{ improved_course }}--}}</span> -->
-                </div>
+        <div class="bg-white w-[210mm] min-h-[297mm] p-[25mm] shadow-md mb-5 mx-auto">
+            <div class="flex justify-center mb-4">
+                <img src="/image/mjulogo.jpg" 
+                    alt="โลโก้ MJU" 
+                    class="h-20 w-20 rounded-full object-cover">
             </div>
+        
+            <h1 class="text-center text-[20px] font-bold">มหาวิทยาลัยแม่โจ้</h1>
+            <h2 class="text-center font-semibold mb-6">มคอ. 3 รายละเอียดรายวิชา</h2>
 
-            <div class="flex flex-wrap items-baseline">
-                <div class="flex items-baseline mr-6 mb-2">
-                    <label class="whitespace-nowrap font-semibold">วิทยาเขต</label>
-                    <span class="ml-2 px-2 min-w-[200px] border-b border-dotted border-gray-500 text-center">เชียงใหม่</span>
-                    <div class="flex items-baseline mb-2">
-                        <label class="whitespace-nowrap font-semibold">ภาคการศึกษา/ปีการศึกษา</label>
-                        <div name="term"  id="term" class="ml-2 w-[100px] bg-transparent border-b border-dotted border-gray-500 appearance-none text-center">
-                            <span value=""></span>
-                        </div> /
-                        <div name="academic_year" id="academic_year" 
-                            class="ml-2 w-[115px] bg-transparent border-b border-dotted border-gray-500 appearance-none text-center">
-                            <span value=""></span>
+            <div class="justify-center mb-2 text-[16px]">
+                <div class="flex flex-wrap items-baseline">
+                    <div class="flex items-baseline mr-6 mb-2">
+                        <label class="whitespace-nowrap font-semibold">คณะ</label>
+                        <input name="faculty" class="px-2 min-w-[150px] border-b border-dotted border-gray-500 text-center" value="{{ $data->faculty ?? 'ระบุคณะ' }}"></input>
+                        <label class="ml-2 whitespace-nowrap font-semibold">สาขาวิชา</label>
+                        <input name="major" class="px-2 min-w-[200px] border-b border-dotted border-gray-500 text-center" value="{{ $data->major ?? 'ระบุสาขา' }}"></input>
+                        <label class="ml-2 whitespace-nowrap font-semibold">หลักสูตรปรับปรุง</label>
+                        <input name="curriculum_year" id="curriculum_year" class="w-[70px] border-b border-dotted border-gray-500 text-center" 
+                            value="{{ ($data->curriculum_year ?? null) ? 'พ.ศ. ' . $data->curriculum_year : '' }}"
+                            placeholder="ระบุปี พ.ศ."></input>
+                        </div>
+                </div>
+
+                <div class="flex flex-wrap items-baseline">
+                    <div class="flex items-baseline mr-6 mb-2">
+                        <label class="whitespace-nowrap font-semibold">วิทยาเขต</label>
+                        <input name="campus" class="ml-2 px-2 min-w-[200px] border-b border-dotted border-gray-500 text-center" value="{{ $data->campus ?? 'ระบุวิทยาเขต' }}"></input>
+                        <div class="flex items-baseline mb-2">
+                            <label class="whitespace-nowrap font-semibold">ภาคการศึกษา/ปีการศึกษา</label>
+                            <div name="term" id="term" class="ml-2 w-[100px] bg-transparent border-b border-dotted border-gray-500 appearance-none text-center">
+                                <span>{{ $data->term ?? '' }}</span>
+                            </div> /
+                            <div name="academic_year" id="academic_year" 
+                                class="ml-2 w-[115px] bg-transparent border-b border-dotted border-gray-500 appearance-none text-center">
+                                <span>{{ $data->year ? $data->year + 543 : '' }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="flex flex-col">
-                <h3 class="text-[20px] font-semibold">ปรัชญามหาวิทยาลัยแม่โจ้</h3>
-                <span class="leading-relaxed" id="philosophy">
-                    {{-- {{ philosophy }} --}}
-                    มุ่งมั่นพัฒนาบัณฑิตสู่ความเป็นผู้อุดมด้วยปัญญา อดทน สู้งาน เป็นผู้มีคุณธรรมและจริยธรรม เพื่อ
-                    ความเจริญรุ่งเรืองวัฒนาของสังคมไทยที่มีการเกษตรเป็นรากฐาน 
-                </span>
-                <h3 class="text-[20px] font-semibold">ปรัชญาการศึกษา มหาวิทยาลัยแม่โจ้</h3>
-                <span class="leading-relaxed" id="philosophy_education">
-                    {{-- {{ philosophy_education }} --}}
-                    จัดการศึกษาเพื่อเสริมสร้างปัญญา ในรูปแบบการเรียนรู ้จากการปฏิบัติที ่บูรณาการกับการทำงานตาม
-                    อมตะโอวาท งานหนักไม่เคยฆ่าคน มุ่งให้ผู้เรียน มีทักษะการเรียนรู้ตลอดชีวิต
-                </span>
-                <h3 class="text-[20px] font-semibold">ปรัชญาหลักสูตร</h3>
-                <span class="leading-relaxed" id="philosophy_curriculum">
-                    {{-- {{ philosophy_curriculum }} --}}
-                    จัดการศึกษาเพื่อการพัฒนาเทคโนโลยี และส่งเสริมการสร้างนวัตกรรม เรียนรู้จากการปฏิบัติที่บูรณาการ
-                    กับการทำงาน
-                </span>
-            </div>
-            {{-- =========================================================================================================================================================================================================================== --}}
-            <h3 class="mt-6 font-bold">หมวดที่ 1 : ข้อมูลทั่วไป</h3>
-            <table class="w-full border-collapse border border-black mt-2 text-sm">
-                <tbody>
-                    <tr class="bg-gray-100 font-semibold">
-                        <th class="w-1/4 border border-black p-2.5 align-top bg-blue-100 text-center">1. ชื่อวิชา</th>
-                        <td colspan="3" class="border border-black p-2.5 align-top" id="course_name">วิทยาการข้อมูล Datascience</td>
-                        <!-- <td colspan="3" class="border border-black p-2.5 align-top">{{-- {{ course_name }} --}}</td> -->
-                    </tr>
-                    <tr>
-                        <th class="border border-black p-2.5 align-top bg-blue-100 text-center">2. รหัสวิชา</th>
-                        <td colspan="3" class="border border-black p-2.5 align-top" id="course_id">10301351</td>
-                        <!-- <td colspan="3" class="border border-black p-2.5 align-top">{{-- {{ course_id }} --}}</td> -->
-                    </tr>
-                    <tr>
-                        <th class="border border-black p-2.5 align-top bg-blue-100 text-center">3. จำนวนหน่วยกิต</th>
-                        <td colspan="3" class="border border-black align-top"> 
-                            <input type="text" name="credits" id="credits" 
-                                class="w-full p-2.5 border-none focus:outline-none focus:ring-0" 
-                                value="">
-                        </td>
-                    </tr>
-                    <tr>
-                        <th class="border border-black p-2.5 align-top bg-blue-100 text-center">4. หลักสูตร</th>
-                        <td colspan="3" class="border border-black align-top">
-                            <input type="text" name="curriculum_name" id="curriculum_name" 
-                                class="w-full p-2.5 border-none focus:outline-none focus:ring-0" 
-                                value="">
-                        </td>
-                    </tr>
-                    <tr> 
-                        <th class="border border-black p-2.5 align-top bg-blue-100 text-center">5. ประเภทของรายวิชา</th> 
-                        <td colspan="3" class="border border-black p-2.5 align-top" id="course_type_section"> 
-                            <label class="inline-flex items-center"><input type="checkbox" checked class="mr-1.5 scale-125" value="specific"> วิชาเฉพาะ</label> 
-                            <label class="inline-flex items-center ml-4"><input type="checkbox" class="mr-1.5 scale-125" value="core"> กลุ่มวิชาแกน</label> 
-                            <label class="inline-flex items-center ml-4"><input type="checkbox" class="mr-1.5 scale-125" value="major_required"> เอกบังคับ</label> 
-                            <label class="inline-flex items-center ml-4"><input type="checkbox" class="mr-1.5 scale-125" value="major_elective"> เอกเลือก</label> 
-                            <label class="inline-flex items-center ml-4"><input type="checkbox" class="mr-1.5 scale-125" value="free_elective"> วิชาเลือกเสรี</label> 
-                        </td> 
-                    </tr> 
-                    <tr> 
-                        <th class="border border-black p-2.5 align-top bg-blue-100 text-center">6. วิชาบังคับก่อน</th> 
-                        <td colspan="3" class="border border-black p-2.5 align-top">
-                            <input type="text" name="curriculum_name" id="prerequisites"
-                                class="w-full border-none focus:outline-none focus:ring-0" 
-                                value="">
-                        </td> 
-                    </tr> 
-                    <tr> 
-                        <th class="border border-black p-2.5 align-top bg-blue-100 text-center">7. ผู้สอน</th> 
-                        <td colspan="3" class="border border-black p-2.5 align-top" id="instructors">Admin2</td>
-                        <!-- <td colspan="3" class="border border-black p-2.5 align-top" id="instructors">{{-- {{ name }} --}}</td>  -->
-                    </tr> 
-                    <tr> 
-                        <th class="border border-black p-2.5 align-top bg-blue-100 text-center">8.การแก้ไขล่าสุด</th> 
-                        <td colspan="3" class="border border-black p-2.5" id="revision_section"> ภาคการศึกษาที่
-                            <label class="inline-flex items-center ml-4"><input type="checkbox" class="mr-1.5 scale-125" id="revision_term_1">1</label>
-                            <label class="inline-flex items-center ml-4 mr-4"><input type="checkbox" class="mr-1.5 scale-125" id="revision_term_2">2</label> 
-                            <label class="inline-flex items-center">ปีการศึกษา <span id="revision_year_display" class="font-semibold ml-1.5"></span></label> 
-                            
-                        </td> 
-                    </tr> 
-                    <tr class="text-center font-semibold bg-gray-100"> 
-                        <td colspan="4" class="border border-black p-2.5 align-top">9.จำนวนชั่วโมงที่ใช้ภาคการศึกษา</td> 
-                    </tr> 
-                    <tr> 
-                        <th class="border border-black p-2.5 align-top bg-blue-100 text-center font-normal">
-                            ภาคทฤษฎี 
-                            <span id="hours_theory" contenteditable="true" class="font-bold inline-block px-2 py-0.5 bg-white border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-yellow-50">00</span> 
-                            ชั่วโมง
-                        </th> 
-                        <th class="border border-black p-2.5 align-top bg-blue-100 text-center font-normal">
-                            ภาคปฏิบัติ 
-                            <span id="hours_practice" contenteditable="true" class="font-bold inline-block px-2 py-0.5 bg-white border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-yellow-50">00</span> 
-                            ชั่วโมง
-                        </th> 
-                        <th class="border border-black p-2.5 align-top bg-blue-100 text-center font-normal">
-                            การศึกษาด้วยตนเอง 
-                            <span id="hours_self_study" contenteditable="true" class="font-bold inline-block px-2 py-0.5 bg-white border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-yellow-50">00</span> 
-                            ชั่วโมง
-                        </th> 
-                        <th class="border border-black p-2.5 align-top bg-blue-100 text-center font-normal">
-                            ทัศนศึกษา/ฝึกงาน 
-                            <span id="hours_field_trip" contenteditable="true" class="font-bold inline-block px-2 py-0.5 bg-white border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-yellow-50">00</span> 
-                            ชั่วโมง
-                        </th> 
-                    </tr> 
-                </tbody>
-            </table>
-            {{-- =========================================================================================================================================================================================================================== --}}
-            <h3 class="mt-6 font-bold bg-blue-200 inline-block px-4 py-1.5 rounded text-gray-900">
-                หมวดที่ 2 : คำอธิบายรายวิชาและผลลัพธ์ระดับรายวิชา (CLOs)
-            </h3>
-            <table class="w-full border-collapse mt-2.5 text-[15px] bg-white shadow-sm border border-gray-300">
-                <tbody>
-                    <tr>
-                        <td class="p-4 border border-gray-300">
-                            <b>2.1 คำอธิบายรายวิชา</b>
-                            <br>
-                            <textarea 
-                                name="course_description" 
-                                rows="4" 
-                                class="w-full mt-2 p-3 text-[15px] leading-relaxed border border-gray-300 rounded-lg bg-white resize-vertical shadow-sm transition-all
-                                        focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
-                            ><?php echo htmlspecialchars($course['description'] ?? ''); ?></textarea>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="p-4 border border-gray-300">
-                            <b>2.2 ผลลัพธ์การเรียนรู้ระดับรายวิชา (Course learning Outcome) CLOs </b>
-                            <br>
-                            <textarea 
-                                name="course_clos" 
-                                rows="4" 
-                                class="w-full mt-2 p-3 text-[15px] leading-relaxed border border-gray-300 rounded-lg bg-white resize-vertical shadow-sm transition-all
-                                        focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
-                            ><?php echo htmlspecialchars($course['clos'] ?? ''); ?></textarea>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            {{-- =========================================================================================================================================================================================================================== --}}
-            <table class="w-full border-collapse border border-gray-400 mt-6 text-sm">
-                <thead class="font-semibold">
-                    <tr class="bg-blue-100">
-                        <th colspan="2" class="p-2 text-left border border-gray-400">
-                            หมวดที่ 3 : การปรับปรุงรายวิชาตามข้อเสนอแนะจาก มคอ.5
-                        </th>
-                    </tr>
-                    <tr class="bg-gray-200">
-                        <th class="w-1/2 p-2 text-left border border-gray-400">ข้อเสนอแนะ</th>
-                        <th class="w-1/2 p-2 text-left border border-gray-400">การปรับปรุง</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td class="p-2 border border-gray-400 align-top">
-                            <textarea name="feedback" rows="4" 
-                                        class="w-full p-1 border border-gray-300 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none">
-                            <?php echo htmlspecialchars($course['feedback'] ?? ''); ?></textarea>
-                        </td>
-                        <td class="p-2 border border-gray-400 align-top">
-                            <textarea name="improvement" rows="4" 
-                                        class="w-full p-1 border border-gray-300 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none">
-                            <?php echo htmlspecialchars($course['improvement'] ?? ''); ?></textarea>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            {{-- =========================================================================================================================================================================================================================== --}}
-            <h3 class="text-center font-bold text-[#003366] mt-6 bg-blue-200 inline-block px-4 py-1.5 rounded text-gray-900">
-                หมวดที่ 4: ข้อตกลงร่วมกันระหว่างผู้สอนและผู้เรียน 
-            </h3><br>
-            <textarea 
-                class="w-[90%] h-36 p-4 text-base border border-gray-300 rounded-lg bg-white resize-vertical shadow-sm transition-all mt-2 mb-6
-                        focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
-                placeholder='พิมพ์รายละเอียด'
-            ></textarea>
-            {{-- =========================================================================================================================================================================================================================== --}}
-            <h3 class="text-center font-bold text-[#003366] mt-6 bg-blue-200 inline-block px-4 py-1.5 rounded text-gray-900">
-                หมวดที่ 5: ความสอดคล้องระหว่างผลลัพธ์การเรียนรู้ระดับหลักสูตร (PLOs) กับ  ผลลัพธ์การเรียนรู้ระดับรายวิชา (CLOs) และผลทักษะการเรียนรู้ตลอดชีวิต (LLLs)
-            </h3>
-            <h4 class="mt-2 font-semibold">5.1 ผลลัพธ์การเรียนรู้ของหลักสูตร</h4>
-            <h4 class="mt-2 font-semibold">หลักสูตรฯ วิทยาศาสตรบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์ </h4>
-            <table class="w-full border-collapse border border-gray-400 mt-2 text-sm">
-                <thead class="bg-gray-100 font-semibold text-center">
-                    <tr>
-                        <th class="w-[8%] border border-black p-2.5 align-top bg-blue-100 text-center">PLOs</th>
-                        <th class="w-[45%] border border-black p-2.5 align-top bg-blue-100 text-center">Outcome Statement</th>
-                        <th class="w-[8%] border border-black p-2.5 align-top bg-blue-100 text-center">Specific LO</th>
-                        <th class="w-[8%] border border-black p-2.5 align-top bg-blue-100 text-center">Generic LO</th>
-                        <th class="w-[8%] border border-black p-2.5 align-top bg-blue-100 text-center">Level</th>
-                        <th class="w-[15%] border border-black p-2.5 align-top bg-blue-100 text-center">Type</th>
-                    </tr>
-                </thead>
-                <tbody>
-                @for ($i = 1; $i <= 4; $i++)
-                    <tr>
-                        <td class="text-center border border-black p-2.5 align-top">{{ $i }}</td>
-                        <td class="border border-black p-2.5 align-top">
-                            <textarea name="plo{{ $i }}_outcome" rows="3" class="w-full border border-gray-300 rounded p-1"></textarea>
-                        </td>
-                        <td class="text-center border border-black p-2.5 align-top">
-                            <input type="checkbox" name="plo{{ $i }}_specific" class="scale-125">
-                        </td>
-                        <td class="text-center border border-black p-2.5 align-top">
-                            <input type="checkbox" name="plo{{ $i }}_generic" class="scale-125">
-                        </td>
-                        <td class="text-center border border-black p-2.5 align-top">
-                            <select name="plo{{ $i }}_level" 
-                            class="border rounded px-2 py-1 text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
-                                <option value="">--เลือก--</option>
-                                <option value="R - Remember">R</option>
-                                <option value="U - Understand">U</option>
-                                <option value="AP - Apply">AP</option>
-                                <option value="AN - Analyze">AN</option>
-                                <option value="E - Evaluate">E</option>
-                                <option value="C - Create">C</option>
-                            </select>
-                        </td>
-                        <td class="text-center border border-black p-2.5 align-top">
-                            <select name="plo{{ $i }}_type" 
-                            class="border rounded px-2 py-1 text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
-                                <option value="">--เลือก--</option>
-                                <option value="K - Knowledge">K</option>
-                                <option value="S- Skill">S</option>
-                                <option value="AR - Application">AR</option>
-                                <option value="Rs - Responsibility">Rs</option>
-                            </select>
-                        </td>
-                    </tr>
-                @endfor
-                </tbody>
-            </table>
-            <p class="text-xs">Bloom's Taxonomy : R-Remember, U-Understand,  AP-Apply,  AN-Analyze, E-Evaluate,  C-Create </p>
-            
-            <div id="section-5-2">
-                <h3 class="font-bold text-lg">5.2 มาตรฐานผลการเรียนรู้รายวิชา (Curriculum Mapping)</h3>
-                <p class="text-sm mb-2">หลักสูตรฯ วิทยาศาสตรบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์</p>
-        
-                <div class="overflow-x-auto">
-                    <table class="min-w-full border-collapse border border-gray-400 text-sm">
-                        <thead class="text-center font-semibold align-middle">
-                            <tr class="bg-white">
-                                <th rowspan="2" class="border border-gray-400 p-2 align-middle w-48 bg-white">รายวิชา</th>
-                                <th colspan="7" class="border border-gray-400 p-2 align-middle text-xs bg-yellow-100">ด้านคุณธรรมและจริยธรรม</th>
-                                <th colspan="8" class="border border-gray-400 p-2 align-middle text-xs bg-yellow-100">ด้านความรู้</th>
-                                <th colspan="4" class="border border-gray-400 p-2 align-middle text-xs bg-white">ทักษะทางปัญญา</th>
-                                <th colspan="6" class="border border-gray-400 p-2 align-middle text-xs bg-yellow-100">ทักษะระหว่างบุคคลและ<br>ความรับผิดชอบ</th>
-                                <th colspan="4" class="border border-gray-400 p-2 align-middle text-xs bg-white">ทักษะวิเคราะห์<br>เชิงตัวเลข การสื่อสารและ<br>การใช้เทคโนโลยีสารสนเทศ</th>
-                            </tr>
-                                <tr class="bg-white">
-                                <th class="border border-gray-400 p-2 w-8 font-normal bg-yellow-100">1</th>
-                                <th class="border border-gray-400 p-2 w-8 font-normal bg-yellow-100">2</th>
-                                <th class="border border-gray-400 p-2 w-8 font-normal bg-yellow-100">3</th>
-                                <th class="border border-gray-400 p-2 w-8 font-normal bg-yellow-100">4</th>
-                                <th class="border border-gray-400 p-2 w-8 font-normal bg-yellow-100">5</th>
-                                <th class="border border-gray-400 p-2 w-8 font-normal bg-yellow-100">6</th>
-                                <th class="border border-gray-400 p-2 w-8 font-normal bg-yellow-100">7</th>
-                                <th class="border border-gray-400 p-2 w-8 font-normal bg-yellow-100">1</th>
-                                <th class="border border-gray-400 p-2 w-8 font-normal bg-yellow-100">2</th>
-                                <th class="border border-gray-400 p-2 w-8 font-normal bg-yellow-100">3</th>
-                                <th class="border border-gray-400 p-2 w-8 font-normal bg-yellow-100">4</th>
-                                <th class="border border-gray-400 p-2 w-8 font-normal bg-yellow-100">5</th>
-                                <th class="border border-gray-400 p-2 w-8 font-normal bg-yellow-100">6</th>
-                                <th class="border border-gray-400 p-2 w-8 font-normal bg-yellow-100">7</th>
-                                <th class="border border-gray-400 p-2 w-8 font-normal bg-yellow-100">8</th>
-                                <th class="border border-gray-400 p-2 w-8 font-normal bg-white">1</th>
-                                <th class="border border-gray-400 p-2 w-8 font-normal bg-white">2</th>
-                                <th class="border border-gray-400 p-2 w-8 font-normal bg-white">3</th>
-                                <th class="border border-gray-400 p-2 w-8 font-normal bg-white">4</th>
-                                <th class="border border-gray-400 p-2 w-8 font-normal bg-yellow-100">1</th>
-                                <th class="border border-gray-400 p-2 w-8 font-normal bg-yellow-100">2</th>
-                                <th class="border border-gray-400 p-2 w-8 font-normal bg-yellow-100">3</th>
-                                <th class="border border-gray-400 p-2 w-8 font-normal bg-yellow-100">4</th>
-                                <th class="border border-gray-400 p-2 w-8 font-normal bg-yellow-100">5</th>
-                                <th class="border border-gray-400 p-2 w-8 font-normal bg-yellow-100">6</th>
-                                <th class="border border-gray-400 p-2 w-8 font-normal bg-white">1</th>
-                                <th class="border border-gray-400 p-2 w-8 font-normal bg-white">2</th>
-                                <th class="border border-gray-400 p-2 w-8 font-normal bg-white">3</th>
-                                <th class="border border-gray-400 p-2 w-8 font-normal bg-white">4</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white">
-                            <tr>
-                                <td class="border border-gray-400 p-2 text-left align-top">
-                                    10301351<br>วิทยาการข้อมูล
-                                </td>
-                                <td class="score-cell border border-gray-400 p-2 text-center align-middle cursor-pointer hover:bg-gray-100 transition-colors" data-state="0">&nbsp;</td>
-                                <td class="score-cell border border-gray-400 p-2 text-center align-middle cursor-pointer hover:bg-gray-100 transition-colors" data-state="0">&nbsp;</td>
-                                <td class="score-cell border border-gray-400 p-2 text-center align-middle cursor-pointer hover:bg-gray-100 transition-colors" data-state="0">&nbsp;</td>
-                                <td class="score-cell border border-gray-400 p-2 text-center align-middle cursor-pointer hover:bg-gray-100 transition-colors" data-state="0">&nbsp;</td>
-                                <td class="score-cell border border-gray-400 p-2 text-center align-middle cursor-pointer hover:bg-gray-100 transition-colors" data-state="0">&nbsp;</td>
-                                <td class="score-cell border border-gray-400 p-2 text-center align-middle cursor-pointer hover:bg-gray-100 transition-colors" data-state="0">&nbsp;</td>
-                                <td class="score-cell border border-gray-400 p-2 text-center align-middle cursor-pointer hover:bg-gray-100 transition-colors" data-state="0">&nbsp;</td>
-                                <td class="score-cell border border-gray-400 p-2 text-center align-middle cursor-pointer hover:bg-gray-100 transition-colors" data-state="0">&nbsp;</td>
-                                <td class="score-cell border border-gray-400 p-2 text-center align-middle cursor-pointer hover:bg-gray-100 transition-colors" data-state="0">&nbsp;</td>
-                                <td class="score-cell border border-gray-400 p-2 text-center align-middle cursor-pointer hover:bg-gray-100 transition-colors" data-state="0">&nbsp;</td>
-                                <td class="score-cell border border-gray-400 p-2 text-center align-middle cursor-pointer hover:bg-gray-100 transition-colors" data-state="0">&nbsp;</td>
-                                <td class="score-cell border border-gray-400 p-2 text-center align-middle cursor-pointer hover:bg-gray-100 transition-colors" data-state="0">&nbsp;</td>
-                                <td class="score-cell border border-gray-400 p-2 text-center align-middle cursor-pointer hover:bg-gray-100 transition-colors" data-state="0">&nbsp;</td>
-                                <td class="score-cell border border-gray-400 p-2 text-center align-middle cursor-pointer hover:bg-gray-100 transition-colors" data-state="0">&nbsp;</td>
-                                <td class="score-cell border border-gray-400 p-2 text-center align-middle cursor-pointer hover:bg-gray-100 transition-colors" data-state="0">&nbsp;</td>
-                                <td class="score-cell border border-gray-400 p-2 text-center align-middle cursor-pointer hover:bg-gray-100 transition-colors" data-state="0">&nbsp;</td>
-                                <td class="score-cell border border-gray-400 p-2 text-center align-middle cursor-pointer hover:bg-gray-100 transition-colors" data-state="0">&nbsp;</td>
-                                <td class="score-cell border border-gray-400 p-2 text-center align-middle cursor-pointer hover:bg-gray-100 transition-colors" data-state="0">&nbsp;</td>
-                                <td class="score-cell border border-gray-400 p-2 text-center align-middle cursor-pointer hover:bg-gray-100 transition-colors" data-state="0">&nbsp;</td>
-                                <td class="score-cell border border-gray-400 p-2 text-center align-middle cursor-pointer hover:bg-gray-100 transition-colors" data-state="0">&nbsp;</td>
-                                <td class="score-cell border border-gray-400 p-2 text-center align-middle cursor-pointer hover:bg-gray-100 transition-colors" data-state="0">&nbsp;</td>
-                                <td class="score-cell border border-gray-400 p-2 text-center align-middle cursor-pointer hover:bg-gray-100 transition-colors" data-state="0">&nbsp;</td>
-                                <td class="score-cell border border-gray-400 p-2 text-center align-middle cursor-pointer hover:bg-gray-100 transition-colors" data-state="0">&nbsp;</td>
-                                <td class="score-cell border border-gray-400 p-2 text-center align-middle cursor-pointer hover:bg-gray-100 transition-colors" data-state="0">&nbsp;</td>
-                                <td class="score-cell border border-gray-400 p-2 text-center align-middle cursor-pointer hover:bg-gray-100 transition-colors" data-state="0">&nbsp;</td>
-                                <td class="score-cell border border-gray-400 p-2 text-center align-middle cursor-pointer hover:bg-gray-100 transition-colors" data-state="0">&nbsp;</td>
-                                <td class="score-cell border border-gray-400 p-2 text-center align-middle cursor-pointer hover:bg-gray-100 transition-colors" data-state="0">&nbsp;</td>
-                                <td class="score-cell border border-gray-400 p-2 text-center align-middle cursor-pointer hover:bg-gray-100 transition-colors" data-state="0">&nbsp;</td>
-                                <td class="score-cell border border-gray-400 p-2 text-center align-middle cursor-pointer hover:bg-gray-100 transition-colors" data-state="0">&nbsp;</td>
-                                <td class="score-cell border border-gray-400 p-2 text-center align-middle cursor-pointer hover:bg-gray-100 transition-colors" data-state="0">&nbsp;</td>
-                                <td class="score-cell border border-gray-400 p-2 text-center align-middle cursor-pointer hover:bg-gray-100 transition-colors" data-state="0">&nbsp;</td>
-                            </tr>
-                            </tbody>
-                    </table>
+                <div class="flex flex-col">
+                    <h3 class="text-[20px] font-semibold">ปรัชญามหาวิทยาลัยแม่โจ้</h3>
+                    <span class="leading-relaxed" id="philosophy">
+                        {{-- {{ philosophy ?? '' }} --}}
+                        มุ่งมั่นพัฒนาบัณฑิตสู่ความเป็นผู้อุดมด้วยปัญญา อดทน สู้งาน เป็นผู้มีคุณธรรมและจริยธรรม เพื่อ
+                        ความเจริญรุ่งเรืองวัฒนาของสังคมไทยที่มีการเกษตรเป็นรากฐาน 
+                    </span>
+                    <h3 class="text-[20px] font-semibold">ปรัชญาการศึกษา มหาวิทยาลัยแม่โจ้</h3>
+                    <span class="leading-relaxed" id="philosophy_education">
+                        {{-- {{ philosophy_education ?? '' }} --}}
+                        จัดการศึกษาเพื่อเสริมสร้างปัญญา ในรูปแบบการเรียนรู ้จากการปฏิบัติที ่บูรณาการกับการทำงานตาม
+                        อมตะโอวาท งานหนักไม่เคยฆ่าคน มุ่งให้ผู้เรียน มีทักษะการเรียนรู้ตลอดชีวิต
+                    </span>
+                    <h3 class="text-[20px] font-semibold">ปรัชญาหลักสูตร</h3>
+                    <span class="leading-relaxed" id="philosophy_curriculum">
+                        {{-- {{ philosophy_curriculum ?? '' }} --}}
+                        จัดการศึกษาเพื่อการพัฒนาเทคโนโลยี และส่งเสริมการสร้างนวัตกรรม เรียนรู้จากการปฏิบัติที่บูรณาการ
+                        กับการทำงาน
+                    </span>
                 </div>
-            </div>
-        
-            <h3 class="mt-6 font-bold">5.3 ความสอดคล้องของรายวิชากับ PLOs, CLOs และ LLLs</h3>
-            <h4 class="mt-2 font-semibold">หลักสูตรฯ วิทยาศาสตรบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์</h4>
-            <table id="ploTable" class="w-full border-collapse border border-gray-300 text-sm mt-4">
-                <thead>
-                    <tr>
-                        <th class="border border-gray-400 p-2 bg-gray-200 font-bold">รหัส CLO</th>
-                        <th class="border border-gray-400 p-2 bg-gray-200 font-bold">รหัสวิชา 10301351 วิชาการวิทยาการข้อมูล</th>
-                        <th class="border border-gray-400 p-2 bg-gray-200 font-bold">PLO1 (U)</th>
-                        <th class="border border-gray-400 p-2 bg-gray-200 font-bold">PLO2 (E)</th>
-                        <th class="border border-gray-400 p-2 bg-gray-200 font-bold">PLO3 (C)</th>
-                        <th class="border border-gray-400 p-2 bg-gray-200 font-bold">PLO4 (AP)</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-            {{-- =========================================================================================================================================================================================================================== --}}
-            <div class="max-w-7xl mx-auto space-y-4 mt-6"> 
-                <h3 class="text-center font-bold text-[#003366] mt-6 bg-blue-200 inline-block px-4 py-1.5 rounded text-gray-900" >
-                    หมวดที่ 6 : ความสอดคล้องระหว่างผลการเรียนรู้ระดับรายวิชา (CLOs)  วิธีการสอน และการประเมินผล
-                </h3>
-                <table id="cloTable_S6" class="w-full border-collapse border border-gray-400">
-                    <thead class="bg-gray-200 font-semibold text-left">
+                {{-- =========================================================================================================================================================================================================================== --}}
+                <h3 class="mt-6 font-bold">หมวดที่ 1 : ข้อมูลทั่วไป</h3>
+                <table class="w-full border-collapse border border-black mt-2 text-sm">
+                    <tbody>
+                        <tr class="bg-gray-100 font-semibold">
+                            <th class="w-1/4 border border-black p-2.5 align-top bg-blue-100 text-center">1. ชื่อวิชา</th>
+                            <td colspan="3" class="border border-black p-2.5 align-top" id="course_name">{{ $data->course_name }}</td>
+                            </tr>
                         <tr>
-                            <th class="w-[20%] p-2 border border-gray-400 align-top">CLO#</th>
-                            <th class="w-[40%] p-2 border border-gray-400 align-top">วิธีการสอน (Active Learning)</th>
-                            <th class="w-[40%] p-2 border border-gray-400 align-top">การประเมินผล</th>
+                            <th class="border border-black p-2.5 align-top bg-blue-100 text-center">2. รหัสวิชา</th>
+                            <td colspan="3" class="border border-black p-2.5 align-top" id="course_id">{{ $data->course_id }}</td>
+                            </tr>
+                        <tr>
+                            <th class="border border-black p-2.5 align-top bg-blue-100 text-center">3. จำนวนหน่วยกิต</th>
+                            <td colspan="3" class="border border-black align-top"> 
+                                <input type="text" name="credits" id="credits" 
+                                    class="w-full p-2.5 border-none focus:outline-none focus:ring-0" 
+                                    value="{{ $data->credits ?? '' }}">
+                            </td>
                         </tr>
-                    </thead>
-                    <tbody id="cloTableBody_S6" class="bg-white">
+                        <tr>
+                            <th class="border border-black p-2.5 align-top bg-blue-100 text-center">4. หลักสูตร</th>
+                            <td colspan="3" class="border border-black align-top">
+                                <input type="text" name="curriculum_name" id="curriculum_name" 
+                                    class="w-full p-2.5 border-none focus:outline-none focus:ring-0" 
+                                    value="{{ $data->curriculum_name ?? '' }}">
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="border border-black p-2.5 align-top bg-blue-100 text-center">5. ประเภทของรายวิชา</th>
+                            <td colspan="3" class="border border-black p-2.5 align-top" id="course_type_section">
+                                <label class="inline-flex items-center">
+                                    <input type="checkbox" name="is_specific" class="mr-1.5 scale-125" value="1"
+                                        @if(!empty($data->is_specific)) checked @endif> วิชาเฉพาะ
+                                </label>
+                                <label class="inline-flex items-center ml-4">
+                                    <input type="checkbox" name="is_core" class="mr-1.5 scale-125" value="1"
+                                        @if(!empty($data->is_core)) checked @endif> กลุ่มวิชาแกน
+                                </label>
+                                <label class="inline-flex items-center ml-4">
+                                    <input type="checkbox" name="is_major_required" class="mr-1.5 scale-125" value="1"
+                                        @if(!empty($data->is_major_required)) checked @endif> เอกบังคับ
+                                </label>
+                                <label class="inline-flex items-center ml-4">
+                                    <input type="checkbox" name="is_major_elective" class="mr-1.5 scale-125" value="1"
+                                        @if(!empty($data->is_major_elective)) checked @endif> เอกเลือก
+                                </label>
+                                <label class="inline-flex items-center ml-4">
+                                    <input type="checkbox" name="is_free_elective" class="mr-1.5 scale-125" value="1"
+                                        @if(!empty($data->is_free_elective)) checked @endif> วิชาเลือกเสรี
+                                </label>
+                            </td>
+                        </tr> 
+                        <tr> 
+                            <th class="border border-black p-2.5 align-top bg-blue-100 text-center">6. วิชาบังคับก่อน</th> 
+                            <td colspan="3" class="border border-black p-2.5 align-top">
+                                <input type="text" name="prerequisites" id="prerequisites"
+                                    class="w-full border-none focus:outline-none focus:ring-0" 
+                                    value="{{ $data->prerequisites ?? '' }}">
+                            </td> 
+                        </tr> 
+                        <tr> 
+                            <th class="border border-black p-2.5 align-top bg-blue-100 text-center">7. ผู้สอน</th> 
+                            <td colspan="3" class="border border-black p-2.5 align-top" id="instructors">{{ $data->name ?? '' }}</td>
+                            </tr> 
+                        <tr>
+                            <th class="border border-black p-2.5 align-top bg-blue-100 text-center">8.การแก้ไขล่าสุด</th>
+                            <td colspan="3" class="border border-black p-2.5" id="revision_section"> ภาคการศึกษาที่
+                                <label class="inline-flex items-center ml-4">
+                                    <input type="checkbox" class="mr-1.5 scale-125" id="revision_term_1" disabled
+                                        @if($data->term == 1) checked @endif>1
+                                </label>
+                                <label class="inline-flex items-center ml-4 mr-4">
+                                    <input type="checkbox" class="mr-1.5 scale-125" id="revision_term_2" disabled
+                                        @if($data->term == 2) checked @endif>2
+                                </label>
+                                <label class="inline-flex items-center">ปีการศึกษา <span id="revision_year_display" class="font-semibold ml-1.5">{{ $data->year ? $data->year + 543 : '' }}</span></label>
+                            </td>
+                        </tr>
+                        <tr class="text-center font-semibold bg-gray-100"> 
+                            <td colspan="4" class="border border-black p-2.5 align-top">9.จำนวนชั่วโมงที่ใช้ภาคการศึกษา</td> 
+                        </tr> 
+                        <tr>
+                            <th class="border border-black p-2.5 align-top bg-blue-100 text-center font-normal">
+                                ภาคทฤษฎี
+                                <span id="hours_theory" contenteditable="true" class="font-bold inline-block px-2 w-8 py-0.5 bg-white border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-yellow-50">
+                                    {{ $data->hours_theory ?? '' }}
+                                </span> ชั่วโมง
+                            </th>
+                            <th class="border border-black p-2.5 align-top bg-blue-100 text-center font-normal">
+                                ภาคปฏิบัติ
+                                <span id="hours_practice" contenteditable="true" class="font-bold inline-block px-2 w-8 py-0.5 bg-white border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-yellow-50">
+                                    {{ $data->hours_practice ?? '' }}
+                                </span> ชั่วโมง
+                            </th>
+                            <th class="border border-black p-2.5 align-top bg-blue-100 text-center font-normal">
+                                การศึกษาด้วยตนเอง
+                                <span id="hours_self_study" contenteditable="true" class="font-bold inline-block px-2 w-8 py-0.5 bg-white border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-yellow-50">
+                                    {{ $data->hours_self_study ?? '' }}
+                                </span> ชั่วโมง
+                            </th>
+                            <th class="border border-black p-2.5 align-top bg-blue-100 text-center font-normal">
+                                ทัศนศึกษา/ฝึกงาน
+                                <span id="hours_field_trip" contenteditable="true" class="font-bold inline-block px-2 w-8 py-0.5 bg-white border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-yellow-50">
+                                    {{ $data->hours_field_trip ?? '' }}
+                                </span> ชั่วโมง
+                            </th>
+                        </tr>
                     </tbody>
                 </table>
-                <button id="addCloBtn_S6" class="mt-4 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700">
-                    + เพิ่ม CLO ใหม่
-                </button>
-    
-                <template id="cloRowTemplate_S6">
-                    <tr class="bg-white">
-                        <td class="clo-cell-s6 p-2 border border-gray-400 align-top text-sm" contenteditable="true"></td>
-                        <td class="teaching-cell-s6 p-2 border border-gray-400 align-top text-sm"></td>
-                        <td class="assessment-cell-s6 p-2 border border-gray-400 align-top text-sm"></td>
-                    </tr>
-                </template>
-            </div>
-            {{-- =========================================================================================================================================================================================================================== --}}
-            <h3 class="text-center font-bold text-[#003366] mt-6 bg-blue-200 inline-block px-4 py-1.5 rounded text-gray-900">
-                หมวดที่ 7: แผนการสอน
-            </h3>
-            <h3 class="mt-6 font-bold">7.1 แผนการสอน</h3>
-            <div class="mb-4">
-                จำนวนสัปดาห์: 
-                <input type="number" id="weekCount" value="2" min="1" max="20" class="w-[70px] border border-gray-300 rounded px-2 py-1">
-                <button id="generateLessonTableBtn" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">สร้างตาราง</button>
-            </div>
-            <table id="planTable" class="w-full border-collapse border border-black text-sm">
-                <thead>
-                    <tr>
-                        <th class="w-[5%] border border-black p-2.5 align-top bg-blue-100 text-center">สัปดาห์ที่</th>
-                        <th class="w-[15%] border border-black p-2.5 align-top bg-blue-100 text-center">หัวข้อ</th>
-                        <th class="w-[20%] border border-black p-2.5 align-top bg-blue-100 text-center">วัตถุประสงค์รายสัปดาห์</th>
-                        <th class="w-[25%] border border-black p-2.5 align-top bg-blue-100 text-center">กิจกรรมการเรียนรู้</th>
-                        <th class="w-[20%] border border-black p-2.5 align-top bg-blue-100 text-center">สื่อ/เครื่องมือ</th>
-                        <th class="w-[10%] border border-black p-2.5 align-top bg-blue-100 text-center">การประเมินผล</th>
-                        <th class="w-[5%] border border-black p-2.5 align-top bg-blue-100 text-center">CLO</th>
-                    </tr>
-                </thead>
-                <tbody>
+                {{-- =========================================================================================================================================================================================================================== --}}
+                <h3 class="mt-6 font-bold bg-blue-200 inline-block px-4 py-1.5 rounded text-gray-900">
+                    หมวดที่ 2 : คำอธิบายรายวิชาและผลลัพธ์ระดับรายวิชา (CLOs)
+                </h3>
+                <table class="w-full border-collapse mt-2.5 text-[15px] bg-white shadow-sm border border-gray-300">
+                    <tbody>
+                        <tr>
+                            <td class="p-4 border border-gray-300">
+                                <b>2.1 คำอธิบายรายวิชา</b>
+                                <br>
+                                <textarea
+                                    rows="4"
+                                    class="w-full mt-2 p-3 text-[15px] leading-relaxed border border-gray-300 rounded-lg bg-white resize-vertical shadow-sm transition-all
+                                        focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                                >
+                            {{ $data->course_detail_th ?? ($data->course_detail_th ?? '') }}
+                            {{ $data->course_detail_en ?? ($data->course_detail_en ?? '') }}</textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="p-4 border border-gray-300">
+                                <b>2.2 ผลลัพธ์การเรียนรู้ระดับรายวิชา (Course learning Outcome) CLOs </b>
+                                <br>
+                                <textarea
+                                    name="ai_text"
+                                    rows="4"
+                                    class="w-full mt-2 p-3 text-[15px] leading-relaxed border border-gray-300 rounded-lg bg-white resize-vertical shadow-sm transition-all
+                                        focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                                >{{ $data->ai_text ?? '' }}</textarea>
+                            </td>
+                        </tr>
                     </tbody>
-            </table>
-            <h2 class="text-center font-bold text-[#003366] mt-6 bg-blue-200 inline-block px-4 py-1.5 rounded text-gray-900">
-                หมวดที่ 8 : การประเมินการบรรลุผลลัพธ์การเรียนรู้รายวิชา (CLOs) </h2>
-            <h3 class="mt-6 font-bold">8.1 กลยุทธ์การประเมิน</h3>
-            <div class="mb-4">
-                จำนวนสัปดาห์: 
-                <input type="number" id="Assessment" value="2" min="1" max="20" class="w-[70px] border border-gray-300 rounded px-2 py-1">
-                <button id="generateAssessmentTableBtn" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">สร้างตาราง</button>
-            </div>
-            <table id="assessmentTable" class="w-full border-collapse border border-black text-sm">
-                <thead>
-                    <tr>
-                        <th class="w-[25%] border border-black p-2.5 align-top bg-blue-100 text-center">วิธีการประเมิน</th>
-                        <th class="w-[40%] border border-black p-2.5 align-top bg-blue-100 text-center">เครื่องมือ / รายละเอียด</th>
-                        <th class="w-[10%] border border-black p-2.5 align-top bg-blue-100 text-center">สัดส่วน (%)</th>
-                        <th class="w-[25%] border border-black p-2.5 align-top bg-blue-100 text-center">ความสอดคล้องกับ CLOs</th>
-                    </tr>
-                </thead>
-                <tbody>
+                </table>
+                {{-- =========================================================================================================================================================================================================================== --}}
+                <table class="w-full border-collapse border border-gray-400 mt-6 text-sm">
+                    <thead class="font-semibold">
+                        <tr class="bg-blue-100">
+                            <th colspan="2" class="p-2 text-left border border-gray-400">
+                                หมวดที่ 3 : การปรับปรุงรายวิชาตามข้อเสนอแนะจาก มคอ.5
+                            </th>
+                        </tr>
+                        <tr class="bg-gray-200">
+                            <th class="w-1/2 p-2 text-left border border-gray-400">ข้อเสนอแนะ</th>
+                            <th class="w-1/2 p-2 text-left border border-gray-400">การปรับปรุง</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="p-2 border border-gray-400 align-top">
+                                <textarea name="feedback" rows="4" id="feedback"
+                                        class="w-full p-1 border border-gray-300 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                                >{{ $data->feedback ?? '' }}</textarea>
+                            </td>
+                            <td class="p-2 border border-gray-400 align-top">
+                                <textarea name="improvement" rows="4" id="improvement"
+                                        class="w-full p-1 border border-gray-300 rounded focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:outline-none"
+                                >{{ $data->improvement ?? '' }}</textarea>
+                            </td>
+                        </tr>
                     </tbody>
-            </table>
-        
-            <h3 class="mt-6 font-bold">8.2 วิธีการประเมิน แบบรูบริค (Rubric) หรือ อื่นๆ (ถ้ามี) </h3>
-            <div id="rubric-container" class="max-w-4xl mx-auto space-y-8">
+                </table>
+                {{-- =========================================================================================================================================================================================================================== --}}
+                <h3 class="text-center font-bold text-[#003366] mt-6 bg-blue-200 inline-block px-4 py-1.5 rounded text-gray-900">
+                    หมวดที่ 4: ข้อตกลงร่วมกันระหว่างผู้สอนและผู้เรียน 
+                </h3><br>
+                <textarea
+                    name="agreement"
+                    class="w-[90%] h-36 p-4 text-base border border-gray-300 rounded-lg bg-white resize-vertical shadow-sm transition-all mt-2 mb-6
+                        focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                    placeholder='พิมพ์รายละเอียด'
+                >{{ $data->agreement ?? '' }}</textarea>
+                {{-- =========================================================================================================================================================================================================================== --}}
+                <h3 class="text-center font-bold text-[#003366] mt-6 bg-blue-200 inline-block px-4 py-1.5 rounded text-gray-900">
+                    หมวดที่ 5: ความสอดคล้องระหว่างผลลัพธ์การเรียนรู้ระดับหลักสูตร (PLOs) กับ  ผลลัพธ์การเรียนรู้ระดับรายวิชา (CLOs) และผลทักษะการเรียนรู้ตลอดชีวิต (LLLs)
+                </h3>
+                <div>
+                    <h4 class="mt-2 font-semibold">5.1 ผลลัพธ์การเรียนรู้ของหลักสูตร</h4>
+                    <h4 class="mt-2 font-semibold">หลักสูตรฯ วิทยาศาสตรบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์</h4>
+                    <div class="flex justify-end -mt-10 ">
+                        <button type="button" id="addPloRowBtn"
+                            class="px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75">
+                            + เพิ่มแถว PLO
+                        </button>
+                    </div>
+                </div>
+                <table class="w-full border-collapse border border-gray-400 mt-2 text-sm">
+                    <thead class="bg-gray-100 font-semibold text-center">
+                        <tr>
+                            <th class="w-[8%] border border-black p-2.5 align-top bg-blue-100 text-center">PLOs</th>
+                            <th class="w-[45%] border border-black p-2.5 align-top bg-blue-100 text-center">Outcome Statement</th>
+                            <th class="w-[8%] border border-black p-2.5 align-top bg-blue-100 text-center">Specific LO</th>
+                            <th class="w-[8%] border border-black p-2.5 align-top bg-blue-100 text-center">Generic LO</th>
+                            <th class="w-[8%] border border-black p-2.5 align-top bg-blue-100 text-center">Level</th>
+                            <th class="w-[15%] border border-black p-2.5 align-top bg-blue-100 text-center">Type</th>
+                        </tr>
+                    </thead>
+                    @php
+                        $outcomeStatements = isset($data->outcome_statement) && is_array($data->outcome_statement) ? $data->outcome_statement : [];
+                        if (empty($outcomeStatements)) {
+                            $maxPlos = 4;
+                        } else {
+                            $maxPlos = max(array_keys($outcomeStatements));
+                        }
+                    @endphp
+                    <tbody id="plosTableBody" data-max-plo="{{ $maxPlos }}">
+                        @for ($i = 1; $i <= $maxPlos; $i++)
+                            @php
+                                $ploData = $outcomeStatements[$i] ?? [
+                                    'outcome' => '',
+                                    'specific' => false,
+                                    'generic' => false,
+                                    'level' => '',
+                                    'type' => ''
+                                ];
+                            @endphp
+                            <tr>
+                                <td class="text-center border border-black p-2.5 align-top">{{ $i }}</td>
+                                <td class="border border-black p-2.5 align-top">
+                                    <textarea name="plo{{ $i }}_outcome" rows="3" class="w-full border border-gray-300 rounded p-1">{{ $ploData['outcome'] ?? '' }}</textarea>
+                                </td>
+                                <td class="text-center border border-black p-2.5 align-top">
+                                    <input type="checkbox" name="plo{{ $i }}_specific" class="scale-125" value="1" {{ ($ploData['specific'] ?? false) ? 'checked' : '' }}>
+                                </td>
+                                <td class="text-center border border-black p-2.5 align-top">
+                                    <input type="checkbox" name="plo{{ $i }}_generic" class="scale-125" value="1" {{ ($ploData['generic'] ?? false) ? 'checked' : '' }}>
+                                </td>
+                                <td class="text-center border border-black p-2.5 align-top">
+                                    <select name="plo{{ $i }}_level"
+                                    class="border rounded px-2 py-1 text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                        <option value="">--เลือก--</option>
+                                        @foreach (['R - Remember', 'U - Understand', 'AP - Apply', 'AN - Analyze', 'E - Evaluate', 'C - Create'] as $levelValue)
+                                            <option value="{{ $levelValue }}" {{ ($ploData['level'] ?? '') === $levelValue ? 'selected' : '' }}>
+                                                {{ explode(' - ', $levelValue)[0] }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </td>
+                                <td class="text-center border border-black p-2.5 align-top">
+                                    <select name="plo{{ $i }}_type"
+                                    class="border rounded px-2 py-1 text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                        <option value="">--เลือก--</option>
+                                        @foreach (['K - Knowledge', 'S - Skill', 'AR - Application', 'Rs - Responsibility'] as $typeValue)
+                                            <option value="{{ $typeValue }}" {{ ($ploData['type'] ?? '') === $typeValue ? 'selected' : '' }}>
+                                                {{ explode(' - ', $typeValue)[0] }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </td>
+                            </tr>
+                        @endfor
+                    </tbody>
+                </table>
+                <p class="text-xs">Bloom's Taxonomy : R-Remember, U-Understand,  AP-Apply,  AN-Analyze, E-Evaluate,  C-Create </p>
                 
-                <div class="rubric-section">
-                    <h3 class="text-base font-semibold mb-2 p-1" contenteditable="true">
-                        ก. การประเมินการปฏิบัติงาน (Performance)
-                    </h3>
-                    <div class="overflow-x-auto border border-gray-400">
-                        <table class="w-full border-collapse text-xs">
-                            <thead class="bg-gray-100 text-center font-semibold">
-                                <tr>
-                                    <th class="border border-gray-400 p-1 w-32">ระดับ</th>
-                                    <th class="border border-gray-400 p-1" contenteditable="true">
-                                        คำอธิบายเกณฑ์การให้คะแนนการปฏิบัติงาน
-                                    </th>
+                <div id="section-5-2">
+                    <h3 class="font-bold text-lg">5.2 มาตรฐานผลการเรียนรู้รายวิชา (Curriculum Mapping)</h3>
+                    <p class="text-sm mb-2">หลักสูตรฯ วิทยาศาสตรบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์</p>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full border-collapse border border-gray-400 text-sm" id="curriculum-mapping-table">
+                            <thead class="text-center font-semibold align-middle">
+                                <tr class="bg-white">
+                                    <th rowspan="2" class="border border-gray-400 p-2 align-middle w-48 bg-white">รายวิชา</th>
+                                    <th colspan="7" class="border border-gray-400 p-2 align-middle text-xs bg-yellow-100">ด้านคุณธรรมและจริยธรรม</th>
+                                    <th colspan="8" class="border border-gray-400 p-2 align-middle text-xs bg-yellow-100">ด้านความรู้</th>
+                                    <th colspan="4" class="border border-gray-400 p-2 align-middle text-xs bg-white">ทักษะทางปัญญา</th>
+                                    <th colspan="6" class="border border-gray-400 p-2 align-middle text-xs bg-yellow-100">ทักษะระหว่างบุคคลและ<br>ความรับผิดชอบ</th>
+                                    <th colspan="4" class="border border-gray-400 p-2 align-middle text-xs bg-white">ทักษะวิเคราะห์<br>เชิงตัวเลข การสื่อสารและ<br>การใช้เทคโนโลยีสารสนเทศ</th>
+                                </tr>
+                                <tr class="bg-white">
+                                    @php $cols = [7, 8, 4, 6, 4]; $bgColors = ['bg-yellow-100', 'bg-yellow-100', 'bg-white', 'bg-yellow-100', 'bg-white']; @endphp
+                                    @foreach($cols as $index => $count)
+                                        @for($j=1; $j<=$count; $j++)
+                                            <th class="border border-gray-400 p-2 w-8 font-normal {{ $bgColors[$index] }}">{{ $j }}</th>
+                                        @endfor
+                                    @endforeach
                                 </tr>
                             </thead>
-                            <tbody class="bg-white rubric-tbody">
+                            <tbody class="bg-white">
                                 <tr>
-                                    <td class="level-cell border border-gray-400 p-1 text-center align-top font-semibold" contenteditable="true">5</td>
-                                    <td class="description-cell border border-gray-400 p-1 align-top hover:bg-gray-50" contenteditable="true">แสดงถึงความเข้าใจปัญหา ...</td>
-                                </tr>
-                                
-                                <tr>
-                                    <td class="level-cell border border-gray-400 p-1 text-center align-top font-semibold" contenteditable="true">4</td>
-                                    <td class="description-cell border border-gray-400 p-1 align-top hover:bg-gray-50" contenteditable="true">[ใส่คำอธิบายสำหรับระดับ 4]</td>
-                                </tr>
-                                <tr>
-                                    <td class="level-cell border border-gray-400 p-1 text-center align-top font-semibold" contenteditable="true">3</td>
-                                    <td class="description-cell border border-gray-400 p-1 align-top hover:bg-gray-50" contenteditable="true">[ใส่คำอธิบายสำหรับระดับ 3]</td>
-                                </tr>
-                                <tr>
-                                    <td class="level-cell border border-gray-400 p-1 text-center align-top font-semibold" contenteditable="true">2</td>
-                                    <td class="description-cell border border-gray-400 p-1 align-top hover:bg-gray-50" contenteditable="true">[ใส่คำอธิบายสำหรับระดับ 2]</td>
-                                </tr>
-                                <tr>
-                                    <td class="level-cell border border-gray-400 p-1 text-center align-top font-semibold" contenteditable="true">1</td>
-                                    <td class="description-cell border border-gray-400 p-1 align-top hover:bg-gray-50" contenteditable="true">[ใส่คำอธิบายสำหรับระดับ 1]</td>
-                                </tr>
-                                <tr>
-                                    <td class="level-cell border border-gray-400 p-1 text-center align-top font-semibold" contenteditable="true">0</td>
-                                    <td class="description-cell border border-gray-400 p-1 align-top hover:bg-gray-50" contenteditable="true">ไม่ส่งผลงาน</td>
+                                    <td class="border border-gray-400 p-2 text-left align-top">
+                                        {{ $data->course_id ?? '' }}<br>{{ $data->course_name ?? ($data->course_name_en ?? '') }}
+                                    </td>
+                                    {{-- สร้าง Cells ว่างๆ ไว้ก่อน รอ JS มาใส่ข้อมูล --}}
+                                    @php $totalCols = array_sum($cols); @endphp
+                                    @for($k=0; $k<$totalCols; $k++)
+                                        <td class="score-cell border border-gray-400 p-2 text-center align-middle cursor-pointer hover:bg-gray-100 transition-colors" data-state="0" data-row="0" data-col="{{ $k }}">&nbsp;</td>
+                                    @endfor
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
-            </div>
-            <div class="max-w-4xl mx-auto mt-6 text-center">
-                <button id="add-rubric-btn" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700">
-                    + เพิ่มเกณฑ์การประเมินใหม่ (ข, ค, ...)
-                </button>
-            </div>
-            <br>
-            {{-- =========================================================================================================================================================================================================================== --}}
-            <h3 class="text-center font-bold text-[#003366] mt-6 bg-blue-200 inline-block px-4 py-1.5 rounded text-gray-900">
-                หมวดที่ 9: สื่อการเรียนรู้และงานวิจัย
-            </h3>
-            <h3 class="mt-6 font-bold">9.1 สื่อการเรียนรู้และสิ่งสนับสนุนการเรียนรู้ </h3>
-            <ul id="referenceList" class="list-disc pl-8 max-w-2xl mt-4">
-                <li class="mb-2.5 relative">
-                    <input type="text" class="w-4/5 p-2 border border-gray-300 rounded-md text-[15px]" placeholder="พิมพ์รายละเอียด" />
-                    <button class="remove-btn bg-red-500 text-white border-none rounded-md px-2.5 py-1.5 ml-2.5 cursor-pointer text-[13px] hover:bg-red-600">ลบ</button>
-                </li>
-            </ul>
-            <button id="addReferenceItemBtn" class="mt-4 bg-blue-600 text-white border-none rounded-lg px-3.5 py-2 cursor-pointer text-[14px] hover:bg-blue-700">
-                ➕ เพิ่มรายการใหม่
-            </button>
-            <br><br>
-        
-            <h3 class="mt-6 font-bold">9.2 งานวิจัยที่นำมาสอนในรายวิชา 
-            </h3><br>
-            <textarea 
-                class="w-[90%] h-36 p-4 text-base border border-gray-300 rounded-lg bg-white resize-vertical shadow-sm transition-all mt-2 mb-6
-                        focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
-                placeholder='พิมพ์รายละเอียดเกี่ยวกับงานวิจัยที่นำมาสอนในรายวิชา...'
-            ></textarea>
-        
-            <h3 class="mt-6 font-bold">9.3 การบริการวิชาการ  
-                </h3><br>
-            <textarea 
-                class="w-[90%] h-36 p-4 text-base border border-gray-300 rounded-lg bg-white resize-vertical shadow-sm transition-all mt-2 mb-6
-                        focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
-                placeholder='พิมพ์รายละเอียดเกี่ยวกับการบริการวิชาการ...'
-            ></textarea>
-        
-            <h3 class="mt-6 font-bold">9.4 งานทำนุบำรุงศิลปวัฒนธรรม 
-            </h3><br>
-            <textarea 
-                class="w-[90%] h-36 p-4 text-base border border-gray-300 rounded-lg bg-white resize-vertical shadow-sm transition-all mt-2 mb-6
-                        focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
-                placeholder='พิมพ์รายละเอียดเกี่ยวกับงานทำนุบำรุงศิลปวัฒนธรรม...'
-            ></textarea>
-            {{-- =========================================================================================================================================================================================================================== --}}
-            <div class="mt-8">
-                <h2 class="w-full bg-blue-100 text-gray-800 font-semibold text-left p-2 border border-gray-400">
-                    หมวดที่ 10 : เกณฑ์การประเมิน
-                </h2>
-        
-                <table id="gradeTable" class="w-full border-collapse border border-gray-400 text-sm">
-                    <thead class="bg-gray-200 font-semibold text-center">
+            
+                <h3 class="mt-6 font-bold">5.3 ความสอดคล้องของรายวิชากับ PLOs, CLOs และ LLLs</h3>
+                <h4 class="mt-2 font-semibold">หลักสูตรฯ วิทยาศาสตรบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์</h4>
+                <table id="ploTable" class="w-full border-collapse border border-gray-300 text-sm mt-4">
+                    <thead>
                         <tr>
-                            <th class="w-1/2 border border-gray-400 p-2 align-middle">ระดับผลการศึกษา</th>
-                            <th class="w-1/2 border border-gray-400 p-2 align-middle">เกณฑ์การประเมินผล</th>
+                            <th class="border border-gray-400 p-2 bg-gray-200 font-bold w-[10%]">รหัส</th>
+                            <th class="border border-gray-400 p-2 bg-gray-200 font-bold w-[40%]">คำอธิบาย CLOs/LLLs</th>
+                             @for ($p = 1; $p <= 4; $p++)
+                                @php
+                                    $ploLevel = '';
+                                    if(isset($outcomeStatements[$p]['level'])) {
+                                        $levelParts = explode(' - ', $outcomeStatements[$p]['level']);
+                                        $ploLevel = $levelParts[0] ?? '';
+                                    }
+                                @endphp
+                                <th class="border border-gray-400 p-2 bg-gray-200 font-bold w-[12.5%]">PLO{{ $p }} {{ $ploLevel ? "($ploLevel)" : '' }}</th>
+                            @endfor
                         </tr>
                     </thead>
-                    <tbody class="bg-white">
-                        <tr>
-                            <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true">A</td>
-                            <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true">80.00% ขึ้นไป</td>
-                        </tr>
-                        <tr>
-                            <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true">B+</td>
-                            <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true">75.00% - 79.99%</td>
-                        </tr>
-                        <tr>
-                            <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true">B</td>
-                            <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true">70.00% - 74.99%</td>
-                        </tr>
-                        <tr>
-                            <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true">C+</td>
-                            <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true">65.00% - 69.99%</td>
-                        </tr>
-                        <tr>
-                            <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true">C</td>
-                            <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true">60.00% - 64.99%</td>
-                        </tr>
-                        <tr>
-                            <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true">D+</td>
-                            <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true">55.00% - 59.99%</td>
-                        </tr>
-                        <tr>
-                            <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true">D</td>
-                            <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true">50.00% - 54.99%</td>
-                        </tr>
-                        <tr>
-                            <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true">F</td>
-                            <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true">ต่ำกว่า 50.00%</td>
-                        </tr>
-                    </tbody>
+                    <tbody></tbody>
                 </table>
-            </div>
-            {{-- =========================================================================================================================================================================================================================== --}}
-            <h3 class="text-center font-bold text-[#003366] mt-6 bg-blue-200 inline-block px-4 py-1.5 rounded text-gray-900">
-                หมวด 11 : ขั้นตอนการแก้ไขคะแนน 
-            </h3><br>
-            <textarea 
-                class="w-[90%] h-36 p-4 text-base border border-gray-300 rounded-lg bg-white resize-vertical shadow-sm transition-all mt-2 mb-6
+                {{-- =========================================================================================================================================================================================================================== --}}
+                <div class="max-w-7xl mx-auto space-y-4 mt-6" id="section-6-container">
+                    <h3 class="text-center font-bold text-[#003366] mt-6 bg-blue-200 inline-block px-4 py-1.5 rounded text-gray-900" >
+                        หมวดที่ 6 : ความสอดคล้องระหว่างผลลัพธ์การเรียนรู้ระดับรายวิชา (CLOs)  วิธีการสอน และการประเมินผล
+                    </h3>
+                    <table id="cloTable_S6" class="w-full border-collapse border border-gray-400">
+                        <thead class="bg-gray-200 font-semibold text-left">
+                            <tr>
+                                <th class="w-[20%] p-2 border border-gray-400 align-top">CLO#</th>
+                                <th class="w-[40%] p-2 border border-gray-400 align-top">วิธีการสอน (Active Learning)</th>
+                                <th class="w-[40%] p-2 border border-gray-400 align-top">การประเมินผล</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cloTableBody_S6" class="bg-white">
+                            {{-- Rows will be added by JavaScript --}}
+                        </tbody>
+                    </table>
+                    <button id="addCloBtn_S6" class="mt-4 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700">
+                        + เพิ่ม CLO ใหม่
+                    </button>
+
+                    <template id="cloRowTemplate_S6">
+                        <tr class="bg-white clo-row">
+                            <td class="clo-cell-s6 p-2 border border-gray-400 align-top text-sm" contenteditable="true" data-field=""></td>
+                            <td class="teaching-cell-s6 p-2 border border-gray-400 align-top text-sm"></td>
+                            <td class="assessment-cell-s6 p-2 border border-gray-400 align-top text-sm"></td>
+                        </tr>
+                    </template>
+                </div>
+                {{-- =========================================================================================================================================================================================================================== --}}
+                <div id="section-7-container">
+                    <h3 class="text-center font-bold text-[#003366] mt-6 bg-blue-200 inline-block px-4 py-1.5 rounded text-gray-900">
+                        หมวดที่ 7: แผนการสอน
+                    </h3>
+                    <h3 class="mt-6 font-bold">7.1 แผนการสอน</h3>
+                    <div class="mb-4">
+                        จำนวนสัปดาห์:
+                        <input type="number" id="weekCount" value="10" min="1" max="20" class="w-[70px] border border-gray-300 rounded px-2 py-1">
+                        <button id="generateLessonTableBtn" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">สร้างตาราง</button>
+                    </div>
+                    <table id="planTable" class="w-full border-collapse border border-black text-sm">
+                        <thead>
+                            <tr>
+                                <th class="w-[5%] border border-black p-2.5 align-top bg-blue-100 text-center">สัปดาห์ที่</th>
+                                <th class="w-[15%] border border-black p-2.5 align-top bg-blue-100 text-center">หัวข้อ</th>
+                                <th class="w-[20%] border border-black p-2.5 align-top bg-blue-100 text-center">วัตถุประสงค์รายสัปดาห์</th>
+                                <th class="w-[25%] border border-black p-2.5 align-top bg-blue-100 text-center">กิจกรรมการเรียนรู้</th>
+                                <th class="w-[15%] border border-black p-2.5 align-top bg-blue-100 text-center">สื่อ/เครื่องมือ</th>
+                                <th class="w-[10%] border border-black p-2.5 align-top bg-blue-100 text-center">การประเมินผล</th>
+                                <th class="w-[10%] border border-black p-2.5 align-top bg-blue-100 text-center">CLO</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{-- Rows will be added/loaded by JavaScript --}}
+                        </tbody>
+                    </table>
+                </div>
+                {{-- =========================================================================================================================================================================================================================== --}}
+                <div id="section-8-container">
+                    <h2 class="text-center font-bold text-[#003366] mt-6 bg-blue-200 inline-block px-4 py-1.5 rounded text-gray-900">
+                        หมวดที่ 8 : การประเมินการบรรลุผลลัพธ์การเรียนรู้รายวิชา (CLOs) </h2>
+                    <h3 class="mt-6 font-bold">8.1 กลยุทธ์การประเมิน</h3>
+                    <div class="mb-4">
+                        จำนวนรายการประเมิน:
+                        {{-- Changed default value to 3 --}}
+                        <input type="number" id="AssessmentCount" value="3" min="1" max="20" class="w-[70px] border border-gray-300 rounded px-2 py-1">
+                        <button id="generateAssessmentTableBtn" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">สร้างตาราง</button>
+                    </div>
+                    <table id="assessmentTable" class="w-full border-collapse border border-black text-sm">
+                        <thead>
+                            <tr>
+                                <th class="w-[25%] border border-black p-2.5 align-top bg-blue-100 text-center">วิธีการประเมิน</th>
+                                <th class="w-[35%] border border-black p-2.5 align-top bg-blue-100 text-center">เครื่องมือ / รายละเอียด</th> {{-- Adjusted width --}}
+                                <th class="w-[10%] border border-black p-2.5 align-top bg-blue-100 text-center">สัดส่วน (%)</th>
+                                <th class="w-[30%] border border-black p-2.5 align-top bg-blue-100 text-center">ความสอดคล้องกับ CLOs</th> {{-- Adjusted width --}}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{-- Rows will be added/loaded by JavaScript --}}
+                        </tbody>
+                    </table>
+
+                    <h3 class="mt-6 font-bold">8.2 วิธีการประเมิน แบบรูบริค (Rubric) หรือ อื่นๆ (ถ้ามี) </h3>
+                    <div id="rubric-container" class="max-w-4xl mx-auto space-y-8">
+                        <div class="rubric-section hidden" id="rubric-template">
+                            <div class="flex items-center justify-between mb-2">
+                                <h3 class="text-base font-semibold p-1 rubric-title" contenteditable="true" data-field="">
+                                    ก. [หัวข้อเกณฑ์]
+                                </h3>
+                                <button class="delete-rubric-btn px-3 py-1 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 ml-4">ลบ</button>
+                            </div>
+                            <div class="overflow-x-auto border border-gray-400">
+                                <table class="w-full border-collapse text-xs rubric-table">
+                                    <thead class="bg-gray-100 text-center font-semibold">
+                                        <tr>
+                                            <th class="border border-gray-400 p-1 w-32">ระดับ</th>
+                                            <th class="border border-gray-400 p-1 rubric-header" contenteditable="true" data-field="">
+                                                คำอธิบายเกณฑ์
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white rubric-tbody">
+                                        {{-- Rubric rows will be added by JS --}}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="max-w-4xl mx-auto mt-6 text-center">
+                        <button id="add-rubric-btn" class="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700">
+                            + เพิ่มเกณฑ์การประเมินใหม่
+                        </button>
+                    </div>
+                    <br>
+                </div>
+                {{-- =========================================================================================================================================================================================================================== --}}
+                <div id="section-9-container">
+                    <h3 class="text-center font-bold text-[#003366] mt-6 bg-blue-200 inline-block px-4 py-1.5 rounded text-gray-900">
+                        หมวดที่ 9: สื่อการเรียนรู้และงานวิจัย
+                    </h3>
+                    <h3 class="mt-6 font-bold">9.1 สื่อการเรียนรู้และสิ่งสนับสนุนการเรียนรู้ </h3>
+                    <ul id="referenceList" class="list-disc pl-8 max-w-2xl mt-4">
+                        {{-- Items will be loaded/added by JavaScript --}}
+                    </ul>
+                    <button id="addReferenceItemBtn" class="mt-4 bg-blue-600 text-white border-none rounded-lg px-3.5 py-2 cursor-pointer text-[14px] hover:bg-blue-700">
+                        ➕ เพิ่มรายการใหม่
+                    </button>
+                    <br><br>
+
+                    <h3 class="mt-6 font-bold">9.2 งานวิจัยที่นำมาสอนในรายวิชา</h3><br>
+                    <textarea
+                        name="research_subjects"
+                        class="w-[90%] h-36 p-4 text-base border border-gray-300 rounded-lg bg-white resize-vertical shadow-sm transition-all mt-2 mb-6
+                            focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                        placeholder='พิมพ์รายละเอียดเกี่ยวกับงานวิจัยที่นำมาสอนในรายวิชา...'
+                    >{{ $data->research_subjects ?? '' }}</textarea>
+
+                    <h3 class="mt-6 font-bold">9.3 การบริการวิชาการ</h3><br>
+                    <textarea
+                        name="academic_service"
+                        class="w-[90%] h-36 p-4 text-base border border-gray-300 rounded-lg bg-white resize-vertical shadow-sm transition-all mt-2 mb-6
+                            focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                        placeholder='พิมพ์รายละเอียดเกี่ยวกับการบริการวิชาการ...'
+                    >{{ $data->academic_service ?? '' }}</textarea>
+
+                    <h3 class="mt-6 font-bold">9.4 งานทำนุบำรุงศิลปวัฒนธรรม</h3><br>
+                    <textarea
+                        name="art_culture"
+                        class="w-[90%] h-36 p-4 text-base border border-gray-300 rounded-lg bg-white resize-vertical shadow-sm transition-all mt-2 mb-6
+                            focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                        placeholder='พิมพ์รายละเอียดเกี่ยวกับงานทำนุบำรุงศิลปวัฒนธรรม...'
+                    >{{ $data->art_culture ?? '' }}</textarea>
+                </div>
+                {{-- =========================================================================================================================================================================================================================== --}}
+                <div class="mt-8">
+                    <h2 class="w-full bg-blue-100 text-gray-800 font-semibold text-left p-2 border border-gray-400">
+                        หมวดที่ 10 : เกณฑ์การประเมิน
+                    </h2>
+                    <table id="gradeTable" class="w-full border-collapse border border-gray-400 text-sm">
+                        <thead class="bg-gray-200 font-semibold text-center">
+                            <tr>
+                                <th class="w-1/2 border border-gray-400 p-2 align-middle">ระดับผลการศึกษา</th>
+                                <th class="w-1/2 border border-gray-400 p-2 align-middle">เกณฑ์การประเมินผล</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white">
+                            @php
+                                $gradingCriteria = (object) ($data->grading_criteria ?? []);
+                            @endphp
+                            <tr>
+                                <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true" data-field="grade_A_level">
+                                    {{ $gradingCriteria->grade_A_level ?? 'A' }}
+                                </td>
+                                <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true" data-field="grade_A_criteria">
+                                    {{ $gradingCriteria->grade_A_criteria ?? '80.00% ขึ้นไป' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true" data-field="grade_Bp_level">
+                                    {{ $gradingCriteria->grade_Bp_level ?? 'B+' }}
+                                </td>
+                                <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true" data-field="grade_Bp_criteria">
+                                    {{ $gradingCriteria->grade_B_criteria ?? '75.00% - 79.99%' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true" data-field="grade_B_level">
+                                    {{ $gradingCriteria->grade_B_level ?? 'B' }}
+                                </td>
+                                <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true" data-field="grade_B_criteria">
+                                    {{ $gradingCriteria->grade_B_criteria ?? '70.00% - 74.99%' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true" data-field="grade_Cp_level">
+                                    {{ $gradingCriteria->grade_Cp_level ?? 'C+' }}
+                                </td>
+                                <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true" data-field="grade_Cp_criteria">
+                                    {{ $gradingCriteria->grade_Cp_criteria ?? '65.00% - 69.99%' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true" data-field="grade_C_level">
+                                    {{ $gradingCriteria->grade_C_level ?? 'C' }}
+                                </td>
+                                <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true" data-field="grade_C_criteria">
+                                   {{ $gradingCriteria->grade_C_criteria ?? '60.00% - 64.99%' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true" data-field="grade_Dp_level">
+                                    {{ $gradingCriteria->grade_Dp_level ?? 'D+' }}
+                                </td>
+                                <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true" data-field="grade_Dp_criteria">
+                                    {{ $gradingCriteria->grade_Dp_criteria ?? '55.00% - 59.99%' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true" data-field="grade_D_level">
+                                    {{ $gradingCriteria->grade_D_level ?? 'D' }}
+                                </td>
+                                <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true" data-field="grade_D_criteria">
+                                    {{ $gradingCriteria->grade_D_criteria ?? '50.00% - 54.99%' }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true" data-field="grade_F_level">
+                                    {{ $gradingCriteria->grade_F_level ?? 'F' }}</td>
+                                <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true" data-field="grade_F_criteria">
+                                   {{ $gradingCriteria->grade_F_criteria ?? 'ต่ำกว่า 50.00%' }}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                {{-- =========================================================================================================================================================================================================================== --}}
+                <h3 class="text-center font-bold text-[#003366] mt-6 bg-blue-200 inline-block px-4 py-1.5 rounded text-gray-900">
+                    หมวด 11 : ขั้นตอนการแก้ไขคะแนน
+                </h3><br>
+                <textarea
+                    name="grade_correction"
+                    class="w-[90%] h-36 p-4 text-base border border-gray-300 rounded-lg bg-white resize-vertical shadow-sm transition-all mt-2 mb-6
                         focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
-                placeholder='พิมพ์รายละเอียด'
-            ></textarea>
+                    placeholder='พิมพ์รายละเอียด'
+                >{{ $data->grade_correction ?? '' }}</textarea>
+            </div>
         </div>
-    </div>
-</div>
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        (function() {
+    </div> 
+    <script> document.addEventListener('DOMContentLoaded', () => {
+        async function saveData(fieldName, value, targetElement = null) {
+            const saveUrl = '/savedataedit';
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            const urlParams = new URLSearchParams(window.location.search);
+            const courseId = urlParams.get('course_id');
+            const year = urlParams.get('year');
+            const term = urlParams.get('term');
+            const tqf = urlParams.get('TQF');
+            
+            // ค้นหา element เพื่อแสดง feedback
+            // (เราใช้ attribute selector ที่ซับซ้อนขึ้นเพื่อหา id, name, หรือ data-field)
+            // เราใช้ CSS.escape เพื่อป้องกันอักขระพิเศษในชื่อ field
+            // Find the element for feedback, try different selectors
+            let element = document.querySelector(`[data-field="${CSS.escape(fieldName)}"]`);
+            if (!element) element = document.querySelector(`[name="${CSS.escape(fieldName)}"]`);
+            if (!element) element = document.querySelector(`[id="${CSS.escape(fieldName)}"]`);
+
+            if (!element && fieldName.startsWith('curriculum_map_r')) {
+                const matches = fieldName.match(/curriculum_map_r(\d+)_c(\d+)/);
+                if (matches) element = document.querySelector(`#curriculum-mapping-table .score-cell[data-row="${matches[1]}"][data-col="${matches[2]}"]`);
+            }
+
+            // Special handling for checkboxes inside a cell for Section 6
+            if (fieldName.startsWith('s6_r') && fieldName.includes('_cb')) {
+                // Find the checkbox by name
+                element = document.querySelector(`input[name="${CSS.escape(fieldName)}"]`);
+            }
+            // Special handling for section 6 trigger
+            if (!element && fieldName === 'section6_data') {
+                element = document.getElementById('cloTable_S6');
+            }
+            // Special handling for section 7 trigger
+            if (!element && fieldName === 'section7_data') {
+                element = document.getElementById('planTable');
+            }
+            // Special handling for section 8.1 trigger
+            if (!element && fieldName === 'section8_1_data') {
+                element = document.getElementById('assessmentTable');
+            }
+            // Special handling for section 8.2 trigger (Rubrics)
+            if (!element && fieldName === 'section8_2_data') {
+                element = document.getElementById('rubric-container');
+            }
+            // Special handling for section 9.1 trigger (References)
+            if (!element && fieldName === 'section9_1_data') {
+                element = document.getElementById('referenceList');
+            }
+            if (!element && fieldName.startsWith('plo')) {
+                element = document.getElementById('plosTableBody');
+            }
+            
+            console.log('Saving:', { 
+                field: fieldName, 
+                value: value, 
+                course_id: courseId,
+                year: year, 
+                term: term, 
+                TQF: tqf 
+            });
+            
+            // แสดง feedback (เช่น ไฮไลต์สีเหลือง "กำลังบันทึก")
+            let originalColor = '';
+            // Give feedback on the element or its parent row/container if element itself is hidden/small
+            let feedbackElement = null
+            // Priority 1: Use the element that triggered the event, if passed
+            if (targetElement) {
+                 // Find the specific cell, list item, or rubric section
+                 feedbackElement = targetElement.closest('td') || targetElement.closest('li') || targetElement.closest('.rubric-section');
+                 // If it's still nothing (e.g., a simple input), use the element itself
+                 if (!feedbackElement) {
+                     feedbackElement = targetElement;
+                 }
+            }
+
+            if (!feedbackElement) {
+                feedbackElement = element; // Use the element found by fieldName (which might be the table)
+            }
+
+             // ตรวจสอบว่า formContainer ถูกกำหนดค่าแล้ว
+            const formContainer = document.getElementById('tqf-form-container'); 
+            if (!feedbackElement && formContainer) feedbackElement = formContainer; 
+
+            if (feedbackElement) {
+                originalColor = feedbackElement.style.backgroundColor;
+                feedbackElement.style.transition = 'background-color 0.1s ease';
+                feedbackElement.style.backgroundColor = '#fffbdd';
+            }
+
             try {
-                const urlParams = new URLSearchParams(window.location.search);
-                const getYearStr = urlParams.get('year');
-                const getTermStr = urlParams.get('term');
-                
-                let buddhistYearStr = '';
+                const response = await fetch(saveUrl, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        course_id: courseId, year: year, term: term, TQF: tqf,
+                        field: fieldName,
+                        value: typeof value === 'object' ? JSON.stringify(value) : value
+                    })
+                });
 
-                if (getYearStr) {
-                    const buddhistYear = parseInt(getYearStr, 10) + 543;
-                    buddhistYearStr = buddhistYear.toString();
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('Server error response:', errorData);
+                    const errorMessages = errorData.errors ? Object.values(errorData.errors).flat().join(' ') : (errorData.error || 'Unknown server error');
+                    throw new Error(`Server error: ${response.status} - ${errorData.message || 'Error'} (${errorMessages})`);
                 }
 
-                // ปีการศึกษาหน้าแรก
-                const selectYear = document.getElementById('academic_year');
-                if (buddhistYearStr && selectYear) {
-                    selectYear.innerHTML = ''; 
-                    const newspan = document.createElement('span');
-                    newspan.value = buddhistYearStr;
-                    newspan.textContent = buddhistYearStr;
-                    selectYear.appendChild(newspan);
-                    selectYear.value = buddhistYearStr;
-                }
+                const result = await response.json();
+                console.log('Save successful:', result);
 
-                // เทอมหน้าแรก
-                const selectterm = document.getElementById('term');
-                if (getTermStr && selectterm) {
-                    selectterm.innerHTML = ''; 
-                    const newspan = document.createElement('span');
-                    newspan.value = getTermStr;
-                    newspan.textContent = getTermStr;
-                    selectterm.appendChild(newspan);
-                    selectterm.value = getTermStr;
-                }
-
-                // การแก้ไขล่าสุด"
-                const yearDisplay = document.getElementById('revision_year_display');
-                const term1Checkbox = document.getElementById('revision_term_1');
-                const term2Checkbox = document.getElementById('revision_term_2');
-
-                if (buddhistYearStr && yearDisplay) {
-                    yearDisplay.textContent = buddhistYearStr;
-                }
-
-                // ติ๊กถูกที่ช่องเทอม
-                if (getTermStr && term1Checkbox && term2Checkbox) {
-                    if (getTermStr === '1') {
-                        term1Checkbox.checked = true;
-                    } else if (getTermStr === '2') {
-                        term2Checkbox.checked = true;
-                    }
+                // เปลี่ยนเป็นสีเขียวเมื่อสำเร็จ
+                if (feedbackElement) {
+                    feedbackElement.style.backgroundColor = '#d4edda'; // Light green
+                    setTimeout(() => {
+                         if(feedbackElement) { // Check if element still exists
+                            feedbackElement.style.backgroundColor = originalColor;
+                            feedbackElement.style.transition = '';
+                         }
+                    }, 1000);
                 }
 
             } catch (error) {
-                console.error("Error setting academic year:", error);
-                const selectYear = document.getElementById('academic_year');
-                if (selectYear) {
-                    selectYear.innerHTML = '<span value="">Error</span>';
+                console.error('Save failed:', error);
+                if (feedbackElement) {
+                    feedbackElement.style.backgroundColor = '#f8d7da'; // Light red
+                    setTimeout(() => {
+                         if(feedbackElement) { // Check if element still exists
+                             feedbackElement.style.backgroundColor = originalColor;
+                             feedbackElement.style.transition = '';
+                         }
+                    }, 2000);
                 }
             }
-        })();
-        
-        try {
-            const stateSymbols_s5_2 = { 
-                '0': '&nbsp;', 
-                '1': '<span class="text-xl font-bold">●</span>', 
-                '2': '<span class="text-xl">○</span>'  
-            };
+        }
 
-            const section5_2_container = document.getElementById('section-5-2');
-            if (section5_2_container) { 
-                const cells_s5_2 = section5_2_container.querySelectorAll('.score-cell');
-                if (cells_s5_2.length > 0) {
-                    cells_s5_2.forEach(cell => {
-                        cell.dataset.state = '0';
-                        cell.innerHTML = stateSymbols_s5_2['0'];
-
-                        cell.addEventListener('click', () => {
-                            let currentState = parseInt(cell.dataset.state || '0');
-                            let nextState = (currentState + 1) % 3;
-                            cell.dataset.state = nextState;
-                            cell.innerHTML = stateSymbols_s5_2[nextState];
-                        });
-                    });
+        function getFieldName(element) {
+            // --- Check if the element is within Section 6 table FIRST ---
+            const section6Container = element.closest('#section-6-container');
+            if (section6Container) {
+                return 'section6_data_trigger';
+            }
+            // --- Check if the element is within Section 7 table ---
+            const section7Container = element.closest('#section-7-container');
+            if (section7Container) {
+                if(element.tagName === 'INPUT' || element.tagName === 'SELECT' || element.tagName === 'TEXTAREA') {
+                return 'section7_data_trigger';
                 }
+            }
+            // --- Check if the element is within Section 8 container ---
+            const section8Container = element.closest('#section-8-container');
+            if (section8Container) {
+                if (element.closest('#assessmentTable')) {
+                    if(element.tagName === 'INPUT' || element.tagName === 'SELECT' || element.tagName === 'TEXTAREA') {
+                        return 'section8_1_data_trigger';
+                    }
+                }
+                if (element.closest('#rubric-container')) {
+                    if (element.hasAttribute('contenteditable') || element.tagName === 'INPUT' || element.tagName === 'SELECT' || element.tagName === 'TEXTAREA') {
+                        return 'section8_2_data_trigger';
+                    }
+                }
+            }
+            // --- Check if the element is within Section 9 container ---
+            const section9Container = element.closest('#section-9-container');
+            if (section9Container) {
+                if (element.closest('#referenceList') && (element.tagName === 'INPUT' || element.classList.contains('remove-btn'))) {
+                    return 'section9_1_data_trigger';
+                }
+                if (element.tagName === 'TEXTAREA' && element.name && !element.closest('#referenceList')) {
+                    return element.name;
+                }
+            }
+
+            // Priority: data-field > name > id (for other sections)
+            if (element.dataset.field) return element.dataset.field;
+            if (element.name) return element.name;
+            if (element.id) return element.id;
+
+             // Fallback
+            const cell = element.closest('td, th');
+            const row = element.closest('tr');
+            const table = element.closest('table');
+            if (!table || !row || !cell) return null;
+
+            const tableId = table.id || 'unknown_table';
+            const parentElement = row.parentElement;
+            const rowIndex = Array.from(parentElement.children).indexOf(row);
+            const cellIndex = Array.from(row.children).indexOf(cell);
+            const query = element.tagName;
+            const elementsInCell = Array.from(cell.querySelectorAll(query + ', [contenteditable="true"]'));
+            const elementIndex = elementsInCell.length > 1 ? elementsInCell.indexOf(element) : 0;
+
+            // Specific names for JSON tables
+            if (tableId === 'curriculum-mapping-table' && element.classList.contains('score-cell')) {
+                const mapRowIndex = element.dataset.row;
+                const mapColIndex = element.dataset.col;
+                return `curriculum_map_r${mapRowIndex}_c${mapColIndex}`;
+            }
+            if (tableId === 'ploTable' || tableId === 'plosTableBody') {
+                if (element.tagName === 'SPAN' && element.hasAttribute('contenteditable')) {
+                    const codeCell = row.cells[0];
+                    if (codeCell) { const code = codeCell.textContent.trim(); if (code) return `cloLll_desc_${code}`; }
+                } else {
+                    const mapRowIndex = rowIndex; const mapColIndex = cellIndex - 2;
+                    if (mapColIndex >= 0) { const inputType = element.type === 'checkbox' ? 'check' : 'level'; return `plo_map_r${mapRowIndex}_c${mapColIndex}_${inputType}`; }
+                }
+                if(element.name && element.name.startsWith('plo')) return element.name;
+            }
+            if (tableId && tableId.startsWith('rubricTable_') && element.hasAttribute('contenteditable')) { if(element.dataset.field) return element.dataset.field; }
+            if (element.name && element.name.startsWith('reference_') && element.tagName === 'INPUT') { return element.name; }
+            if (tableId === 'gradeTable' && element.hasAttribute('contenteditable')) { if(element.dataset.field) return element.dataset.field; }
+
+            console.warn("Using fallback naming for element:", element);
+            return `${tableId}_r${rowIndex}_c${cellIndex}_e${elementIndex}`;
+        }
+
+        //จัดการ event 'change' สำหรับ input, textarea, select 
+        function handleFormChange(event) {
+            const target = event.target;
+            const nodeName = target.nodeName;
+            let fieldName = getFieldName(target);
+
+            if (!fieldName) { console.warn("Could not determine field name on change:", target); return; }
+
+            // --- Trigger checks ---
+            if (fieldName === 'section6_data_trigger') {
+                const section6JSON = getSection6Data();
+                saveData('section6_data', section6JSON, target);
+                return;
+            }
+            if (fieldName === 'section7_data_trigger') {
+                const section7JSON = getSection7Data();
+                saveData('section7_data', section7JSON, target);
+                return;
+            }
+            if (fieldName === 'section8_1_data_trigger') {
+                const section8_1JSON = getSection8_1Data();
+                saveData('section8_1_data', section8_1JSON, target);
+                return;
+            }
+            if (fieldName === 'section8_2_data_trigger') {
+                const section8_2JSON = getSection8_2Data();
+                saveData('section8_2_data', section8_2JSON, target);
+                return;
+            }
+            if (fieldName === 'section9_1_data_trigger') {
+                return;
+            }
+
+            // --- Individual field saving ---
+            let value;
+            if (nodeName === 'INPUT') {
+                value = (target.type === 'checkbox') ? target.checked : target.value;
+            } else if (nodeName === 'TEXTAREA' || nodeName === 'SELECT') {
+                value = target.value;
+            } else { return; }
+            saveData(fieldName, value, target);
+        }
+        
+        //จัดการ event 'blur' สำหรับ [contenteditable=true]
+        function handleFormBlur(event) {
+            const target = event.target;
+            if (target instanceof HTMLElement && target.isContentEditable) {
+                let fieldName = getFieldName(target);
+                if (!fieldName) { console.warn("Could not determine field name on blur:", target); return; }
+
+                // --- Trigger checks ---
+                if (fieldName === 'section6_data_trigger') {
+                    if (target.classList.contains('clo-cell-s6')) {
+                        const section6JSON = getSection6Data(); saveData('section6_data', section6JSON, target);
+                    } return;
+                }
+                if (fieldName === 'section7_data_trigger') { return; }
+                if (fieldName === 'section8_1_data_trigger') { return; }
+                if (fieldName === 'section8_2_data_trigger') {
+                    const section8_2JSON = getSection8_2Data(); saveData('section8_2_data', section8_2JSON, target);
+                    return;
+                }
+                if (fieldName === 'section9_1_data_trigger') {
+                    const section9_1JSON = getSection9_1Data(); saveData('section9_1_data', section9_1JSON, target);
+                    return;
+                }
+
+                // --- Individual field saving ---
+                const value = target.textContent.trim();
+                saveData(fieldName, value, target);
+            }
+            if (target.tagName === 'INPUT' && target.closest('#referenceList')) {
+                const section9_1JSON = getSection9_1Data();
+                saveData('section9_1_data', section9_1JSON, target);
+            }
+            if (target.tagName === 'TEXTAREA' && target.closest('#section-9-container')) {
+                if (!target.closest('#referenceList')) {
+                    if (target.name) {
+                        saveData(target.name, target.value, target);
+                    }
+                }
+            }
+        }
+
+        // 3. ผูก Event Listeners เข้ากับ Container หลัก
+        const formContainer = document.querySelector('.w-\\[210mm\\]');
+        if (formContainer) {
+            // สำหรับ <input>, <textarea>, <select>
+            formContainer.addEventListener('change', handleFormChange);
+            
+            // สำหรับ [contenteditable=true]
+            // เราใช้ 'blur' และตั้งค่า useCapture=true
+            // เพื่อให้ event ทำงานที่ div นี้ก่อน แม้ว่า element ข้างในจะ blur ก็ตาม
+            formContainer.addEventListener('blur', handleFormBlur, true);
+        }
+
+        // Section 5.1
+        try {
+            const addRowBtn = document.getElementById('addPloRowBtn');
+            const tableBody = document.getElementById('plosTableBody');
+
+            if (addRowBtn && tableBody) {
+                addRowBtn.addEventListener('click', function() {
+                    let currentRowIndex = parseInt(tableBody.dataset.maxPlo, 10);
+                    let newRowIndex = currentRowIndex + 1;
+                    tableBody.dataset.maxPlo = newRowIndex; // Update max index
+
+                    const newRow = document.createElement('tr');
+                    const rowHtmlTemplate = `
+                        <td class="text-center border border-black p-2.5 align-top">${newRowIndex}</td>
+                        <td class="border border-black p-2.5 align-top">
+                            <textarea name="plo${newRowIndex}_outcome" rows="3" class="w-full border border-gray-300 rounded p-1"></textarea>
+                        </td>
+                        <td class="text-center border border-black p-2.5 align-top">
+                            <input type="checkbox" name="plo${newRowIndex}_specific" class="scale-125" value="1">
+                        </td>
+                        <td class="text-center border border-black p-2.5 align-top">
+                            <input type="checkbox" name="plo${newRowIndex}_generic" class="scale-125" value="1">
+                        </td>
+                        <td class="text-center border border-black p-2.5 align-top">
+                            <select name="plo${newRowIndex}_level" class="border rounded px-2 py-1 text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                <option value="">--เลือก--</option>
+                                <option value="R - Remember">R</option> <option value="U - Understand">U</option>
+                                <option value="AP - Apply">AP</option> <option value="AN - Analyze">AN</option>
+                                <option value="E - Evaluate">E</option> <option value="C - Create">C</option>
+                            </select>
+                        </td>
+                        <td class="text-center border border-black p-2.5 align-top">
+                            <select name="plo${newRowIndex}_type" class="border rounded px-2 py-1 text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                <option value="">--เลือก--</option>
+                                <option value="K - Knowledge">K</option> <option value="S - Skill">S</option>
+                                <option value="AR - Application">AR</option> <option value="Rs - Responsibility">Rs</option>
+                            </select>
+                        </td>
+                    `;
+                    newRow.innerHTML = rowHtmlTemplate;
+                    tableBody.appendChild(newRow);
+
+                    // Automatically save the new empty row structure?
+                    const firstInput = newRow.querySelector('textarea[name^="plo"]');
+                    if(firstInput) {
+                        saveData(firstInput.name, firstInput.value);
+                    }
+                });
+            } else {
+                console.warn("Could not find Add PLO button or table body.");
+            }
+        } catch(e) {
+            console.error("Error setting up Section 5.1 Add Row:", e);
+        }
+        
+        // Section 5.2
+        try {
+            const curriculumMapData = @json($data->curriculum_map_data ?? []);
+            const stateSymbols_s5_2 = { '0': '&nbsp;', '1': '<span class="text-xl font-bold">●</span>', '2': '<span class="text-xl">○</span>' };
+            const mappingTable = document.getElementById('curriculum-mapping-table');
+
+            // ตรวจสอบว่าข้อมูลเป็น Array และมี Object ตัวแรกอยู่หรือไม่
+            if (mappingTable && Array.isArray(curriculumMapData) && curriculumMapData.length > 0 && typeof curriculumMapData[0] === 'object') {
+                
+                const rowData = curriculumMapData[0] || {}; // ใช้ || {} เผื่อเป็น null
+
+                const cells = mappingTable.querySelectorAll('.score-cell');
+                cells.forEach(cell => {
+                    const rowIndex = parseInt(cell.dataset.row); 
+                    const colIndex = parseInt(cell.dataset.col); 
+                    
+                    // ดึงค่า state จาก Object โดยใช้ colIndex เป็น Key (แปลงเป็น String)
+                    const state = rowData[String(colIndex)] ?? 0; // ถ้า Key ไม่มีอยู่ ให้ใช้ค่า Default เป็น 0
+
+                    cell.dataset.state = state;
+                    cell.innerHTML = stateSymbols_s5_2[state] || '&nbsp;';
+
+                    cell.addEventListener('click', () => {
+                        let currentState = parseInt(cell.dataset.state || '0');
+                        let nextState = (currentState + 1) % 3;
+                        cell.dataset.state = nextState;
+                        cell.innerHTML = stateSymbols_s5_2[nextState];
+                        const fieldName = `curriculum_map_r${rowIndex}_c${colIndex}`;
+                        saveData(fieldName, nextState); 
+                    });
+                });
+            } else { // Fallback กรณีข้อมูลไม่ถูกต้อง หรือไม่มี
+                 console.warn("Curriculum mapping table or data not found/invalid format:", curriculumMapData);
+                 const cells = mappingTable ? mappingTable.querySelectorAll('.score-cell') : [];
+                 cells.forEach(cell => {
+                     cell.dataset.state = '0';
+                     cell.innerHTML = stateSymbols_s5_2['0'];
+                     
+                     cell.addEventListener('click', () => {
+                         let currentState = parseInt(cell.dataset.state || '0');
+                         let nextState = (currentState + 1) % 3;
+                         cell.dataset.state = nextState;
+                         cell.innerHTML = stateSymbols_s5_2[nextState];
+                         const rowIndex = parseInt(cell.dataset.row);
+                         const colIndex = parseInt(cell.dataset.col);
+                         const fieldName = `curriculum_map_r${rowIndex}_c${colIndex}`;
+                         saveData(fieldName, nextState);
+                     });
+                 });
             }
         } catch (e) {
-            console.error("Error setting up Section 5.2 (Curriculum Map Click):", e);
-        }
-    });
-
-    // --- หมวดที่ 5.3 : CLO/PLO Mapping Table ---
-    try {
-        const data = [
-            { code: "CLO1", desc: "ประเมินวิธีการวิเคราะห์ข้อมูล เพื่อแก้ไขปัญหาทางวิทยาการข้อมูลได้อย่างเหมาะสม" },
-            { code: "CLO2", desc: "สร้างต้นแบบเพื่อการทำนายหรือการรู้จำจากชุดข้อมูลเพื่อประยุกต์ใช้ในการแก้ปัญหาจริง" },
-            { code: "CLO3", desc: "สื่อสารผลลัพธ์การวิเคราะห์ข้อมูลให้ผู้อื่นเข้าใจและนำไปประยุกต์ใช้อย่างมีจริยธรรม" },
-            { code: "LLL1", desc: "Creativity ความคิดสร้างสรรค์" },
-            { code: "LLL2", desc: "Problem Solving การแก้ปัญหา" },
-            // ... (LLL3-LLL10) ...
-            { code: "LLL10", desc:"Reflection การสะท้อนทักษะความรู้ " }
-        ];
-        const options = ["", "R", "U", "AP", "AN", "E", "C"];
-        
-        // (FIXED) ย้าย const tbody มาไว้ข้างในนี้
-        const tbody = document.querySelector("#ploTable tbody"); 
-        
-        if(tbody) { // เช็คก่อนว่าหา tbody เจอ
-            data.forEach(item => {
-                const tr = document.createElement("tr");
-                
-                // (ใช้ class ของ Tailwind แทน inline style)
-                tr.innerHTML = `
-                    <td class="border border-gray-400 p-2 text-center font-bold">${item.code}</td>
-                    <td class="border border-gray-400 p-2 text-left">${item.desc}</td>
-                `;
-
-                for (let i = 0; i < 4; i++) {
-                    const td = document.createElement("td");
-                    td.className = "border border-gray-400 p-2 text-center";
-                    
-                    const checkbox = document.createElement("input");
-                    checkbox.type = "checkbox";
-                    checkbox.className = "mr-1.5 scale-125"; // Tailwind class
-
-                    const select = document.createElement("select");
-                    select.className = "w-[70px] p-1 border rounded"; // Tailwind class
-                    options.forEach(opt => {
-                        const op = document.createElement("option");
-                        op.value = opt;
-                        op.textContent = opt;
-                        select.appendChild(op);
-                    });
-
-                    td.appendChild(checkbox);
-                    td.appendChild(select);
-                    tr.appendChild(td);
-                }
-                tbody.appendChild(tr);
-            });
-        }
-    } catch (e) {
-        console.error("Error in Section 5.3 (CLO/PLO Map):", e);
-    }
-
-    // --- หมวดที่ 6 : CLO Table (Add Row) ---
-    try {
-        const data_s6_teachingOptions = {
-            onSite: {
-                label: "On-site โดยมีการเรียนการสอนแบบ",
-                items: [
-                    "บรรยาย (Lecture)", "ฝึกปฏิบัติ (Laboratory Model)", "เรียนรู้จากการลงมือทำ (Learning by Doing)",
-                    "การเรียนรู้โดยใช้กิจกรรมเป็นฐาน (Activity-based Learning)", "การเรียนรู้โดยใช้วิจัยเป็นฐาน (Research-based Learning)",
-                    "ถามตอบสะท้อนคิด (Refractive Learning)", "นำเสนออภิปรายกลุ่ม (Discussion Group)",
-                    "เรียนรู้จากการสืบเสาะหาความรู้ (Inquiry-based Learning)", "การเรียนรู้แบบร่วมมือร่วมใจ (Cooperative Learning)",
-                    "การเรียนรู้แบบร่วมมือ (Collaborative Learning)", "การเรียนรู้โดยใช้โครงการเป็นฐาน (Project-based Learning: PBL)",
-                    "การเรียนรู้โดยใช้ปัญหาเป็นฐาน (Problem-based Learning)", "วิเคราะห์โจทย์ปัญหา (Problem Solving)",
-                    "เรียนรู้การตัดสินใจ (Decision Making)", "ศึกษาค้นคว้าจากกรณีศึกษา (Case Study)",
-                    "เรียนรู้ผ่านการเกม/การเล่น (Game/Play Learning)", "ศึกษาดูงาน (Field Trips)", "อื่น ๆ....................................."
-                ],
-                indent: true
-            },
-            online: {
-                label: "Online โดยมีการเรียนการสอนแบบ",
-                items: ["บรรยาย (Lecture)"],
-                indent: true
-            }
-        };
-        const data_s6_assessmentOptions = {
-            exam: {
-                label: "คะแนนจากแบบทดสอบสัมฤทธิ์ผล (ข้อสอบ)",
-                items: [ "ทดสอบย่อย (Quiz)", "ทดสอบกลางภาค (Midterm)", "ทดสอบปลายภาค (Final)" ]
-            },
-            performance: {
-                label: "คะแนนจากผลงานที่ได้รับมอบหมาย (Performance) โดยใช้เกณฑ์ Rubric Score การทำงานกลุ่มและเดี่ยว",
-                items: [ "การทำงานเป็นทีม (Team Work)", "โปรแกรม ซอฟต์แวร์", "ผลงาน ชิ้นงาน", "รายงาน (Report)", "การนำเสนอ (Presentation)", "แฟ้มสะสมงาน (Portfolio)", "รายงานการศึกษาด้วยตนเอง (Self-Study Report)" ]
-            },
-            behavior: {
-                label: "คะแนนจากผลการพฤติกรรม",
-                items: [ "ความรับผิดชอบ การมีส่วนร่วม", "ประเมินผลการงานที่ส่ง" ]
-            }
-        };
-        
-        // (ฟังก์ชันทั้งหมดของหมวด 6 ถูกย้ายมาไว้ข้างในนี้)
-        function initializeCloTable_Section6() {
-            const tableBody = document.getElementById('cloTableBody_S6');
-            const addBtn = document.getElementById('addCloBtn_S6');
-            const template = document.getElementById('cloRowTemplate_S6');
-            if (!tableBody || !addBtn || !template) return;
-
-            function _s6_createCheckboxHtml(optionsObject) {
-                let html = '';
-                for (const key in optionsObject) {
-                    const category = optionsObject[key];
-                    html += `<div class="font-semibold mt-2">${category.label}</div>`;
-                    category.items.forEach(itemText => {
-                        const indentClass = category.indent ? 'ml-4' : '';
-                        html += `
-                            <label class="flex items-start ${indentClass} hover:bg-gray-50 cursor-pointer">
-                                <input type="checkbox" class="mt-1 scale-125 mr-1.5">
-                                <span class="ml-2">${itemText}</span>
-                            </label>
-                        `;
-                    });
-                }
-                return html;
-            }
-
-            function _s6_addNewCloRow() {
-                const newRow = template.content.cloneNode(true);
-                const cloCount = tableBody.children.length + 1;
-                newRow.querySelector('.clo-cell-s6').textContent = `CLO${cloCount} [คลิกเพื่อแก้ไข]`;
-                tableBody.appendChild(newRow);
-            }
-
-            const teachingHtml = _s6_createCheckboxHtml(data_s6_teachingOptions);
-            const assessmentHtml = _s6_createCheckboxHtml(data_s6_assessmentOptions);
-            template.content.querySelector('.teaching-cell-s6').innerHTML = teachingHtml;
-            template.content.querySelector('.assessment-cell-s6').innerHTML = assessmentHtml;
-            
-            _s6_addNewCloRow();
-            addBtn.addEventListener('click', _s6_addNewCloRow);
-        }
-        
-        initializeCloTable_Section6(); // เรียกใช้ฟังก์ชัน
-
-    } catch (e) {
-        console.error("Error in Section 6 (CLO Table):", e);
-    }
-
-    // --- หมวดที่ 7.1 : แผนการสอน (Lesson Plan) ---
-    try {
-    // ---- ฟังก์ชั่นหมวดที่ 7.1 : แผนการสอน ----
-    function generateTableLesson() {
-        const tbody = document.querySelector("#planTable tbody");
-        if (!tbody) {
-            console.warn("Table body for lesson plan (#planTable tbody) not found.");
-            return; // หยุดทำงานถ้าหา tbody ไม่เจอ
+            console.error("Error initializing Section 5.2 (Curriculum Map Display):", e);
         }
 
-        tbody.innerHTML = ""; // ล้างตารางก่อนสร้างใหม่
+        // Section 5.3
+       try {
+            const cloLllData = [
+                { code: "CLO1", description: "ประเมินวิธีการวิเคราะห์ข้อมูล เพื่อแก้ไขปัญหาทางวิทยาการข้อมูลได้อย่างเหมาะสม" },
+                { code: "CLO2", description: "สร้างต้นแบบเพื่อการทำนายหรือการรู้จำจากชุดข้อมูลเพื่อประยุกต์ใช้ในการแก้ปัญหาจริง" },
+                { code: "CLO3", description: "สื่อสารผลลัพธ์การวิเคราะห์ข้อมูลให้ผู้อื่นเข้าใจและนำไปประยุกต์ใช้อย่างมีจริยธรรม" },
+                { code: "LLL1", description: "Creativity ความคิดสร้างสรรค์" },
+                { code: "LLL2", description: "Problem Solving การแก้ปัญหา" },
+                { code: "LLL3", description: "Critical Thinking การคิดเชิงวิพากษ์" },
+                { code: "LLL4", description: "Leadership การเป็นผู้นำ" },
+                { code: "LLL5", description: "Communication การสื่อสาร" },
+                { code: "LLL6", description: "Collaboration การประสานงาน" },
+                { code: "LLL7", description: "Information Management การจัดการข้อมูล " },
+                { code: "LLL8", description: "Adaptability การปรับตัว" },
+                { code: "LLL9", description: "Curiosity ความอยากรู้อยากเห็น" },
+                { code: "LLL10", description: "Reflection การสะท้อนทักษะความรู้" }
+            ];
 
-        const weekCountInput = document.getElementById("weekCount");
-        // ถ้าหา input ไม่เจอ หรือค่าไม่ใช่ตัวเลข ให้ใช้ค่า default เป็น 2
-        const weekCount = (weekCountInput && !isNaN(parseInt(weekCountInput.value))) ? parseInt(weekCountInput.value) : 2;
+            const levelOptions = ["", "R", "U", "AP", "AN", "E", "C"];
+            const courseAccordData = @json($data->course_accord ?? []);
+            const tbody = document.querySelector("#ploTable tbody");
 
-        for (let i = 1; i <= weekCount; i++) {
-            const row = document.createElement("tr");
-            row.innerHTML = `
-                <td class="border border-black p-2.5 align-top text-center">${i}</td>
-                <td class="border border-black p-1 align-top">
-                    <textarea name="topic_${i}" placeholder="ใส่หัวข้อสัปดาห์ ${i}" class="w-full h-16 border border-gray-300 rounded p-1"></textarea>
-                </td>
-                <td class="border border-black p-1 align-top">
-                    <textarea name="objective_${i}" placeholder="ใส่วัตถุประสงค์" class="w-full h-16 border border-gray-300 rounded p-1"></textarea>
-                </td>
-                <td class="border border-black p-1 align-top">
-                    <textarea name="activity_${i}" placeholder="ใส่กิจกรรมการเรียนรู้" class="w-full h-16 border border-gray-300 rounded p-1"></textarea>
-                </td>
-                <td class="border border-black p-1 align-top">
-                    <textarea name="tool_${i}" placeholder="ใส่สื่อ/เครื่องมือ" class="w-full h-16 border border-gray-300 rounded p-1"></textarea>
-                </td>
-                <td class="border border-black p-1 align-top">
-                    <textarea name="assessment_${i}" placeholder="ใส่การประเมินผล" class="w-full h-16 border border-gray-300 rounded p-1"></textarea>
-                </td>
-                <td class="border border-black p-2.5 align-top text-center">
-                    <select name="clo_${i}" class="border rounded px-2 py-1 text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
-                        <option value="">--เลือก--</option>
-                        <option value="CLO1">CLO 1</option>
-                        <option value="CLO2">CLO 2</option>
-                        <option value="CLO3">CLO 3</option>
-                        <option value="CLO4">CLO 4</option>
-                        <option value="CLO5">CLO 5</option>
-                    </select>
-                </td>
-            `;
-            tbody.appendChild(row);
-        }
-    }
+            if (tbody) {
+                tbody.innerHTML = '';
+                cloLllData.forEach((item, rowIndex) => {
+                    const tr = document.createElement("tr");
+                    const itemCode = item.code ?? `Item ${rowIndex+1}`;
+                    const itemDesc = item.description ?? '';
 
-    // --- ผูก Event Listener กับปุ่ม "สร้างตาราง" ---
-    // (ย้ายมาจากโค้ดก่อนหน้า และเปลี่ยน onclick เป็น addEventListener)
-    const lessonBtn = document.getElementById('generateLessonTableBtn');
-    if (lessonBtn) {
-        lessonBtn.addEventListener('click', generateTableLesson);
-    } else {
-        console.warn("Button to generate lesson table (#generateLessonTableBtn) not found.");
-    }
+                    tr.innerHTML = `
+                        <td class="border border-gray-400 p-2 text-center font-bold">${itemCode}</td>
+                        <td class="border border-gray-400 p-2 text-left">
+                           <span
+                                class="inline-block w-full hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500 p-1 rounded"
+                                contenteditable="true"
+                                data-field="cloLll_desc_${itemCode}"
+                           >${itemDesc}</span>
+                        </td>
+                    `;
 
-    // --- เรียกใช้ฟังก์ชันครั้งแรกเมื่อหน้าเว็บโหลดเสร็จ ---
-    // (ย้ายมาไว้ข้างใน try...catch และเรียกหลังจากผูกปุ่ม)
-    generateTableLesson();
+                    for (let colIndex = 0; colIndex < 4; colIndex++) {
+                        const td = document.createElement("td");
+                        td.className = "border border-gray-400 p-2 text-center";
+                        const ploDbIndex = colIndex + 1;
+                        let savedCellData = { check: false, level: '' };
 
-} catch (e) {
-    console.error("Error in Section 7.1 (Lesson Plan):", e);
-}
-    
-    // --- หมวดที่ 8.1 : กลยุทธ์การประเมิน ---
-    try {
-        // (FIXED) ย้ายฟังก์ชันมาไว้ข้างใน
-        function generateTableAssessment() {
-            const tbody = document.querySelector("#assessmentTable tbody");
-            if(!tbody) return;
-            tbody.innerHTML = ""; // ล้างตารางก่อน
-            const Assessment = parseInt(document.getElementById("Assessment").value);
+                        if (courseAccordData && courseAccordData[rowIndex] !== undefined) {
+                            const rowData = courseAccordData[rowIndex];
+                            if (rowData && rowData[ploDbIndex] !== undefined && typeof rowData[ploDbIndex] === 'object' && rowData[ploDbIndex] !== null) {
+                                savedCellData = { check: rowData[ploDbIndex].check ?? false, level: rowData[ploDbIndex].level ?? '' };
+                            } else if (Array.isArray(rowData) && rowData.length > colIndex && typeof rowData[colIndex] === 'object' && rowData[colIndex] !== null) {
+                                console.warn(`Accessing courseAccordData[${rowIndex}] as array for colIndex ${colIndex}. Structure might be incorrect.`);
+                                savedCellData = { check: rowData[colIndex].check ?? false, level: rowData[colIndex].level ?? '' };
+                            }
+                        }
 
-            for (let i = 1; i <= Assessment; i++) {
-                const row = document.createElement("tr");
-                row.innerHTML = `
-                    <td class="border border-black p-1 align-top"><textarea name="method[]" placeholder="เช่น แบบฝึกหัดในห้องเรียน / Quiz / สอบกลางภาค" class="w-full h-16 border border-gray-300 rounded p-1"></textarea></td>
-                    <td class="border border-black p-1 align-top"><textarea name="tool[]" placeholder="เช่น แบบฝึกหัด Lab, การนำเสนอ, โครงการ, รายงาน" class="w-full h-16 border border-gray-300 rounded p-1"></textarea></td>
-                    <td class="border border-black p-1 align-top"><input type="number" name="percent[]" min="0" max="100" placeholder="%" class="w-full text-center border border-gray-300 rounded p-1"></td>
-                    <td class="border border-black p-1 align-top">
-                        <select name="clo[]" class="w-full mb-1 p-1 border rounded">
-                            <option value="">--เลือก CLO--</option>
-                            <option value="CLO1">CLO1</option>
-                            <option value="CLO2">CLO2</option>
-                            <option value="CLO3">CLO3</option>
-                            <option value="CLO4">CLO4</option>
-                            <option value="CLO5">CLO5</option>
-                        </select>
-                        <textarea name="clo_desc[]" placeholder="ระบุรายละเอียดความสอดคล้อง เช่น CLO1: การวิเคราะห์ข้อมูล" class="w-full h-12 border border-gray-300 rounded p-1"></textarea>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            }
-        }
-        
-        // (FIXED) เปลี่ยน onclick เป็น addEventListener
-        const assessmentBtn = document.getElementById('generateAssessmentTableBtn');
-        if(assessmentBtn) {
-            assessmentBtn.addEventListener('click', generateTableAssessment);
-            generateTableAssessment(); // เรียกใช้ครั้งแรก
-        }
-    } catch (e) {
-        console.error("Error in Section 8.1 (Assessment Strategy):", e);
-    }
+                        const checkbox = document.createElement("input");
+                        checkbox.type = "checkbox";
+                        checkbox.className = "mr-1.5 scale-125 plo-map-checkbox";
+                        checkbox.name = `plo_map_r${rowIndex}_c${colIndex}_check`;
+                        checkbox.checked = savedCellData.check;
 
-    // --- หมวดที่ 8.2 : Rubrics (Add Section) ---
-    try {
-        const newRubricBodyTemplate = `
-            <tr>
-                <td class="level-cell border border-gray-400 p-1 text-center align-top font-semibold" contenteditable="true">5</td>
-                <td class="description-cell border border-gray-400 p-1 align-top hover:bg-gray-50" contenteditable="true">[ใส่คำอธิบายสำหรับระดับ 5]</td>
-            </tr>
-            <tr>
-                <td class="level-cell border border-gray-400 p-1 text-center align-top font-semibold" contenteditable="true">4</td>
-                <td class="description-cell border border-gray-400 p-1 align-top hover:bg-gray-50" contenteditable="true">[ใส่คำอธิบายสำหรับระดับ 4]</td>
-            </tr>
-            <tr>
-                <td class="level-cell border border-gray-400 p-1 text-center align-top font-semibold" contenteditable="true">3</td>
-                <td class="description-cell border border-gray-400 p-1 align-top hover:bg-gray-50" contenteditable="true">[ใส่คำอธิบายสำหรับระดับ 3]</td>
-            </tr>
-            <tr>
-                <td class="level-cell border border-gray-400 p-1 text-center align-top font-semibold" contenteditable="true">2</td>
-                <td class="description-cell border border-gray-400 p-1 align-top hover:bg-gray-50" contenteditable="true">[ใส่คำอธิบายสำหรับระดับ 2]</td>
-            </tr>
-            <tr>
-                <td class="level-cell border border-gray-400 p-1 text-center align-top font-semibold" contenteditable="true">1</td>
-                <td class="description-cell border border-gray-400 p-1 align-top hover:bg-gray-50" contenteditable="true">[ใส่คำอธิบายสำหรับระดับ 1]</td>
-            </tr>
-            <tr>
-                <td class="level-cell border border-gray-400 p-1 text-center align-top font-semibold" contenteditable="true">0</td>
-                <td class="description-cell border border-gray-400 p-1 align-top hover:bg-gray-50" contenteditable="true">ไม่ส่งผลงาน</td>
-            </tr>
-        `;
-        
-        const rubricContainer = document.getElementById('rubric-container');
-        const addRubricBtn = document.getElementById('add-rubric-btn');
+                        const select = document.createElement("select");
+                        select.className = "w-[70px] p-1 border rounded plo-map-level";
+                        select.name = `plo_map_r${rowIndex}_c${colIndex}_level`;
+                        levelOptions.forEach(opt => {
+                            const op = document.createElement("option");
+                            op.value = opt;
+                            op.textContent = opt;
+                            if (savedCellData.level === opt) op.selected = true;
+                            select.appendChild(op);
+                        });
 
-        // --- [เพิ่มใหม่] ฟังก์ชันสำหรับอัปเดตลำดับ ก, ข, ค ---
-        function updateRubricLetters() {
-            const allRubrics = rubricContainer.querySelectorAll('.rubric-section');
-            allRubrics.forEach((rubric, index) => {
-                const letter = String.fromCharCode(0x0E01 + index); // 0=ก, 1=ข
-                const titleElement = rubric.querySelector('h3');
-                const thElement = rubric.querySelector('thead th:nth-child(2)');
-
-                if (titleElement && thElement) {
-                    // ดึงข้อความเดิม (หลัง ". ")
-                    let currentTitleText = titleElement.textContent;
-                    if (currentTitleText.match(/^[ก-ฮ]\.\s/)) { // ถ้ามี ก. อยู่แล้ว
-                        currentTitleText = currentTitleText.substring(currentTitleText.indexOf('.') + 2);
-                    } else if (currentTitleText.startsWith('[หัวข้อใหม่')) {
-                        currentTitleText = "[หัวข้อใหม่ (คลิกเพื่อแก้ไข)]";
+                        td.appendChild(checkbox);
+                        td.appendChild(select);
+                        tr.appendChild(td);
                     }
-                    // (ถ้าไม่ตรงเงื่อนไขเลย ก็คือข้อความจาก template เดิม)
-
-                    // อัปเดตหัวข้อ
-                    titleElement.textContent = `${letter}. ${currentTitleText}`;
-                    // อัปเดตหัวตาราง
-                    thElement.textContent = `[คำอธิบายเกณฑ์ฯ ของหัวข้อ ${letter}]`;
-                }
-            });
+                    tbody.appendChild(tr);
+                });
+            } else {
+                console.warn("Table body for PLO/CLO map (#ploTable tbody) not found.");
+            }
+        } catch (e) {
+            console.error("Error initializing Section 5.3 (PLO/CLO Map Display & Edit):", e);
         }
 
-        if(rubricContainer && addRubricBtn) {
-            
-            // --- [แก้ไข] อัปเดต Listener ของปุ่ม "เพิ่ม" ---
-            addRubricBtn.addEventListener('click', () => {
-                const template = rubricContainer.querySelector('.rubric-section'); 
-                if (!template) return;
+        // Section 6
+        try {
+            const data_s6_teachingOptions = { onSite: { label: "On-site โดยมีการเรียนการสอนแบบ", items: ["บรรยาย (Lecture)","ฝึกปฏิบัติ (Laboratory Model)","เรียนรู้จากการลงมือทำ (Learning by Doing)","การเรียนรู้โดยใช้กิจกรรมเป็นฐาน (Activity-based Learning)","การเรียนรู้โดยใช้วิจัยเป็นฐาน (Research-based Learning)","ถามตอบสะท้อนคิด (Refractive Learning)","นำเสนออภิปรายกลุ่ม (Discussion Group)","เรียนรู้จากการสืบเสาะหาความรู้ (Inquiry-based Learning)","การเรียนรู้แบบร่วมมือร่วมใจ (Cooperative Learning)","การเรียนรู้แบบร่วมมือ (Collaborative Learning)","การเรียนรู้โดยใช้โครงการเป็นฐาน (Project-based Learning: PBL)","การเรียนรู้โดยใช้ปัญหาเป็นฐาน (Problem-based Learning)","วิเคราะห์โจทย์ปัญหา (Problem Solving)","เรียนรู้การตัดสินใจ (Decision Making)","ศึกษาค้นคว้าจากกรณีศึกษา (Case Study)","เรียนรู้ผ่านการเกม/การเล่น (Game/Play Learning)","ศึกษาดูงาน (Field Trips)","อื่น ๆ....................................." ], indent: true }, online: { label: "Online โดยมีการเรียนการสอนแบบ", items: ["บรรยาย (Lecture)"], indent: true } };
+            const data_s6_assessmentOptions = { exam: { label: "คะแนนจากแบบทดสอบสัมฤทธิ์ผล (ข้อสอบ)", items: ["ทดสอบย่อย (Quiz)","ทดสอบกลางภาค (Midterm)","ทดสอบปลายภาค (Final)" ] }, performance: { label: "คะแนนจากผลงานที่ได้รับมอบหมาย (Performance) โดยใช้เกณฑ์ Rubric Score การทำงานกลุ่มและเดี่ยว", items: ["การทำงานเป็นทีม (Team Work)","โปรแกรม ซอฟต์แวร์","ผลงาน ชิ้นงาน","รายงาน (Report)","การนำเสนอ (Presentation)","แฟ้มสะสมงาน (Portfolio)","รายงานการศึกษาด้วยตนเอง (Self-Study Report)" ] }, behavior: { label: "คะแนนจากผลการพฤติกรรม", items: ["ความรับผิดชอบ การมีส่วนร่วม","ประเมินผลการงานที่ส่ง" ] } };
+
+            function getSection6Data() {
+                const sectionData = {};
+                const tableBody = document.getElementById('cloTableBody_S6');
+                if (!tableBody) return sectionData;
+
+                const rows = tableBody.querySelectorAll('tr.clo-row');
+
+                rows.forEach((row, rowIndex) => {
+                    const cloCell = row.querySelector('.clo-cell-s6');
+                    let cloKey = cloCell ? cloCell.textContent.trim().replace(/ \[คลิกเพื่อแก้ไข\]$/, '').trim() : `CLO${rowIndex + 1}`;
+                    if (!cloKey) cloKey = `CLO${rowIndex + 1}`;
+
+                    const teachingMethods = [];
+                    row.querySelectorAll('.teaching-cell-s6 input[type="checkbox"]:checked').forEach(cb => {
+                        const labelSpan = cb.closest('label')?.querySelector('span');
+                        if (labelSpan) teachingMethods.push(labelSpan.textContent.trim());
+                    });
+
+                    const assessmentMethods = [];
+                    row.querySelectorAll('.assessment-cell-s6 input[type="checkbox"]:checked').forEach(cb => {
+                        const labelSpan = cb.closest('label')?.querySelector('span');
+                        if (labelSpan) assessmentMethods.push(labelSpan.textContent.trim());
+                    });
+
+                    sectionData[cloKey] = [
+                        { "วิธีการสอน": teachingMethods },
+                        { "การประเมินผล": assessmentMethods }
+                    ];
+                });
+                console.log("Prepared Section 6 Data:", sectionData);
+                return sectionData;
+            }
+
+            function initializeCloTable_Section6() {
+                const tableBody = document.getElementById('cloTableBody_S6');
+                const addBtn = document.getElementById('addCloBtn_S6');
+                const template = document.getElementById('cloRowTemplate_S6');
+                if (!tableBody || !addBtn || !template) {
+                    console.warn("Section 6 elements not found.");
+                    return;
+                }
+
+                let section6Data = {};
+                try {
+                    const jsonDataString = @json($data->teaching_methods ?? null);
+                    if (typeof jsonDataString === 'string' && jsonDataString.length > 0 && jsonDataString !== 'null') {
+                        section6Data = JSON.parse(jsonDataString);
+                    } else if (typeof jsonDataString === 'object' && jsonDataString !== null) {
+                        section6Data = jsonDataString;
+                    }
+                    if (typeof section6Data !== 'object' || section6Data === null) section6Data = {};
+                    console.log("Loaded Section 6 Data:", section6Data);
+                } catch (parseError) {
+                    console.error("Error parsing section 6 JSON data:", parseError, @json($data->teaching_methods ?? null));
+                    section6Data = {};
+                }
+
+                function _s6_createCheckboxHtml(optionsObject, cloKey, type, loadedData) {
+                    let html = '';
+                    let checkedItems = [];
+                    const cloEntry = loadedData[cloKey];
+
+                    if(cloEntry && Array.isArray(cloEntry)) {
+                        const typeKey = (type === 'teach') ? 'วิธีการสอน' : 'การประเมินผล';
+                        const relevantObject = cloEntry.find(obj => obj && typeof obj === 'object' && obj.hasOwnProperty(typeKey));
+                        if(relevantObject && Array.isArray(relevantObject[typeKey])) {
+                            checkedItems = relevantObject[typeKey].map(item => String(item).trim());
+                        }
+                    }
+
+                    for (const key in optionsObject) {
+                        const category = optionsObject[key];
+                        html += `<div class="font-semibold mt-2">${category.label}</div>`;
+                        category.items.forEach(itemText => {
+                            const indentClass = category.indent ? 'ml-4' : '';
+                            const isChecked = checkedItems.includes(String(itemText).trim());
+                            html += `
+                                <label class="flex items-start ${indentClass} hover:bg-gray-50 cursor-pointer">
+                                    <input type="checkbox" class="mt-1 scale-125 mr-1.5 s6-checkbox" ${isChecked ? 'checked' : ''}>
+                                    <span class="ml-2">${itemText}</span>
+                                </label>
+                            `;
+                        });
+                    }
+                    return html;
+                }
+
+                function _s6_addNewCloRow(cloKey = null, rowData = null, rowIndex = -1) {
+                    if (rowIndex === -1) rowIndex = tableBody.children.length;
+                    if (!cloKey) cloKey = `CLO${rowIndex + 1}`;
+
+                    const newRow = template.content.cloneNode(true);
+                    const cloRowElement = newRow.querySelector('tr');
+                    if (!cloRowElement) return;
+
+                    const cloCell = newRow.querySelector('.clo-cell-s6');
+                    const teachingCell = newRow.querySelector('.teaching-cell-s6');
+                    const assessmentCell = newRow.querySelector('.assessment-cell-s6');
+
+                    cloCell.textContent = cloKey;
+                    // No data-field needed on cloCell anymore
+
+                    teachingCell.innerHTML = _s6_createCheckboxHtml(data_s6_teachingOptions, cloKey, 'teach', section6Data);
+                    assessmentCell.innerHTML = _s6_createCheckboxHtml(data_s6_assessmentOptions, cloKey, 'assess', section6Data);
+
+                    tableBody.appendChild(newRow);
+                }
+
+                tableBody.innerHTML = '';
+                const loadedCloKeys = Object.keys(section6Data);
+
+                if (loadedCloKeys.length > 0) {
+                    loadedCloKeys.forEach((key, index) => {
+                        _s6_addNewCloRow(key, section6Data[key], index);
+                    });
+                } else {
+                    _s6_addNewCloRow(null, null, 0);
+                }
+
+                addBtn.addEventListener('click', () => {
+                    _s6_addNewCloRow();
+                    const section6JSON = getSection6Data();
+                    saveData('section6_data', section6JSON);
+                });
+            }
+            initializeCloTable_Section6();
+        } catch (e) {
+            console.error("Error initializing Section 6 (CLO Table):", e);
+        }
+
+        // Section 7
+        try {
+            function getSection7Data() {
+                const planData = [];
+                const tableBody = document.querySelector("#planTable tbody");
+                if (!tableBody) return planData;
+
+                const rows = tableBody.querySelectorAll('tr');
+                rows.forEach((row, index) => {
+                    const weekNumber = index + 1; // Get week number from row index
+                    const rowData = {
+                        week: weekNumber,
+                        topic: row.querySelector(`textarea[name="plan_topic_${weekNumber}"]`)?.value || '',
+                        objective: row.querySelector(`textarea[name="plan_objective_${weekNumber}"]`)?.value || '',
+                        activity: row.querySelector(`textarea[name="plan_activity_${weekNumber}"]`)?.value || '',
+                        tool: row.querySelector(`textarea[name="plan_tool_${weekNumber}"]`)?.value || '',
+                        assessment: row.querySelector(`textarea[name="plan_assessment_${weekNumber}"]`)?.value || '',
+                        clo: row.querySelector(`select[name="plan_clo_${weekNumber}"]`)?.value || ''
+                    };
+                    planData.push(rowData);
+                });
+                console.log("Prepared Section 7 Data:", planData);
+                return planData;
+            }
+
+            function generateTableLesson(forceInputCount = false) {
+                const tbody = document.querySelector("#planTable tbody");
+                if (!tbody) { console.warn("Table body for lesson plan (#planTable tbody) not found."); return; }
+                tbody.innerHTML = "";
+                const weekCountInput = document.getElementById("weekCount");
                 
-                const newRubric = template.cloneNode(true);
+                // Load data
+                const loadedPlanData = @json($data->plan_data ?? []);
+
+                // Calculate count
+                const inputWeekCount = (weekCountInput && !isNaN(parseInt(weekCountInput.value))) ? parseInt(weekCountInput.value) : 10; // Default 10
+                const maxWeekInData = loadedPlanData.reduce((max, item) => Math.max(max, parseInt(item.week || 0)), 0);
                 
-                // --- [เพิ่มใหม่] สร้างปุ่มลบและจัด Layout ---
-                // (เช็คก่อนว่าปุ่มลบยังไม่มี เผื่อ template มีอยู่แล้ว)
-                if (!newRubric.querySelector('.delete-rubric-btn')) {
-                    const deleteButton = document.createElement('button');
-                    deleteButton.className = "delete-rubric-btn px-3 py-1 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 ml-4";
-                    deleteButton.textContent = "ลบ";
-                    
-                    const titleElement = newRubric.querySelector('h3');
-                    if (titleElement) {
-                        // สร้าง div มาครอบ h3 และปุ่มลบ
-                        const headerWrapper = document.createElement('div');
-                        headerWrapper.className = "flex items-center justify-between mb-2";
+                let weekCount;
+                if(forceInputCount) {
+                    // If button clicked, STRICTLY use the input value
+                    weekCount = inputWeekCount;
+                } else {
+                    // On initial load, use the MAX value to prevent data loss
+                    weekCount = Math.max(inputWeekCount, maxWeekInData);
+                }
+                
+                // Enforce limits
+                if (weekCount > 20) weekCount = 20;
+                if (weekCount < 1) weekCount = 1;
+                if (weekCountInput) weekCountInput.value = weekCount; // Sync input
+
+                for (let i = 1; i <= weekCount; i++) {
+                    const weekData = loadedPlanData.find(item => parseInt(item.week) === i) || {};
+
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td class="border border-black p-2.5 align-top text-center">${i}</td>
+                        <td class="border border-black p-1 align-top">
+                            <textarea name="plan_topic_${i}" placeholder="ใส่หัวข้อสัปดาห์ ${i}" class="w-full h-16 border border-gray-300 rounded p-1">${weekData.topic || ''}</textarea>
+                        </td>
+                        <td class="border border-black p-1 align-top">
+                            <textarea name="plan_objective_${i}" placeholder="ใส่วัตถุประสงค์" class="w-full h-16 border border-gray-300 rounded p-1">${weekData.objective || ''}</textarea>
+                        </td>
+                        <td class="border border-black p-1 align-top">
+                            <textarea name="plan_activity_${i}" placeholder="ใส่กิจกรรมการเรียนรู้" class="w-full h-16 border border-gray-300 rounded p-1">${weekData.activity || ''}</textarea>
+                        </td>
+                        <td class="border border-black p-1 align-top">
+                            <textarea name="plan_tool_${i}" placeholder="ใส่สื่อ/เครื่องมือ" class="w-full h-16 border border-gray-300 rounded p-1">${weekData.tool || ''}</textarea>
+                        </td>
+                        <td class="border border-black p-1 align-top">
+                            <textarea name="plan_assessment_${i}" placeholder="ใส่การประเมินผล" class="w-full h-16 border border-gray-300 rounded p-1">${weekData.assessment || ''}</textarea>
+                        </td>
+                        <td class="border border-black p-2.5 align-top text-center">
+                            <select name="plan_clo_${i}" class="border rounded px-2 py-1 text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+                                <option value="">--เลือก--</option>
+                                <option value="CLO1" ${(weekData.clo || '') === 'CLO1' ? 'selected' : ''}>CLO 1</option>
+                                <option value="CLO2" ${(weekData.clo || '') === 'CLO2' ? 'selected' : ''}>CLO 2</option>
+                                <option value="CLO3" ${(weekData.clo || '') === 'CLO3' ? 'selected' : ''}>CLO 3</option>
+                            </select>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                }
+            }
+            const lessonBtn = document.getElementById('generateLessonTableBtn');
+            if (lessonBtn) {
+                lessonBtn.addEventListener('click', () => {
+                    generateTableLesson(true);
+                    const section7JSON = getSection7Data();
+                    saveData('section7_data', section7JSON);
+                });
+            } else {
+                console.warn("Button to generate lesson table (#generateLessonTableBtn) not found.");
+            }
+            generateTableLesson(false);
+        } catch (e) {
+            console.error("Error initializing Section 7 (Lesson Plan):", e);
+        }
+        
+        // Section 8.1
+        try {
+            function getSection8_1Data() {
+                const assessmentData = [];
+                const tableBody = document.querySelector("#assessmentTable tbody");
+                if (!tableBody) return assessmentData;
+
+                const rows = tableBody.querySelectorAll('tr');
+                rows.forEach((row, index) => {
+                    // Find inputs by index-based name
+                    const rowData = {
+                        method: row.querySelector(`textarea[name="assess_method_${index}"]`)?.value || '',
+                        tool: row.querySelector(`textarea[name="assess_tool_${index}"]`)?.value || '',
+                        percent: row.querySelector(`input[name="assess_percent_${index}"]`)?.value || '',
+                        clo: row.querySelector(`select[name="assess_clo_${index}"]`)?.value || '',
+                        clo_desc: row.querySelector(`textarea[name="assess_clo_desc_${index}"]`)?.value || ''
+                    };
+                    assessmentData.push(rowData);
+                });
+                console.log("Prepared Section 8.1 Data:", assessmentData);
+                return assessmentData;
+            }
+
+
+            function generateTableAssessment(forceInputCount = false) {
+                const tbody = document.querySelector("#assessmentTable tbody");
+                if(!tbody) { console.warn("Assessment table body not found."); return; }
+                tbody.innerHTML = "";
+                const assessmentCountInput = document.getElementById("AssessmentCount");
+                
+                // Load data *first*
+                const loadedAssessmentData = @json($data->assessment_data ?? []); // Use alias
+
+                // Calculate count based on MAX(input, data)
+                const inputCount = (assessmentCountInput && !isNaN(parseInt(assessmentCountInput.value))) ? parseInt(assessmentCountInput.value) : 3; // Default 3
+                const dataCount = loadedAssessmentData.length;
+                
+                let assessmentCount;
+                if (forceInputCount) {
+                    assessmentCount = inputCount;
+                } else {
+                    assessmentCount = Math.max(inputCount, dataCount);
+                }
+
+                // Enforce limits
+                if (assessmentCount > 20) assessmentCount = 20;
+                if (assessmentCount < 1) assessmentCount = 1;
+                if (assessmentCountInput) assessmentCountInput.value = assessmentCount; // Sync input
+
+
+                for (let i = 0; i < assessmentCount; i++) {
+                    const rowData = loadedAssessmentData[i] || {}; // Get data or empty object
+
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td class="border border-black p-1 align-top"><textarea name="assess_method_${i}" placeholder="เช่น แบบฝึกหัด, Quiz, สอบกลางภาค" class="w-full h-16 border border-gray-300 rounded p-1">${rowData.method || ''}</textarea></td>
+                        <td class="border border-black p-1 align-top"><textarea name="assess_tool_${i}" placeholder="เช่น Lab, การนำเสนอ, โครงการ, รายงาน" class="w-full h-16 border border-gray-300 rounded p-1">${rowData.tool || ''}</textarea></td>
+                        <td class="border border-black p-1 align-top"><input type="number" name="assess_percent_${i}" min="0" max="100" placeholder="%" class="w-full text-center border border-gray-300 rounded p-1" value="${rowData.percent || ''}"></td>
+                        <td class="border border-black p-1 align-top">
+                            <select name="assess_clo_${i}" class="w-full mb-1 p-1 border rounded">
+                                <option value="">--เลือก CLO--</option>
+                                <option value="CLO1" ${(rowData.clo || '') === 'CLO1' ? 'selected' : ''}>CLO1</option>
+                                <option value="CLO2" ${(rowData.clo || '') === 'CLO2' ? 'selected' : ''}>CLO2</option>
+                                <option value="CLO3" ${(rowData.clo || '') === 'CLO3' ? 'selected' : ''}>CLO3</option>
+                            </select>
+                            <textarea name="assess_clo_desc_${i}" placeholder="ระบุรายละเอียดความสอดคล้อง" class="w-full h-12 border border-gray-300 rounded p-1">${rowData.clo_desc || ''}</textarea>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                 }
+             }
+            const assessmentBtn = document.getElementById('generateAssessmentTableBtn');
+            if(assessmentBtn) {
+                assessmentBtn.addEventListener('click', () => {
+                    generateTableAssessment(true);
+                    const section8_1JSON = getSection8_1Data();
+                    saveData('section8_1_data', section8_1JSON);
+                });
+                generateTableAssessment(false);
+            } else {
+                console.warn("Generate assessment table button not found.");
+            }
+        } catch (e) {
+            console.error("Error initializing Section 8.1 (Assessment Strategy):", e);
+        }
+
+        // Section 8.2
+        try {
+            function getSection8_2Data() {
+                const rubricsData = [];
+                const rubricContainer = document.getElementById('rubric-container');
+                if (!rubricContainer) return rubricsData;
+
+                const sections = rubricContainer.querySelectorAll('.rubric-section:not(.hidden)');
+                sections.forEach((section, rubricIndex) => {
+                    const titleElement = section.querySelector('.rubric-title');
+                    const headerElement = section.querySelector('.rubric-header');
+                    const tableBody = section.querySelector('.rubric-tbody');
+                    const rubric = {
+                        title: titleElement ? titleElement.textContent.trim().replace(/^[ก-ฮ]\.\s*/, '') : '',
+                        header: headerElement ? headerElement.textContent.trim() : '',
+                        // Initialize rows as an Array
+                        rows: []
+                    };
+
+                    if (tableBody) {
+                        // Create a temporary array to hold descriptions, indexed by level
+                        let descriptions = new Array(6).fill(''); // Array[6] (for levels 0-5)
                         
-                        // ย้าย h3 เข้าไปใน wrapper
-                        titleElement.parentNode.insertBefore(headerWrapper, titleElement);
-                        headerWrapper.appendChild(titleElement);
-                        // เพิ่มปุ่มลบเข้าไปใน wrapper
-                        headerWrapper.appendChild(deleteButton);
+                        tableBody.querySelectorAll('tr').forEach((row, rowIndex) => {
+                            const levelCell = row.querySelector('.level-cell');
+                            const descCell = row.querySelector('.description-cell');
+                            if (levelCell && descCell) {
+                                const level = parseInt(levelCell.textContent.trim(), 10);
+                                const description = descCell.textContent.trim();
+                                if (level >= 0 && level <= 5) {
+                                    descriptions[level] = description; 
+                                }
+                            }
+                        });
+                        // Assign the sequential array (index 0 = level 0, index 5 = level 5)
+                        rubric.rows = descriptions;
                     }
-                }
-                
-                // ตั้งค่าข้อความเริ่มต้นสำหรับอันใหม่
-                newRubric.querySelector('h3').textContent = `[หัวข้อใหม่ (คลิกเพื่อแก้ไข)]`;
-                newRubric.querySelector('.rubric-tbody').innerHTML = newRubricBodyTemplate;
-                
-                rubricContainer.appendChild(newRubric);
-                
-                // [แก้ไข] เรียกใช้ฟังก์ชันอัปเดต ก, ข, ค ทั้งหมด
-                updateRubricLetters();
-            });
-
-            // --- [เพิ่มใหม่] Listener สำหรับ "ปุ่มลบ" (ใช้ Event Delegation) ---
-            rubricContainer.addEventListener('click', (event) => {
-                // เช็คว่าที่คลิกคือปุ่มลบ (คลาส .delete-rubric-btn)
-                if (event.target.classList.contains('delete-rubric-btn')) {
-                    
-                    // ป้องกันการลบหัวข้อสุดท้าย (ก.)
-                    const totalRubrics = rubricContainer.querySelectorAll('.rubric-section').length;
-                    if (totalRubrics <= 1) {
-                        alert("อย่างน้อยต้องมี 1 หัวข้อเกณฑ์การประเมิน");
-                        return;
-                    }
-                    
-                    // ค้นหา .rubric-section ที่ใกล้ที่สุด
-                    const rubricToRemove = event.target.closest('.rubric-section');
-                    
-                    // ยืนยันก่อนลบ
-                    if (rubricToRemove && confirm('คุณแน่ใจหรือไม่ว่าต้องการลบหัวข้อนี้?')) {
-                        rubricToRemove.remove();
-                        // อัปเดต ก, ข, ค ที่เหลือใหม่
-                        updateRubricLetters(); 
-                    }
-                }
-            });
-
-            // --- [เพิ่มใหม่] เพิ่มปุ่มลบให้กับหัวข้อแรก (ก.) ที่มีอยู่แล้ว (ถ้ายังไม่มี) ---
-            const firstRubric = rubricContainer.querySelector('.rubric-section');
-            if (firstRubric && !firstRubric.querySelector('.delete-rubric-btn')) {
-                const deleteButton = document.createElement('button');
-                deleteButton.className = "delete-rubric-btn px-3 py-1 bg-red-600 text-white font-semibold rounded-lg shadow-md hover:bg-red-700 ml-4";
-                deleteButton.textContent = "ลบ";
-                
-                const titleElement = firstRubric.querySelector('h3');
-                if (titleElement) {
-                    const headerWrapper = document.createElement('div');
-                    headerWrapper.className = "flex items-center justify-between mb-2";
-                    
-                    titleElement.parentNode.insertBefore(headerWrapper, titleElement);
-                    headerWrapper.appendChild(titleElement);
-                    headerWrapper.appendChild(deleteButton);
-                }
+                    rubricsData.push(rubric);
+                });
+                console.log("Prepared Section 8.2 Data:", rubricsData);
+                return rubricsData;
             }
-            
-            // --- [เพิ่มใหม่] เรียกอัปเดต ก, ข, ค ครั้งแรกตอนโหลดหน้า ---
+
+            const rubricContainer = document.getElementById('rubric-container');
+            const addRubricBtn = document.getElementById('add-rubric-btn');
+            const rubricTemplate = document.getElementById('rubric-template');
+            const loadedRubricsData = @json($data->rubrics ?? []); // Load data
+            const rubricLevels = [5, 4, 3, 2, 1, 0];
+
+            function createRubricRow(rubricIndex, rowIndex, level, description) {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                <td class="level-cell border border-gray-400 p-1 text-center align-top font-semibold" contenteditable="true" data-field="rubric_${rubricIndex}_r${rowIndex}_level">${level}</td>
+                <td class="description-cell border border-gray-400 p-1 align-top hover:bg-yellow-50" contenteditable="true" data-field="rubric_${rubricIndex}_r${rowIndex}_desc">${description || (level === 0 ? 'ไม่ส่งผลงาน' : '[ใส่คำอธิบาย]') }</td>
+            `;
+                return tr;
+            }
+
+            function addOrLoadRubric(rubricData = null, rubricIndex = -1) {
+                if (!rubricTemplate) return;
+                if (rubricIndex === -1) rubricIndex = rubricContainer.querySelectorAll('.rubric-section:not(.hidden)').length;
+
+                const newRubric = rubricTemplate.cloneNode(true);
+                newRubric.classList.remove('hidden'); newRubric.removeAttribute('id');
+                const titleElement = newRubric.querySelector('.rubric-title');
+                const headerElement = newRubric.querySelector('.rubric-header');
+                const tableBody = newRubric.querySelector('.rubric-tbody');
+                const table = newRubric.querySelector('.rubric-table');
+                table.id = `rubricTable_${rubricIndex}`;
+
+                const letter = String.fromCharCode(0x0E01 + rubricIndex);
+                titleElement.textContent = rubricData?.title ? `${letter}. ${rubricData.title}` : `${letter}. [หัวข้อเกณฑ์ใหม่]`;
+                titleElement.dataset.field = `rubric_${rubricIndex}_title`;
+                headerElement.textContent = rubricData?.header || `คำอธิบายเกณฑ์ฯ ${letter}`;
+                headerElement.dataset.field = `rubric_${rubricIndex}_header`;
+
+                tableBody.innerHTML = '';
+                let rowsData = rubricData?.rows || {};
+                
+                // ตรวจสอบว่าเป็น Format เก่า (Array of strings) หรือไม่
+                if (Array.isArray(rowsData) && (rowsData.length === 0 || typeof rowsData[0] === 'string')) {
+                    // นี่คือ Format เก่า: ["Desc 0", "Desc 1", ..., "Desc 5"]
+                    const tempRows = {};
+                    // แปลงให้เป็น Format ใหม่ (Object): { "0": "Desc 0", "1": "Desc 1", ... }
+                    rowsData.forEach((description, level) => {
+                        tempRows[String(level)] = description;
+                    });
+                    rowsData = tempRows; // ตอนนี้ rowsData เป็น Object แล้ว
+                
+                } 
+                // ตรวจสอบว่าเป็น Format เก่ามากๆ (Array of Objects) หรือไม่
+                else if (Array.isArray(rowsData)) {
+                    const tempRows = {}; 
+                    rowsData.forEach(r => { if(r && r.level !== undefined) tempRows[r.level] = r.description ?? ''; });
+                    rowsData = tempRows;
+                } 
+                // ถ้าไม่ใช่ทั้งสองแบบ หรือเป็น null ให้ใช้ Object ว่าง
+                else if (typeof rowsData !== 'object' || rowsData === null) { 
+                    rowsData = {}; // ทำให้เป็น Object ว่าง
+                }
+
+
+                rubricLevels.forEach((level, rowIndex) => { 
+                    const currentDescription = rowsData[String(level)] ?? '';
+                    const row = createRubricRow(rubricIndex, rowIndex, level, currentDescription);
+                    tableBody.appendChild(row);
+                });
+                rubricContainer.appendChild(newRubric);
+            }
+
+            // Load existing rubrics
+            rubricContainer.innerHTML = '';
+            if (Array.isArray(loadedRubricsData) && loadedRubricsData.length > 0) {
+                loadedRubricsData.forEach((rubric, index) => addOrLoadRubric(rubric, index));
+            } else {
+                addOrLoadRubric({ title: 'การประเมินการปฏิบัติงาน (Performance)' }, 0);
+            }
             updateRubricLetters();
 
-        }
-    } catch (e) {
-        console.error("Error in Section 8.2 (Rubrics):", e);
-    }
-
-    // --- หมวดที่ 9.1 : สื่อการเรียนรู้ (Add/Remove List) ---
-    try {
-        const referenceList = document.getElementById('referenceList');
-        const addReferenceBtn = document.getElementById('addReferenceItemBtn');
-
-        function addNewReferenceItem() {
-            const li = document.createElement('li');
-            li.className = "mb-2.5 relative";
-            li.innerHTML = `
-                <input type="text" class="w-4/5 p-2 border border-gray-300 rounded-md text-[15px]" placeholder="พิมพ์รายการใหม่ที่นี่...">
-                <button class="remove-btn bg-red-500 text-white border-none rounded-md px-2.5 py-1.5 ml-2.5 cursor-pointer text-[13px] hover:bg-red-600">ลบ</button>
-            `;
-            referenceList.appendChild(li);
-        }
-
-        if (referenceList && addReferenceBtn) {
-            
-            addReferenceBtn.addEventListener('click', addNewReferenceItem);
-            
-            referenceList.addEventListener('click', (event) => {
-                if (event.target.classList.contains('remove-btn')) {
-                    
-                    // เช็คก่อนว่ามีมากกว่า 1 รายการหรือไม่
-                    const itemCount = referenceList.children.length;
-                    if (itemCount > 1) {
-                        // ถ้ามีมากกว่า 1 ลบได้
-                        event.target.parentElement.remove();
-                    } else {
-                        // ถ้าเหลือ 1 อัน ลบไม่ได้
-                        alert("อย่างน้อยต้องมี 1 รายการ");
+            // Add/Delete Buttons
+            if (addRubricBtn) {
+                addRubricBtn.addEventListener('click', () => { addOrLoadRubric(); updateRubricLetters(); const d = getSection8_2Data(); saveData('section8_2_data', d); });
+            }
+            rubricContainer.addEventListener('click', (event) => {
+                if (event.target.classList.contains('delete-rubric-btn')) {
+                    const totalRubrics = rubricContainer.querySelectorAll('.rubric-section:not(.hidden)').length;
+                    if (totalRubrics <= 1) { alert("อย่างน้อยต้องมี 1 หัวข้อ"); return; }
+                    const rubricToRemove = event.target.closest('.rubric-section');
+                    if (rubricToRemove && confirm('ต้องการลบหัวข้อนี้?')) {
+                        rubricToRemove.remove(); updateRubricLetters(); const d = getSection8_2Data(); saveData('section8_2_data', d);
                     }
                 }
             });
 
-            // ถ้า list ว่างเปล่า ให้เพิ่ม 1 รายการทันที
-            if (referenceList.children.length === 0) {
-                addNewReferenceItem();
+            function updateRubricLetters() {
+                const allRubrics = rubricContainer.querySelectorAll('.rubric-section:not(.hidden)');
+                allRubrics.forEach((rubric, index) => {
+                    const letter = String.fromCharCode(0x0E01 + index);
+                    const titleElement = rubric.querySelector('.rubric-title');
+                    const headerElement = rubric.querySelector('.rubric-header');
+                    if (titleElement) { let txt = titleElement.textContent.trim().replace(/^[ก-ฮ]\.\s*/, ''); titleElement.textContent = `${letter}. ${txt}`; titleElement.dataset.field = `rubric_${index}_title`; }
+                    if (headerElement) { headerElement.dataset.field = `rubric_${index}_header`; }
+                    rubric.querySelectorAll('.rubric-tbody tr').forEach((row, rowIndex) => {
+                        const levelCell = row.querySelector('.level-cell'); const descCell = row.querySelector('.description-cell');
+                        if(levelCell) levelCell.dataset.field = `rubric_${index}_r${rowIndex}_level`;
+                        if(descCell) descCell.dataset.field = `rubric_${index}_r${rowIndex}_desc`;
+                    });
+                });
             }
 
-        }
-    } catch (e) {
-        console.error("Error in Section 9.1 (Reference List):", e);
-    }
+        } catch (e) { console.error("Error initializing Section 8.2 (Rubrics):", e); }
+
+        // Section 9.1
+        try {
+            // Function to gather Section 9.1 data
+            function getSection9_1Data() {
+                const referencesData = [];
+                const referenceList = document.getElementById('referenceList');
+                if (!referenceList) return referencesData;
+                referenceList.querySelectorAll('li input[type="text"]').forEach(input => {
+                    if (input.value.trim()) {
+                        referencesData.push(input.value.trim());
+                    }
+                });
+                console.log("Prepared Section 9.1 Data:", referencesData);
+                return referencesData;
+            }
+
+            const referenceList = document.getElementById('referenceList');
+            const addReferenceBtn = document.getElementById('addReferenceItemBtn');
+            const loadedReferencesData = @json($data->research ?? []);
+
+            function createReferenceItem(value = '', index = -1) {
+                if (index === -1) index = referenceList.children.length;
+                const li = document.createElement('li');
+                li.className = "mb-2.5 relative";
+                const escapedValue = String(value || '').replace(/"/g, '&quot;');
+                li.innerHTML = `
+                <input type="text" name="reference_${index}" class="w-4/5 p-2 border border-gray-300 rounded-md text-[15px]" placeholder="พิมพ์รายการใหม่..." value="${escapedValue}">
+                <button class="remove-btn bg-red-500 text-white border-none rounded-md px-2.5 py-1.5 ml-2.5 cursor-pointer text-[13px] hover:bg-red-600">ลบ</button>
+            `;
+                referenceList.appendChild(li);
+            }
+
+            referenceList.innerHTML = '';
+            if (Array.isArray(loadedReferencesData) && loadedReferencesData.length > 0) {
+                loadedReferencesData.forEach((refText, index) => createReferenceItem(refText, index));
+            } else {
+                createReferenceItem('', 0);
+            }
+
+            // Add/Delete Buttons
+            if (addReferenceBtn) {
+                addReferenceBtn.addEventListener('click', () => { createReferenceItem(); const d = getSection9_1Data(); saveData('section9_1_data', d); }); // Save after adding
+            }
+            if (referenceList) {
+                referenceList.addEventListener('click', (event) => {
+                    if (event.target.classList.contains('remove-btn')) {
+                        const itemCount = referenceList.children.length;
+                        if (itemCount > 1) {
+                            event.target.parentElement.remove();
+                            // Re-index names AND save
+                            referenceList.querySelectorAll('li input').forEach((input, index) => { input.name = `reference_${index}`; });
+                            const d = getSection9_1Data(); saveData('section9_1_data', d); // Save after deleting
+                        } else { alert("อย่างน้อยต้องมี 1 รายการ"); }
+                    }
+                });
+                referenceList.addEventListener('change', (event) => {
+                    if(event.target.tagName === 'INPUT'){ const d = getSection9_1Data(); saveData('section9_1_data', d); }
+                });
+                referenceList.addEventListener('blur', (event) => {
+                    if(event.target.tagName === 'INPUT'){ const d = getSection9_1Data(); saveData('section9_1_data', d); }
+                }, true);
+            }
+        } catch (e) { console.error("Error initializing Section 9.1 (Reference List):", e); }
+    });
 </script>
 
 </body>
