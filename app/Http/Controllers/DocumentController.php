@@ -78,8 +78,16 @@ class DocumentController extends Controller
             }
         }
 
+        $curriculaDefaults = [
+            'curriculum_name' => 'วิทยาศาสตรบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์',
+            'faculty'         => 'วิทยาศาสตร์',
+            'major'           => 'วิทยาการคอมพิวเตอร์',
+            'campus'          => 'เชียงใหม่',
+            'credits'         => '0 (0-0-0) (บรรยาย-ปฏิบัติ-ศึกษาด้วยตนเอง)',
+        ];
+
         // Combine all data into one object
-        $data = (array) $context;
+        $data = (array) $context + $curriculaDefaults;
 
         if ($curricula) {
             $curriculaArray = (array) $curricula;
@@ -184,8 +192,7 @@ class DocumentController extends Controller
                 'faculty'         => 'วิทยาศาสตร์',
                 'major'           => 'วิทยาการคอมพิวเตอร์',
                 'campus'          => 'เชียงใหม่',
-                 'credits'         => '0(0-0-0)',
-                 'curriculum_year' => $validated['year']
+                'credits'         => '0 (0-0-0) (บรรยาย-ปฏิบัติ-ศึกษาด้วยตนเอง)',
             ];
             $curriculaId = $this->updateOrCreateWithDB('curricula', $curriculaConditions, [], $curriculaDefaults);
 
