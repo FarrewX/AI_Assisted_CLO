@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>แบบฟอร์ม มคอ.3</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=1920mm, height: 1080mm, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
     <script src="https://cdn.tailwindcss.com"></script>
@@ -21,11 +21,11 @@
     </script>
 </head>
 <body>
-    <div class="flex justify-center py-6 bg-gray-100 font-sans text-base">
+    <div class="flex justify-center py-6 bg-gray-100 font-sans text-bases">
         <div class="fixed top-4 right-4 flex gap-3 z-50">
             <button type="button" onclick="window.history.back()"
                 class="px-4 py-2 bg-blue-300 hover:bg-blue-400 text-gray-900 rounded-md shadow">
-                <a href="/export-docx" class="download-button">
+                <a href="/export-docx?course_id={{ $data->course_id ?? '' }}&year={{ $data->year ?? '' }}&term={{ $data->term ?? '' }}&TQF={{ $data->TQF ?? 3 }}" class="download-button">
                     ดาวน์โหลดไฟล์ .docx 
                 </a>
             </button>
@@ -47,9 +47,9 @@
                         <input name="faculty" class="px-2 min-w-[150px] border-b border-dotted border-gray-500 text-center" value="{{ $data->faculty ?? 'ระบุคณะ' }}"></input>
                         <label class="ml-2 whitespace-nowrap font-semibold">สาขาวิชา</label>
                         <input name="major" class="px-2 min-w-[200px] border-b border-dotted border-gray-500 text-center" value="{{ $data->major ?? 'ระบุสาขา' }}"></input>
-                        <label class="ml-2 whitespace-nowrap font-semibold">หลักสูตรปรับปรุง</label>
+                        <label class="ml-2 whitespace-nowrap font-semibold">หลักสูตรปรับปรุง พ.ศ.</label>
                         <input name="curriculum_year" id="curriculum_year" class="w-[70px] border-b border-dotted border-gray-500 text-center" 
-                            value="{{ ($data->curriculum_year ?? null) ? 'พ.ศ. ' . $data->curriculum_year : '' }}"
+                            value="{{ ($data->curriculum_year ?? null) ? $data->curriculum_year : '' }}"
                             placeholder="ระบุปี พ.ศ."></input>
                         </div>
                 </div>
@@ -597,7 +597,7 @@
                                     {{ $gradingCriteria->grade_Bp_level ?? 'B+' }}
                                 </td>
                                 <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true" data-field="grade_Bp_criteria">
-                                    {{ $gradingCriteria->grade_B_criteria ?? '75.00% - 79.99%' }}
+                                    {{ $gradingCriteria->grade_Bp_criteria ?? '75.00% - 79.99%' }}
                                 </td>
                             </tr>
                             <tr>
@@ -866,12 +866,20 @@
                 return `curriculum_map_r${mapRowIndex}_c${mapColIndex}`;
             }
             if (tableId === 'ploTable' || tableId === 'plosTableBody') {
+                //Get code from the first cell
+                const codeCell = row.cells[0];
+                const code = codeCell ? codeCell.textContent.trim() : null;
+                if (!code) return null; // Can't get code, stop
+
                 if (element.tagName === 'SPAN' && element.hasAttribute('contenteditable')) {
-                    const codeCell = row.cells[0];
-                    if (codeCell) { const code = codeCell.textContent.trim(); if (code) return `cloLll_desc_${code}`; }
-                } else {
-                    const mapRowIndex = rowIndex; const mapColIndex = cellIndex - 2;
-                    if (mapColIndex >= 0) { const inputType = element.type === 'checkbox' ? 'check' : 'level'; return `plo_map_r${mapRowIndex}_c${mapColIndex}_${inputType}`; }
+                    return `cloLll_desc_${code}`;
+                } else { // Handle checkbox and select
+                    const mapColIndex = cellIndex - 2; // Col index (0-3)
+                    if (mapColIndex >= 0) {
+                        const inputType = element.type === 'checkbox' ? 'check' : 'level';
+                        // Use code instead of rowIndex
+                        return `plo_map_${code}_c${mapColIndex}_${inputType}`;
+                    }
                 }
                 if(element.name && element.name.startsWith('plo')) return element.name;
             }

@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use PhpOffice\PhpWord\PhpWord;
 use PhpOffice\PhpWord\IOFactory;
 use PhpOffice\PhpWord\SimpleType\Jc;
+use PhpOffice\PhpWord\Shared\Converter;
+
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
-use PhpOffice\PhpWord\Shared\Converter;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -29,7 +30,7 @@ class DocumentController extends Controller
         $context = DB::table('courseyears as cy')
             ->leftJoin('users as u', 'cy.user_id', '=', 'u.user_id')
             ->leftJoin('courses as c', 'cy.course_id', '=', 'c.course_id')
-            ->leftJoin('prompts as p', 'cy.id', '=', 'cy.id')
+            ->leftJoin('prompts as p', 'cy.id', '=', 'p.ref_id')
             ->leftJoin('generates as g', 'p.ref_id', '=', 'g.ref_id')
             ->where('cy.user_id', $user->user_id)
             ->where('cy.course_id', $course_id)
@@ -360,19 +361,39 @@ class DocumentController extends Controller
                 $conditions = ['ref_id' => $curriculaId];
                 $jsonColumn = 'grading_criteria';
 
-                // Get current JSON data
+                $defaultGradingData = [
+                    "grade_A_level" => "A",
+                    "grade_A_criteria" => "80.00% ขึ้นไป",
+                    "grade_Bp_level" => "B+",
+                    "grade_Bp_criteria" => "75.00% - 79.99%",
+                    "grade_B_level" => "B",
+                    "grade_B_criteria" => "70.00% - 74.99%",
+                    "grade_Cp_level" => "C+",
+                    "grade_Cp_criteria" => "65.00% - 69.99%",
+                    "grade_C_level" => "C",
+                    "grade_C_criteria" => "60.00% - 64.99%",
+                    "grade_Dp_level" => "D+",
+                    "grade_Dp_criteria" => "55.00% - 59.99%",
+                    "grade_D_level" => "D",
+                    "grade_D_criteria" => "50.00% - 54.99%",
+                    "grade_F_level" => "F",
+                    "grade_F_criteria" => "ต่ำกว่า 50.00%"
+                ];
+
+                // 1. Get current JSON data
                 $currentPlans = DB::table($targetTable)->where($conditions)->first();
                 $gradingData = ($currentPlans && $currentPlans->grading_criteria) ? json_decode($currentPlans->grading_criteria, true) : [];
                 if (!is_array($gradingData)) $gradingData = [];
-
-                // $field is 'grade_A_level', 'grade_A_criteria', etc.
+                $gradingData = $gradingData + $defaultGradingData; 
+                
+                // 2. Update the specific key
                 $gradingData[$field] = $value;
 
-                // Prepare data to save
+                // 3. Prepare data to save
                 $jsonToSave = json_encode($gradingData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
                 $dataToUpdate = [$jsonColumn => $jsonToSave];
 
-                // Save
+                // 4. Save
                 $this->updateOrCreateWithDB($targetTable, $conditions, $dataToUpdate);
                 return response()->json(['success' => true, 'message' => "Field '{$field}' updated in JSON column '{$jsonColumn}'."]);
 
@@ -459,7 +480,7 @@ class DocumentController extends Controller
                 $targetTable = 'curricula';
                 $conditions = ['ref_id' => $curriculaId];
                 $dataToUpdate = [$field => $value];
-                $this->updateOrCreateWithDB($targetTable, $conditions, $dataToUpdate);
+                $this->updateOrCreateWithDB($targetTable, $conditions, $dataToUpdate, $curriculaDefaults);
                 return response()->json(['success' => true, 'message' => "Field '{$field}' updated in '{$targetTable}'."]);
             }
 
@@ -505,6 +526,7 @@ class DocumentController extends Controller
         Log::warning("Received non-string/array/object value for JSON field.");
         return $value ?? [];
     }
+    
     private function updateOrCreateWithDB($tableName, $conditions, $dataToUpdate, $defaults = [])
     {
         $existingRecord = DB::table($tableName)->where($conditions)->first();
@@ -527,46 +549,391 @@ class DocumentController extends Controller
         }
     }
 
-    private function updateLearningOutcomeDescription($code, $description)
-    {
-        try {
-             DB::table('learning_outcomes')
-                ->where('code', $code)
-                ->update([
-                    'description' => $description,
-                ]);
-             Log::info("Updated description for code: {$code}");
-             return true;
-        } catch (\Exception $e) {
-             Log::error("Failed to update description for code {$code}: " . $e->getMessage());
-             return false;
-        }
-    }
-
     // ดาวน์โหลด.docx 
-    public function exportdocx()
+    public function exportdocx(Request $request)
     {
-        // ข้อมูลจำลอง (DUMMY DATA)
-        $data = [
+        // DATA FETCHING
+        $user = Auth::user();
+        $course_id = $request->query('course_id');
+        $year = (int) $request->query('year');
+        $term = $request->query('term');
+        $TQF = $request->query('TQF');
+
+        if (!$course_id || !$year || $term === null || $TQF === null || !$user) {
+            abort(400, 'Missing required parameters or not authenticated');
+        }
+
+        // 1. Fetch main context (Fixed: Removed faulty joins)
+        $context = DB::table('courseyears as cy')
+            ->leftJoin('users as u', 'cy.user_id', '=', 'u.user_id')
+            ->leftJoin('courses as c', 'cy.course_id', '=', 'c.course_id')
+            ->leftJoin('prompts as p', 'cy.id', '=', 'p.ref_id')
+            ->leftJoin('generates as g', 'p.ref_id', '=', 'g.ref_id')
+            ->where('cy.user_id', $user->user_id)
+            ->where('cy.course_id', $course_id)
+            ->where('cy.year', $year)
+            ->where('cy.term', $term)
+            ->where('cy.TQF', $TQF)
+            ->select(
+                'cy.id as courseYearId',
+                'u.name as instructorName',
+                'c.course_id',
+                'c.course_name',
+                'c.course_name_en',
+                'c.course_detail_th',
+                'c.course_detail_en',
+                'cy.year',
+                'cy.term',
+                'cy.TQF',
+                'g.ai_text',
+            )
+            ->first();
+            
+        if (!$context) {
+            abort(404, 'TQF Document (CourseYear) not found for this user.');
+        }
+
+        // Define the defaults array
+        $curriculaDefaults = [
+            'curriculum_name' => 'วิทยาศาสตรบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์',
+            'faculty'         => 'วิทยาศาสตร์',
+            'major'           => 'วิทยาการคอมพิวเตอร์',
+            'campus'          => 'เชียงใหม่',
+            'credits'         => '0(0-0-0)',
+            'curriculum_year' => $context->year ? $context->year + 543 : '',
+            'outcome_statement' => [],
+            'curriculum_map_data' => [],
+            'course_accord' => [],
+            'feedback' => '', 'improvement' => '', 's4_agreement' => '',
+            'references_data' => [], 'research_subjects' => '', 'academic_service' => '', 'art_culture' => '',
+            'teaching_methods' => null, 'lesson_plan' => [], 'assessment_strategies' => [],
+            'rubrics' => [],
+            'grading_criteria' => [],
+            'grade_correction' => '',
+        ];
+        
+        $data = $curriculaDefaults + (array) $context; // Start with defaults
+
+        // 2. Fetch TQF data
+        $curricula = DB::table('curricula')->where('ref_id', $context->courseYearId)->first();
+        $feedback = null; $plans = null; $generates = null;
+        
+        if ($curricula) {
+            $curriculaRefId = $curricula->ref_id;
+            $feedback = DB::table('feedback')->where('ref_id', $curriculaRefId)->first();
+            $plans = DB::table('plans')->where('ref_id', $curriculaRefId)->first();
+            
+            $latestPrompt = DB::table('prompts')->where('ref_id', $context->courseYearId)->orderBy('updated_at', 'desc')->first();
+            if($latestPrompt && property_exists($latestPrompt, 'id')){
+                $generates = DB::table('generates')->where('ref_id', $latestPrompt->id)->orderBy('updated_at', 'desc')->first();
+            }
+            
+            $curriculaArray = (array) $curricula;
+            $curriculaArray['outcome_statement'] = isset($curricula->outcome_statement) ? json_decode($curricula->outcome_statement, true) : $data['outcome_statement'];
+            $curriculaArray['curriculum_map_data'] = isset($curricula->curriculum_map_data) ? json_decode($curricula->curriculum_map_data, true) : $data['curriculum_map_data'];
+            $curriculaArray['course_accord'] = isset($curricula->course_accord) ? json_decode($curricula->course_accord, true) : $data['course_accord'];
+            $data = $curriculaArray + $data;
+        }
+
+        if ($feedback) {
+            $feedbackArray = (array) $feedback;
+            $feedbackArray['references_data'] = isset($feedback->research) ? json_decode($feedback->research, true) : $data['references_data'];
+            if(isset($feedback->agreement)) $feedbackArray['s4_agreement'] = $feedback->agreement; 
+            $data = $feedbackArray + $data;
+        }
+
+        if ($plans) {
+            $plansArray = (array) $plans;
+            $plansArray['teaching_methods'] = isset($plans->teaching_methods) ? json_decode($plans->teaching_methods, true) : $data['teaching_methods'];
+            $plansArray['lesson_plan'] = isset($plans->lesson_plan) ? json_decode($plans->lesson_plan, true) : $data['lesson_plan'];
+            $plansArray['assessment_strategies'] = isset($plans->assessment_strategies) ? json_decode($plans->assessment_strategies, true) : $data['assessment_strategies'];
+            $plansArray['rubrics_data'] = isset($plans->rubrics) ? json_decode($plans->rubrics, true) : $data['rubrics'];
+            $plansArray['grading_criteria'] = isset($plans->grading_criteria) ? json_decode($plans->grading_criteria, true) : $data['grading_criteria'];
+            if(isset($plans->grade_correction)) $plansArray['grade_correction'] = $plans->grade_correction;
+            $data = $plansArray + $data;
+        }
+        
+        if ($generates) {
+            if (property_exists($generates, 'ai_text')) {
+                $data['ai_text'] = $generates->ai_text;
+            }
+        }
+
+        // 3. Use Hardcoded CLO/LLL Descriptions
+         $cloLllDescriptions = [
+             ['code' => "CLO1", 'description' => "ประเมินวิธีการวิเคราะห์ข้อมูล เพื่อแก้ไขปัญหาทางวิทยาการข้อมูลได้อย่างเหมาะสม"],
+             ['code' => "CLO2", 'description' => "สร้างต้นแบบเพื่อการทำนายหรือการรู้จำจากชุดข้อมูลเพื่อประยุกต์ใช้ในการแก้ปัญหาจริง"],
+             ['code' => "CLO3", 'description' => "สื่อสารผลลัพธ์การวิเคราะห์ข้อมูลให้ผู้อื่นเข้าใจและนำไปประยุกต์ใช้อย่างมีจริยธรรม"],
+             ['code' => "LLL1", 'description' => "Creativity ความคิดสร้างสรรค์"],
+             ['code' => "LLL2", 'description' => "Problem Solving การแก้ปัญหา"],
+             ['code' => "LLL3", 'description' => "Critical Thinking การคิดเชิงวิพากษ์"],
+             ['code' => "LLL4", 'description' => "Leadership การเป็นผู้นำ"],
+             ['code' => "LLL5", 'description' => "Communication การสื่อสาร"],
+             ['code' => "LLL6", 'description' => "Collaboration การประสานงาน"],
+             ['code' => "LLL7", 'description' => "Information Management การจัดการข้อมูล "],
+             ['code' => "LLL8", 'description' => "Adaptability การปรับตัว"],
+             ['code' => "LLL9", 'description' => "Curiosity ความอยากรู้อยากเห็น"],
+             ['code' => "LLL10", 'description' => "Reflection การสะท้อนทักษะความรู้"]
+         ];
+
+        // 4. Convert final merged array (which is $data) for mapping
+        $dataArray = $data;
+
+        // DATA MAPPING
+        $get = function($key, $default = '...') use ($dataArray) {
+            return !empty($dataArray[$key]) ? $dataArray[$key] : $default;
+        };
+        $getJson = function($key, $default = []) use ($dataArray) {
+            return !empty($dataArray[$key]) ? $dataArray[$key] : $default;
+        };
+
+
+        $docxData = [
             'logo_path' => public_path('image/mjulogo.jpg'),
             'title' => 'มหาวิทยาลัยแม่โจ้',
             'subtitle' => 'มคอ. 3 รายละเอียดรายวิชา',
-            'fileName' => 'มคอ-3-รายละเอียดรายวิชา',
+            'fileName' => 'มคอ-3-' . $get('course_id', 'unknown'),
 
-            // -- ปรัชญา --
             'philosophy' => 'มุ่งมั่นพัฒนาบัณฑิตสู่ความเป็นผู้อุดมด้วยปัญญา อดทน สู้งาน เป็นผู้มีคุณธรรมและจริยธรรม เพื่อความเจริญรุ่งเรืองวัฒนาของสังคมไทยที่มีการเกษตรเป็นรากฐาน',
             'philosophy_education' => 'จัดการศึกษาเพื่อเสริมสร้างปัญญา ในรูปแบบการเรียนรู ้จากการปฏิบัติที ่บูรณาการกับการทำงานตามอมตะโอวาท งานหนักไม่เคยฆ่าคน มุ่งให้ผู้เรียน มีทักษะการเรียนรู้ตลอดชีวิต',
             'philosophy_curriculum' => 'จัดการศึกษาเพื่อการพัฒนาเทคโนโลยี และส่งเสริมการสร้างนวัตกรรม เรียนรู้จากการปฏิบัติที่บูรณาการกับการทำงาน',
+
+            // -- Header Info --
+            'faculty' => $get('faculty'),
+            'major' => $get('major'),
+            'curriculum_year' => $get('curriculum_year'),
+            'campus' => $get('campus'),
+            'term' => $get('term'),
+            'academic_year' => $get('year') ? $get('year') + 543 : '',
+
+            // -- หมวด 1 --
+            's1_course_name' => $get('course_name', $get('course_name_en')),
+            's1_course_id' => $get('course_id'),
+            's1_credits' => $get('credits'),
+            's1_curriculum_name' => $get('curriculum_name'),
+            'course_types' => [
+                'specific' => $get('is_specific', false),
+                'core' => $get('is_core', false),
+                'major_required' => $get('is_major_required', false),
+                'major_elective' => $get('is_major_elective', false),
+                'free_elective' => $get('is_free_elective', false),
+            ],
+            's1_prerequisites' => $get('prerequisites'),
+            's1_instructors' => $get('instructorName'),
+            's1_revision_term' => $get('term'),
+            's1_revision_year' => $get('year') ? $get('year') + 543 : '',
+            's1_hours' => [
+                'theory' => $get('hours_theory', 0),
+                'practice' => $get('hours_practice', 0),
+                'self_study' => $get('hours_self_study', 0),
+                'field_trip' => $get('hours_field_trip', 0),
+            ],
+
+            // -- หมวด 2 --
+            'description' => $get('description', $get('course_detail_th')),
+            'ai_text' => $get('ai_text'),
+
+            // -- หมวด 3 --
+            'feedback' => $get('feedback'),
+            'improvement' => $get('improvement'),
+
+            // -- หมวด 4 --
+            'agreement' => $get('s4_agreement', $get('agreement')),
+
+            // -- หมวด 5 --
+            's5_1_plos' => [],
+            's5_2_mapping_data' => [],
+            's5_3_clos_plo_mapping' => [],
+
+            // -- หมวด 6 --
+            's6_clos_teaching' => [],
+
+            // -- หมวด 7 --
+            's7_lesson_plan' => [],
+
+            // -- หมวด 8 --
+            's8_1_assessment_strategies' => [],
+            's8_2_rubrics' => [],
+
+            // -- หมวด 9 --
+            's9_references' => $getJson('references_data', []),
+            's9_research' => $get('research_subjects'),
+            's9_academic_service' => $get('academic_service'),
+            's9_culture' => $get('art_culture'),
+
+            // -- หมวด 10 --
+            's10_grading_criteria' => [],
+
+            // -- หมวด 11 --
+            's11_grade_correction' => $get('grade_correction'),
         ];
+        
+        // JSON/ARRAY DATA MAPPING
+        // 5.1 PLOs
+        $outcomeStatementData = $getJson('outcome_statement', []);
+        if(is_array($outcomeStatementData)) {
+            ksort($outcomeStatementData);
+            foreach($outcomeStatementData as $index => $plo) {
+                if(empty($plo) || !is_array($plo)) continue;
+                $docxData['s5_1_plos'][] = [
+                    'id' => $index,
+                    'outcome' => $plo['outcome'] ?? '...',
+                    'specific' => $plo['specific'] ?? false,
+                    'generic' => $plo['generic'] ?? false,
+                    'level' => $plo['level'] ? explode(' - ', $plo['level'])[0] : '...',
+                    'type' => $plo['type'] ? explode(' - ', $plo['type'])[0] : '...',
+                ];
+            }
+        }
+        
+        // 5.2 Mapping Data
+        $curriculumMapData = $getJson('curriculum_map_data', []);
+        $totalCols = 29;
+        if(is_array($curriculumMapData) && !empty($curriculumMapData[0]) && (is_object($curriculumMapData[0]) || is_array($curriculumMapData[0]))) {
+             $mapObject = (array) $curriculumMapData[0];
+             $mapArray = array_fill(0, $totalCols, '0');
+             for($k=0; $k < $totalCols; $k++) {
+                 if(isset($mapObject[strval($k)])) {
+                     $mapArray[$k] = (string)$mapObject[strval($k)];
+                 }
+             }
+             $docxData['s5_2_mapping_data'][] = $mapArray;
+        } else {
+             $docxData['s5_2_mapping_data'][] = array_fill(0, $totalCols, '0');
+        }
 
 
+        // 5.3 CLO-PLO Mapping
+        $courseAccordData = $getJson('course_accord', []);
+        if(is_array($cloLllDescriptions) && is_array($courseAccordData)) {
+            foreach($cloLllDescriptions as $rowIndex => $cloInfo) {
+                $cloInfo = (array) $cloInfo;
+                $code = $cloInfo['code'] ?? null;
+
+                $mapping = ($code && isset($courseAccordData[$code])) ? $courseAccordData[$code] : [];
+                
+                $docxData['s5_3_clos_plo_mapping'][] = [
+                    'clo_id' => $code ?? '?',
+                    'clo_desc' => $cloInfo['description'] ?? '...',
+                    'plo1' => ($mapping['1'] ?? null) ? ($mapping['1']['check'] ? ($mapping['1']['level'] ?: '✓') : '') : '',
+                    'plo2' => ($mapping['2'] ?? null) ? ($mapping['2']['check'] ? ($mapping['2']['level'] ?: '✓') : '') : '',
+                    'plo3' => ($mapping['3'] ?? null) ? ($mapping['3']['check'] ? ($mapping['3']['level'] ?: '✓') : '') : '',
+                    'plo4' => ($mapping['4'] ?? null) ? ($mapping['4']['check'] ? ($mapping['4']['level'] ?: '✓') : '') : '',
+                ];
+            }
+        }
+
+        // 6. Teaching Methods
+        $teachingMethodsData = $getJson('teaching_methods', []);
+        if(is_array($teachingMethodsData)) {
+            uksort($teachingMethodsData, function ($a, $b) {
+                preg_match('/(\d+)/', $a, $matchesA); preg_match('/(\d+)/', $b, $matchesB);
+                $numA = isset($matchesA[1]) ? intval($matchesA[1]) : PHP_INT_MAX;
+                $numB = isset($matchesB[1]) ? intval($matchesB[1]) : PHP_INT_MAX;
+                return $numA <=> $numB;
+            });
+            foreach($teachingMethodsData as $cloKey => $data) {
+                 if(!is_array($data) || count($data) < 2) continue;
+                 $teaching = $data[0]['วิธีการสอน'] ?? [];
+                 $assessment = $data[1]['การประเมินผล'] ?? [];
+                 $docxData['s6_clos_teaching'][] = [
+                     'clo' => $cloKey,
+                     'teaching' => implode("\n", $teaching),
+                     'assessment' => implode("\n", $assessment)
+                 ];
+            }
+        }
+        
+        // 7. Lesson Plan
+        $planData = $getJson('lesson_plan', []);
+        if(is_array($planData)) {
+             usort($planData, function($a, $b) { return ($a['week'] ?? 0) <=> ($b['week'] ?? 0); });
+            foreach($planData as $weekData) {
+                 if(empty($weekData) || !is_array($weekData)) continue;
+                 $docxData['s7_lesson_plan'][] = [
+                     'week' => $weekData['week'] ?? '?',
+                     'topic' => $weekData['topic'] ?? '...',
+                     'objective' => $weekData['objective'] ?? '...',
+                     'activity' => $weekData['activity'] ?? '...',
+                     'media' => $weekData['tool'] ?? '...',
+                     'eval' => $weekData['assessment'] ?? '...',
+                     'clo' => $weekData['clo'] ?? '...'
+                 ];
+            }
+        }
+
+        // 8.1 Assessment Strategies
+        $assessmentData = $getJson('assessment_strategies', []);
+         if(is_array($assessmentData)) {
+             foreach($assessmentData as $stratData) {
+                  if(empty($stratData) || !is_array($stratData)) continue;
+                  $docxData['s8_1_assessment_strategies'][] = [
+                      'method' => $stratData['method'] ?? '...',
+                      'tool' => $stratData['tool'] ?? '...',
+                      'ratio' => $stratData['percent'] ?? '...',
+                      'clos' => $stratData['clo_desc'] ?? ($stratData['clo'] ?? '...')
+                  ];
+             }
+         }
+        
+        // 8.2 Rubrics
+        $rubricsData = $getJson('rubrics_data', []); // Use the 'rubrics_data' alias
+         if(is_array($rubricsData)) {
+             foreach($rubricsData as $rubric) {
+                 if(empty($rubric) || !is_array($rubric)) continue;
+                 $levelsArray = [];
+                 if(isset($rubric['rows']) && (is_array($rubric['rows']) || is_object($rubric['rows']))) {
+                     $rubricRows = (array) $rubric['rows'];
+                     if(count($rubricRows) > 0) {
+                         $isNumericArray = true; $isAssociativeObject = false;
+                         foreach(array_keys($rubricRows) as $key) {
+                             if(!is_numeric($key)) $isNumericArray = false;
+                             if(in_array($key, ["5","4","3","2","1","0"])) $isAssociativeObject = true;
+                         }
+                         if ($isAssociativeObject) {
+                             $levels = ["5", "4", "3", "2", "1", "0"];
+                             foreach($levels as $level) {
+                                 $levelsArray[] = ['level' => $level, 'desc' => $rubricRows[$level] ?? '...'];
+                             }
+                         } else if ($isNumericArray) {
+                             $levels = [0, 1, 2, 3, 4, 5];
+                             foreach($levels as $level) {
+                                 $levelsArray[] = ['level' => $level, 'desc' => $rubricRows[$level] ?? '...'];
+                             }
+                             $levelsArray = array_reverse($levelsArray);
+                         }
+                     }
+                 }
+                 $docxData['s8_2_rubrics'][] = [
+                     'title' => $rubric['title'] ?? '...',
+                     'header' => $rubric['header'] ?? '...',
+                     'levels' => $levelsArray
+                 ];
+             }
+         }
+
+        // 10. Grading Criteria
+        $gradingData = $getJson('grading_criteria', []);
+        $grades = ['A', 'Bp', 'B', 'Cp', 'C', 'Dp', 'D', 'F'];
+        
+        foreach($grades as $g) {
+            $gradeKey = "grade_{$g}_level";
+            $criteriaKey = "grade_{$g}_criteria";
+            
+            $docxData['s10_grading_criteria'][] = [
+                'grade' => $gradingData[$gradeKey] ?? str_replace('p', '+', $g),
+                'criteria' => $gradingData[$criteriaKey] ?? '...'
+            ];
+        }
+
+        // DOCX GENERATION
         try {
             // สร้างอ็อบเจกต์ PhpWord
             $phpWord = new PhpWord();
             $phpWord->setDefaultFontName('TH Sarabun New');
-            $phpWord->setDefaultFontSize(16);
+            $phpWord->setDefaultFontSize(14);
 
-            // ตั้งค่าหน้ากระดาษ (A4, ขอบ 2.5cm)
+            // ... (ตั้งค่า Section) ...
             $cmMargin = 2.5;
             $section = $phpWord->addSection([
                 'paperSize'   => 'A4',
@@ -575,166 +942,170 @@ class DocumentController extends Controller
                 'marginBottom'=> Converter::cmToTwip($cmMargin),
                 'marginLeft'  => Converter::cmToTwip($cmMargin),
                 'marginRight' => Converter::cmToTwip($cmMargin),
+                'spaceAfter'  => 0,
+                'spaceBefore' => 0,
             ]);
 
-            // เริ่มสร้างเอกสาร
+            $boldFont = ['bold' => true];
+            $underlineFont = ['underline' => 'single'];
+            $leftAlign = ['align' => 'left', 'spaceBefore' => 0, 'spaceAfter' => 0];
+            $head = ['size' => 16];
 
-            // === ส่วนหัว (Logo และ Title) ===
-            if (file_exists($data['logo_path'])) {
-                $section->addImage($data['logo_path'], [
-                    'width'         => 80,
-                    'height'        => 80,
-                    'alignment'     => Jc::CENTER
-                ]);
-            }
-            $section->addText($data['title'], ['bold' => true, 'size' => 20], ['alignment' => Jc::CENTER]);
-            $section->addText($data['subtitle'], ['bold' => true, 'size' => 16], ['alignment' => Jc::CENTER, 'spaceAfter' => 200]);
+            // สไตล์ Cell (มีเส้นขอบทุกด้าน) - อิงจากรูปภาพ
+            $cellStyle = [
+                'borderColor' => '000000',
+            ];
 
+            $mergedCellStyle = array_merge($cellStyle, ['gridSpan' => 2]);
+
+            $paragraph_spacing = ['spaceAfter' => 200];
             
-            // === ส่วนข้อมูล (ปรับปรุงใหม่ ใช้ตารางไร้ขอบ 1 ตาราง) ===
-            $borderlessStyle = ['borderSize' => 0, 'borderColor' => 'FFFFFF', 'cellMargin' => 0];
+            // ... (ส่วนหัว, ข้อมูล, ปรัชญา) ...
+            if (file_exists($docxData['logo_path'])) {
+                $section->addImage($docxData['logo_path'], ['width' => 70, 'height' => 70, 'alignment' => Jc::CENTER]);
+            }
+            $section->addText($docxData['title'], array_merge($boldFont, ['size' => 16]), ['alignment' => Jc::CENTER, 'spaceAfter' => 200]);
+            $section->addText($docxData['subtitle'], array_merge($boldFont, ['size' => 16]), ['alignment' => Jc::CENTER, 'spaceAfter' => 200]);
+            $borderlessStyle = ['borderSize' => 0, 'borderColor' => 'FFFFFF', 'cellMargin' => 0, 'spaceAfter'  => 0, 'spaceBefore' => 0];
             $infoTable = $section->addTable($borderlessStyle);
             $infoTable->addRow();
-            $infoTable->addCell(1000)->addText('คณะ', ['bold' => true]);
-            $infoTable->addCell(3000)->addText($data['faculty']);
-            $infoTable->addCell(1200)->addText('สาขาวิชา', ['bold' => true]);
-            $infoTable->addCell(4800)->addText($data['major']);
-            
+            $infoTable->addCell(1500)->addText('คณะ', $boldFont);
+            $infoTable->addCell(2000)->addText(htmlspecialchars($docxData['faculty']), $underlineFont);
+            $infoTable->addCell(1300)->addText('สาขาวิชา', $boldFont);
+            $infoTable->addCell(3000, $mergedCellStyle)->addText(htmlspecialchars($docxData['major']), $underlineFont);
+            $infoTable->addCell(1700)->addText('หลักสูตรปรับปรุง', $boldFont);
+            $infoTable->addCell(1500)->addText(('พ.ศ. '.$docxData['curriculum_year']), $underlineFont);
             $infoTable->addRow();
-            $infoTable->addCell()->addText('หลักสูตรปรับปรุง พ.ศ.', ['bold' => true]);
-            $infoTable->addCell()->addText($data['curriculum_year']);
-            $infoTable->addCell()->addText('');
-            $infoTable->addCell()->addText('');
-
-            $infoTable->addRow();
-            $infoTable->addCell(1000)->addText('วิทยาเขต', ['bold' => true]);
-            $infoTable->addCell(3000)->addText($data['campus']);
-            $infoTable->addCell(2500)->addText('ภาคการศึกษา/ปีการศึกษา', ['bold' => true]);
-            $infoTable->addCell(3500)->addText($data['term'] . ' / ' . $data['academic_year']);
-
-            
-            // === ส่วนปรัชญา ===
+            $infoTable->addCell(1500)->addText('วิทยาเขต', $boldFont);
+            $infoTable->addCell(2000)->addText(htmlspecialchars($docxData['campus']), $underlineFont);
+            $infoTable->addCell(2500, $mergedCellStyle)->addText('ภาคการศึกษา/ปีการศึกษา', $boldFont);
+            $infoTable->addCell(1000)->addText(($docxData['term'] . ' / ' . $docxData['academic_year']), $underlineFont);
+            $infoTable->addCell(1700)->addText('', null);
+            $infoTable->addCell(1500)->addText('', null);
             $section->addTextBreak(1);
-            $section->addText('ปรัชญามหาวิทยาลัยแม่โจ้', ['bold' => true, 'size' => 18]);
-            $section->addText($data['philosophy'], [], ['spaceAfter' => 150]);
-            $section->addText('ปรัชญาการศึกษา มหาวิทยาลัยแม่โจ้', ['bold' => true, 'size' => 18]);
-            $section->addText($data['philosophy_education'], [], ['spaceAfter' => 150]);
-            $section->addText('ปรัชญาหลักสูตร', ['bold' => true, 'size' => 18]);
-            $section->addText($data['philosophy_curriculum'], [], ['spaceAfter' => 150]);
+            $section->addText('ปรัชญามหาวิทยาลัยแม่โจ้', array_merge($boldFont, $head));
+            $section->addText(htmlspecialchars($docxData['philosophy']), [$paragraph_spacing]);
+            $section->addText('ปรัชญาการศึกษา มหาวิทยาลัยแม่โจ้', array_merge($boldFont, $head));
+            $section->addText(htmlspecialchars($docxData['philosophy_education']), [$paragraph_spacing]);
+            $section->addText('ปรัชญาหลักสูตร', array_merge($boldFont, $head));
+            $section->addText(htmlspecialchars($docxData['philosophy_curriculum']), [$paragraph_spacing]);
 
-            // === สไตล์ตารางหลัก ===
+            // ... (สไตล์ตาราง) ...
             $tableStyle = ['borderSize' => 6, 'borderColor' => '000000', 'cellMargin' => 80, 'width' => '100%'];
             $phpWord->addTableStyle('MainTable', $tableStyle);
-            $thStyle = ['bgColor' => 'DBEAFE']; // bg-blue-100 (ใช้สีอ่อนลงเล็กน้อย)
-            $thFont = ['bold' => true];
+            $thStyle = ['bgColor' => 'DBEAFE'];
             $cellCenter = ['alignment' => Jc::CENTER];
             $vAlignCenter = ['valign' => 'center'];
 
             // === หมวดที่ 1 : ข้อมูลทั่วไป ===
-            $section->addText('หมวดที่ 1 : ข้อมูลทั่วไป', ['bold' => true, 'size' => 16]);
+            $section->addText('หมวดที่ 1 : ข้อมูลทั่วไป', array_merge($boldFont, $head));
             $table1 = $section->addTable('MainTable');
-            
             $table1->addRow();
-            $table1->addCell(2500, $thStyle)->addText('1. ชื่อวิชา', $thFont, $cellCenter);
-            $table1->addCell(7500, ['gridSpan' => 3])->addText($data['s1_course_name']);
-            
+            $table1->addCell(2500, $thStyle)->addText('1. ชื่อวิชา', $boldFont, $cellCenter);
+            $table1->addCell(7500, ['gridSpan' => 3])->addText(htmlspecialchars($docxData['s1_course_name']));
             $table1->addRow();
-            $table1->addCell(2500, $thStyle)->addText('รหัสวิชา', $thFont, $cellCenter);
-            $table1->addCell(7500, ['gridSpan' => 3])->addText($data['s1_course_id']);
-            
+            $table1->addCell(2500, $thStyle)->addText('2. รหัสวิชา', $boldFont, $cellCenter);
+            $table1->addCell(7500, ['gridSpan' => 3])->addText($docxData['s1_course_id']);
             $table1->addRow();
-            $table1->addCell(2500, $thStyle)->addText('จำนวนหน่วยกิต', $thFont, $cellCenter);
-            $table1->addCell(7500, ['gridSpan' => 3])->addText($data['s1_credits']);
-            
+            $table1->addCell(2500, $thStyle)->addText('3. จำนวนหน่วยกิต', $boldFont, $cellCenter);
+            $table1->addCell(7500, ['gridSpan' => 3])->addText(htmlspecialchars($docxData['s1_credits']));
             $table1->addRow();
-            $table1->addCell(2500, $thStyle)->addText('หลักสูตร', $thFont, $cellCenter);
-            $table1->addCell(7500, ['gridSpan' => 3])->addText($data['s1_curriculum_name']);
-
-            // (แปลง Checkboxes เป็น Text)
+            $table1->addCell(2500, $thStyle)->addText('4. หลักสูตร', $boldFont, $cellCenter);
+            $table1->addCell(7500, ['gridSpan' => 3])->addText(htmlspecialchars($docxData['s1_curriculum_name']));
             $typesText = '';
-            $typesText .= ($data['course_types']['specific'] ? '[✓]' : '[ ]') . ' วิชาเฉพาะ ';
-            $typesText .= ($data['course_types']['core'] ? '[✓]' : '[ ]') . ' กลุ่มวิชาแกน ';
-            $typesText .= ($data['course_types']['major_required'] ? '[✓]' : '[ ]') . ' เอกบังคับ ';
-            $typesText .= ($data['course_types']['major_elective'] ? '[✓]' : '[ ]') . ' เอกเลือก ';
-            $typesText .= ($data['course_types']['free_elective'] ? '[✓]' : '[ ]') . ' วิชาเลือกเสรี';
-            $table1->addRow();
-            $table1->addCell(2500, $thStyle)->addText('5. ประเภทของรายวิชา', $thFont, $cellCenter);
+            $typesText .= ($docxData['course_types']['specific'] ? '[✓]' : '[ ]') . ' วิชาเฉพาะ ';
+            $typesText .= ($docxData['course_types']['core'] ? '[✓]' : '[ ]') . ' กลุ่มวิชาแกน ';
+            $typesText .= ($docxData['course_types']['major_required'] ? '[✓]' : '[ ]') . ' เอกบังคับ ';
+            $typesText .= ($docxData['course_types']['major_elective'] ? '[✓]' : '[ ]') . ' เอกเลือก ';
+            $typesText .= ($docxData['course_types']['free_elective'] ? '[✓]' : '[ ]') . ' วิชาเลือกเสรี';
+            
+            $table1->addRow(); 
+            $table1->addCell(2500, $thStyle)->addText('5. ประเภทของรายวิชา', $boldFont, $cellCenter);
             $table1->addCell(7500, ['gridSpan' => 3])->addText($typesText);
-            
             $table1->addRow();
-            $table1->addCell(2500, $thStyle)->addText('6. วิชาบังคับก่อน', $thFont, $cellCenter);
-            $table1->addCell(7500, ['gridSpan' => 3])->addText($data['s1_prerequisites']);
-            
+            $table1->addCell(2500, $thStyle)->addText('6. วิชาบังคับก่อน', $boldFont, $cellCenter);
+            $table1->addCell(7500, ['gridSpan' => 3])->addText(htmlspecialchars($docxData['s1_prerequisites']));
             $table1->addRow();
-            $table1->addCell(2500, $thStyle)->addText('7. ผู้สอน', $thFont, $cellCenter);
-            $table1->addCell(7500, ['gridSpan' => 3])->addText($data['s1_instructors']);
-
-            // (เพิ่ม Row 8 ที่ขาดไป)
+            $table1->addCell(2500, $thStyle)->addText('7. ผู้สอน', $boldFont, $cellCenter);
+            $table1->addCell(7500, ['gridSpan' => 3])->addText(htmlspecialchars($docxData['s1_instructors']));
             $revisionText = 'ภาคการศึกษาที่ ';
-            $revisionText .= ($data['s1_revision_term'] == '1' ? '[✓]' : '[ ]') . ' 1 ';
-            $revisionText .= ($data['s1_revision_term'] == '2' ? '[✓]' : '[ ]') . ' 2 ';
-            $revisionText .= ' ปีการศึกษา ' . $data['s1_revision_year'];
+            $revisionText .= ($docxData['s1_revision_term'] == '1' ? '[✓]' : '[ ]') . ' 1 ';
+            $revisionText .= ($docxData['s1_revision_term'] == '2' ? '[✓]' : '[ ]') . ' 2 ';
+            $revisionText .= ' ปีการศึกษา ' . $docxData['s1_revision_year'];
             $table1->addRow();
-            $table1->addCell(2500, $thStyle)->addText('8. การแก้ไขล่าสุด', $thFont, $cellCenter);
+            $table1->addCell(2500, $thStyle)->addText('8. การแก้ไขล่าสุด', $boldFont, $cellCenter);
             $table1->addCell(7500, ['gridSpan' => 3])->addText($revisionText);
-            
-            // (Row 9 - Header ชั่วโมง)
             $table1->addRow();
-            $table1->addCell(10000, ['gridSpan' => 4, 'bgColor' => 'F3F4F6'])->addText('9. จำนวนชั่วโมงที่ใช้ภาคการศึกษา', $thFont, $cellCenter);
-            
-            // (Row 10 - ชั่วโมง)
+            $table1->addCell(10000, ['gridSpan' => 4, 'bgColor' => 'F3F4F6'])->addText('9. จำนวนชั่วโมงที่ใช้ภาคการศึกษา', $boldFont, $cellCenter);
             $table1->addRow();
-            $table1->addCell(2500, $thStyle)->addText('ภาคทฤษฎี ' . $data['s1_hours']['theory'] . ' ชั่วโมง', null, $cellCenter);
-            $table1->addCell(2500, $thStyle)->addText('ภาคปฏิบัติ ' . $data['s1_hours']['practice'] . ' ชั่วโมง', null, $cellCenter);
-            $table1->addCell(2500, $thStyle)->addText('การศึกษาด้วยตนเอง ' . $data['s1_hours']['self_study'] . ' ชั่วโมง', null, $cellCenter);
-            $table1->addCell(2500, $thStyle)->addText('ทัศนศึกษา/ฝึกงาน ' . $data['s1_hours']['field_trip'] . ' ชั่วโมง', null, $cellCenter);
+            $table1->addCell(2500, $thStyle)->addText('ภาคทฤษฎี ' . $docxData['s1_hours']['theory'] . ' ชั่วโมง', null, $cellCenter);
+            $table1->addCell(2500, $thStyle)->addText('ภาคปฏิบัติ ' . $docxData['s1_hours']['practice'] . ' ชั่วโมง', null, $cellCenter);
+            $table1->addCell(2500, $thStyle)->addText('การศึกษาด้วยตนเอง ' . $docxData['s1_hours']['self_study'] . ' ชั่วโมง', null, $cellCenter);
+            $table1->addCell(2500, $thStyle)->addText('ทัศนศึกษา/ฝึกงาน ' . $docxData['s1_hours']['field_trip'] . ' ชั่วโมง', null, $cellCenter);
 
             
             // === หมวดที่ 2 : คำอธิบายรายวิชา ===
             $section->addTextBreak(1);
-            $section->addText('หมวดที่ 2 : คำอธิบายรายวิชาและผลลัพธ์ระดับรายวิชา (CLOs)', ['bold' => true, 'size' => 16, 'bgColor' => 'DBEAFE']);
+            $section->addText('หมวดที่ 2 : คำอธิบายรายวิชาและผลลัพธ์ระดับรายวิชา (CLOs)', array_merge($boldFont, $head, $thStyle));
             $table2 = $section->addTable('MainTable');
             $table2->addRow();
             $cell2_1 = $table2->addCell(10000);
-            $cell2_1->addText('2.1 คำอธิบายรายวิชา', ['bold' => true]);
-            $cell2_1->addText(htmlspecialchars($data['description']));
+            $cell2_1->addText('2.1 คำอธิบายรายวิชา', $boldFont);
+            $cell2_1->addText(htmlspecialchars($docxData['description']));
+            
             $table2->addRow();
             $cell2_2 = $table2->addCell(10000);
-            $cell2_2->addText('2.2 ผลลัพธ์การเรียนรู้ระดับรายวิชา (Course learning Outcome) CLOs', ['bold' => true]);
-            $cell2_2->addText(htmlspecialchars($data['clos']));
+            $cell2_2->addText('2.2 ผลลัพธ์การเรียนรู้ระดับรายวิชา (Course learning Outcome) CLOs', $boldFont);
+            
+            // Decode and loop through CLOs
+            $closData = json_decode($docxData['ai_text'], true); // Decode the ai_text JSON
+            
+            if (is_array($closData) && json_last_error() === JSON_ERROR_NONE) {
+                foreach ($closData as $cloKey => $cloDetails) {
+                    $cell2_2->addText(htmlspecialchars($cloKey) . ':', $boldFont); 
+                    if (is_array($cloDetails)) {
+                        foreach ($cloDetails as $key => $value) {
+                             $cell2_2->addListItem(htmlspecialchars($key . ': ' . $value), 0, null, ['indent' => 360]);
+                        }
+                    }
+                    $cell2_2->addTextBreak(0.5); // Add space between CLOs
+                }
+            } else {
+                 $cell2_2->addText(htmlspecialchars($docxData['ai_text']));
+            }
 
             // === หมวดที่ 3 : การปรับปรุง ===
             $section->addTextBreak(1);
-            $section->addText('หมวดที่ 3 : การปรับปรุงรายวิชาตามข้อเสนอแนะจาก มคอ.5', ['bold' => true, 'size' => 16, 'bgColor' => 'DBEAFE']);
+            $section->addText('หมวดที่ 3 : การปรับปรุงรายวิชาตามข้อเสนอแนะจาก มคอ.5', array_merge($boldFont, $head, $thStyle));
             $table3 = $section->addTable('MainTable');
             $table3->addRow();
-            $table3->addCell(5000, $thStyle)->addText('ข้อเสนอแนะ', $thFont);
-            $table3->addCell(5000, $thStyle)->addText('การปรับปรุง', $thFont);
+            $table3->addCell(5000, $thStyle)->addText('ข้อเสนอแนะ', $boldFont);
+            $table3->addCell(5000, $thStyle)->addText('การปรับปรุง', $boldFont);
             $table3->addRow();
-            $table3->addCell(5000)->addText(htmlspecialchars($data['feedback']));
-            $table3->addCell(5000)->addText(htmlspecialchars($data['improvement']));
+            $table3->addCell(5000)->addText(htmlspecialchars($docxData['feedback']));
+            $table3->addCell(5000)->addText(htmlspecialchars($docxData['improvement']));
 
             // === หมวดที่ 4 : ข้อตกลงร่วมกัน ===
             $section->addTextBreak(1);
-            $section->addText('หมวดที่ 4: ข้อตกลงร่วมกันระหว่างผู้สอนและผู้เรียน', ['bold' => true, 'size' => 16, 'bgColor' => 'DBEAFE']);
-            $section->addText(htmlspecialchars($data['agreement']));
+            $section->addText('หมวดที่ 4: ข้อตกลงร่วมกันระหว่างผู้สอนและผู้เรียน', array_merge($boldFont, $head, $thStyle));
+            $section->addText(htmlspecialchars($docxData['agreement']));
 
             // === หมวดที่ 5 : ความสอดคล้อง ===
             $section->addTextBreak(1);
-            $section->addText('หมวดที่ 5: ความสอดคล้องระหว่างผลลัพธ์การเรียนรู้ระดับหลักสูตร (PLOs) กับ ผลลัพธ์การเรียนรู้ระดับรายวิชา (CLOs) และผลทักษะการเรียนรู้ตลอดชีวิต (LLLs)', ['bold' => true, 'size' => 16, 'bgColor' => 'DBEAFE']);
+            $section->addText('หมวดที่ 5: ความสอดคล้องระหว่างผลลัพธ์การเรียนรู้ระดับหลักสูตร (PLOs) กับ ผลลัพธ์การเรียนรู้ระดับรายวิชา (CLOs) และผลทักษะการเรียนรู้ตลอดชีวิต (LLLs)', array_merge($boldFont, $head, $thStyle));
             
             // 5.1 PLOs
-            $section->addText('5.1 ผลลัพธ์การเรียนรู้ของหลักสูตร', ['bold' => true, 'size' => 14]);
+            $section->addText('5.1 ผลลัพธ์การเรียนรู้ของหลักสูตร', array_merge($boldFont));
             $table5_1 = $section->addTable('MainTable');
             $table5_1->addRow();
-            $table5_1->addCell(1000, $thStyle)->addText('PLOs', $thFont, $cellCenter);
-            $table5_1->addCell(4500, $thStyle)->addText('Outcome Statement', $thFont, $cellCenter);
-            $table5_1->addCell(1000, $thStyle)->addText('Specific LO', $thFont, $cellCenter);
-            $table5_1->addCell(1000, $thStyle)->addText('Generic LO', $thFont, $cellCenter);
-            $table5_1->addCell(1000, $thStyle)->addText('Level', $thFont, $cellCenter);
-            $table5_1->addCell(1500, $thStyle)->addText('Type', $thFont, $cellCenter);
+            $table5_1->addCell(1000, $thStyle)->addText('PLOs', $boldFont, $cellCenter);
+            $table5_1->addCell(4500, $thStyle)->addText('Outcome Statement', $boldFont, $cellCenter);
+            $table5_1->addCell(1000, $thStyle)->addText('Specific LO', $boldFont, $cellCenter);
+            $table5_1->addCell(1000, $thStyle)->addText('Generic LO', $boldFont, $cellCenter);
+            $table5_1->addCell(1000, $thStyle)->addText('Level', $boldFont, $cellCenter);
+            $table5_1->addCell(1500, $thStyle)->addText('Type', $boldFont, $cellCenter);
             
-            foreach ($data['s5_1_plos'] as $plo) {
+            foreach ($docxData['s5_1_plos'] as $plo) {
                 $table5_1->addRow();
                 $table5_1->addCell(1000, $vAlignCenter)->addText($plo['id'], null, $cellCenter);
                 $table5_1->addCell(4500)->addText(htmlspecialchars($plo['outcome']));
@@ -746,7 +1117,7 @@ class DocumentController extends Controller
             
             // 5.2 Mapping
             $section->addTextBreak(1);
-            $section->addText('5.2 มาตรฐานผลการเรียนรู้รายวิชา (Curriculum Mapping)', ['bold' => true, 'size' => 14]);
+            $section->addText('5.2 มาตรฐานผลการเรียนรู้รายวิชา (Curriculum Mapping)', array_merge($boldFont));
             $table5_2 = $section->addTable('MainTable');
             $cellYellow = ['bgColor' => 'FFF9C4']; // bg-yellow-100
             $cellWhite = ['bgColor' => 'FFFFFF'];
@@ -771,26 +1142,26 @@ class DocumentController extends Controller
 
             // Row 3 (Data)
             $mapSymbols = ['0' => '', '1' => '●', '2' => '○'];
-            foreach ($data['s5_2_mapping_data'] as $mapRow) {
+            foreach ($docxData['s5_2_mapping_data'] as $mapRow) {
                 $table5_2->addRow();
-                $table5_2->addCell(2000)->addText($data['s1_course_id'] . "\n" . $data['s1_course_name']);
+                $table5_2->addCell(2000)->addText($docxData['s1_course_id'] . "\n" . $docxData['s1_course_name']);
                 foreach ($mapRow as $state) {
-                    $table5_2->addCell(300)->addText($mapSymbols[$state] ?? '', ['bold' => true], $cellCenter);
+                    $table5_2->addCell(300)->addText($mapSymbols[$state] ?? '', $boldFont, $cellCenter);
                 }
             }
 
             // 5.3 CLO-PLO Mapping
             $section->addTextBreak(1);
-            $section->addText('5.3 ความสอดคล้องของรายวิชากับ PLOs, CLOs และ LLLs', ['bold' => true, 'size' => 14]);
+            $section->addText('5.3 ความสอดคล้องของรายวิชากับ PLOs, CLOs และ LLLs', array_merge($boldFont));
             $table5_3 = $section->addTable('MainTable');
             $table5_3->addRow();
-            $table5_3->addCell(1000, $thStyle)->addText('รหัส CLO', $thFont, $cellCenter);
-            $table5_3->addCell(5000, $thStyle)->addText('รหัสวิชา ' . $data['s1_course_id'] . ' ' . $data['s1_course_name'], $thFont, $cellCenter);
-            foreach ($data['s5_1_plos'] as $plo) { // สร้างหัวตาราง PLO แบบไดนามิก
-                $table5_3->addCell(1000, $thStyle)->addText('PLO' . $plo['id'] . ' (' . $plo['level'] . ')', $thFont, $cellCenter);
+            $table5_3->addCell(1000, $thStyle)->addText('รหัส', $boldFont, $cellCenter);
+            $table5_3->addCell(5000, $thStyle)->addText('คำอธิบาย CLOs/LLLs', $boldFont, $cellCenter);
+            foreach ($docxData['s5_1_plos'] as $plo) { 
+                $table5_3->addCell(1000, $thStyle)->addText('PLO' . $plo['id'] . ' (' . $plo['level'] . ')', $boldFont, $cellCenter);
             }
             
-            foreach ($data['s5_3_clos_plo_mapping'] as $map) {
+            foreach ($docxData['s5_3_clos_plo_mapping'] as $map) {
                 $table5_3->addRow();
                 $table5_3->addCell(1000, $vAlignCenter)->addText($map['clo_id'], null, $cellCenter);
                 $table5_3->addCell(5000)->addText(htmlspecialchars($map['clo_desc']));
@@ -802,35 +1173,40 @@ class DocumentController extends Controller
 
             // === หมวดที่ 6 : CLOs, วิธีการสอน, การประเมิน ===
             $section->addTextBreak(1);
-            $section->addText('หมวดที่ 6 : ความสอดคล้องระหว่างผลการเรียนรู้ระดับรายวิชา (CLOs) วิธีการสอน และการประเมินผล', ['bold' => true, 'size' => 16, 'bgColor' => 'DBEAFE']);
+            $section->addText('หมวดที่ 6 : ความสอดคล้องระหว่างผลลัพธ์การเรียนรู้ระดับรายวิชา (CLOs) วิธีการสอน และการประเมินผล', array_merge($boldFont, $head, $thStyle));
             $table6 = $section->addTable('MainTable');
             $table6->addRow();
-            $table6->addCell(2000, $thStyle)->addText('CLO#', $thFont);
-            $table6->addCell(4000, $thStyle)->addText('วิธีการสอน (Active Learning)', $thFont);
-            $table6->addCell(4000, $thStyle)->addText('การประเมินผล', $thFont);
+            $table6->addCell(2000, $thStyle)->addText('CLO#', $boldFont);
+            $table6->addCell(4000, $thStyle)->addText('วิธีการสอน (Active Learning)', $boldFont);
+            $table6->addCell(4000, $thStyle)->addText('การประเมินผล', $boldFont);
             
-            foreach ($data['s6_clos_teaching'] as $row) {
+            foreach ($docxData['s6_clos_teaching'] as $row) {
                 $table6->addRow();
                 $table6->addCell(2000)->addText(htmlspecialchars($row['clo']));
-                $table6->addCell(4000)->addText(htmlspecialchars($row['teaching']));
-                $table6->addCell(4000)->addText(htmlspecialchars($row['assessment']));
+                $cellTeach = $table6->addCell(4000);
+                $teachItems = explode("\n", $row['teaching']);
+                foreach($teachItems as $item) $cellTeach->addText(htmlspecialchars($item));
+                
+                $cellAssess = $table6->addCell(4000);
+                 $assessItems = explode("\n", $row['assessment']);
+                foreach($assessItems as $item) $cellAssess->addText(htmlspecialchars($item));
             }
             
             // === หมวดที่ 7 : แผนการสอน ===
             $section->addTextBreak(1);
-            $section->addText('หมวดที่ 7: แผนการสอน', ['bold' => true, 'size' => 16, 'bgColor' => 'DBEAFE']);
-            $section->addText('7.1 แผนการสอน', ['bold' => true, 'size' => 14]);
+            $section->addText('หมวดที่ 7: แผนการสอน', array_merge($boldFont, $head, $thStyle));
+            $section->addText('7.1 แผนการสอน', array_merge($boldFont));
             $table7 = $section->addTable('MainTable');
             $table7->addRow();
-            $table7->addCell(800, $thStyle)->addText('สัปดาห์ที่', $thFont, $cellCenter);
-            $table7->addCell(1500, $thStyle)->addText('หัวข้อ', $thFont, $cellCenter);
-            $table7->addCell(2000, $thStyle)->addText('วัตถุประสงค์', $thFont, $cellCenter);
-            $table7->addCell(2500, $thStyle)->addText('กิจกรรม', $thFont, $cellCenter);
-            $table7->addCell(1500, $thStyle)->addText('สื่อ/เครื่องมือ', $thFont, $cellCenter);
-            $table7->addCell(1000, $thStyle)->addText('การประเมินผล', $thFont, $cellCenter);
-            $table7->addCell(700, $thStyle)->addText('CLO', $thFont, $cellCenter);
+            $table7->addCell(800, $thStyle)->addText('สัปดาห์ที่', $boldFont, $cellCenter);
+            $table7->addCell(1500, $thStyle)->addText('หัวข้อ', $boldFont, $cellCenter);
+            $table7->addCell(2000, $thStyle)->addText('วัตถุประสงค์', $boldFont, $cellCenter);
+            $table7->addCell(2500, $thStyle)->addText('กิจกรรม', $boldFont, $cellCenter);
+            $table7->addCell(1500, $thStyle)->addText('สื่อ/เครื่องมือ', $boldFont, $cellCenter);
+            $table7->addCell(1000, $thStyle)->addText('การประเมินผล', $boldFont, $cellCenter);
+            $table7->addCell(700, $thStyle)->addText('CLO', $boldFont, $cellCenter);
             
-            foreach ($data['s7_lesson_plan'] as $plan) {
+            foreach ($docxData['s7_lesson_plan'] as $plan) {
                 $table7->addRow();
                 $table7->addCell(800, $vAlignCenter)->addText($plan['week'], null, $cellCenter);
                 $table7->addCell(1500)->addText(htmlspecialchars($plan['topic']));
@@ -843,17 +1219,17 @@ class DocumentController extends Controller
             
             // === หมวดที่ 8 : การประเมิน ===
             $section->addTextBreak(1);
-            $section->addText('หมวดที่ 8 : การประเมินการบรรลุผลลัพธ์การเรียนรู้รายวิชา (CLOs)', ['bold' => true, 'size' => 16, 'bgColor' => 'DBEAFE']);
+            $section->addText('หมวดที่ 8 : การประเมินการบรรลุผลลัพธ์การเรียนรู้รายวิชา (CLOs)', array_merge($boldFont, $head, $thStyle));
             // 8.1 กลยุทธ์
-            $section->addText('8.1 กลยุทธ์การประเมิน', ['bold' => true, 'size' => 14]);
+            $section->addText('8.1 กลยุทธ์การประเมิน', array_merge($boldFont));
             $table8_1 = $section->addTable('MainTable');
             $table8_1->addRow();
-            $table8_1->addCell(2500, $thStyle)->addText('วิธีการประเมิน', $thFont, $cellCenter);
-            $table8_1->addCell(3500, $thStyle)->addText('เครื่องมือ / รายละเอียด', $thFont, $cellCenter);
-            $table8_1->addCell(1500, $thStyle)->addText('สัดส่วน (%)', $thFont, $cellCenter);
-            $table8_1->addCell(2500, $thStyle)->addText('ความสอดคล้องกับ CLOs', $thFont, $cellCenter);
+            $table8_1->addCell(2500, $thStyle)->addText('วิธีการประเมิน', $boldFont, $cellCenter);
+            $table8_1->addCell(3500, $thStyle)->addText('เครื่องมือ / รายละเอียด', $boldFont, $cellCenter);
+            $table8_1->addCell(1500, $thStyle)->addText('สัดส่วน (%)', $boldFont, $cellCenter);
+            $table8_1->addCell(2500, $thStyle)->addText('ความสอดคล้องกับ CLOs', $boldFont, $cellCenter);
             
-            foreach ($data['s8_1_assessment_strategies'] as $strategy) {
+            foreach ($docxData['s8_1_assessment_strategies'] as $strategy) {
                 $table8_1->addRow();
                 $table8_1->addCell(2500)->addText(htmlspecialchars($strategy['method']));
                 $table8_1->addCell(3500)->addText(htmlspecialchars($strategy['tool']));
@@ -863,79 +1239,90 @@ class DocumentController extends Controller
             
             // 8.2 Rubrics
             $section->addTextBreak(1);
-            $section->addText('8.2 วิธีการประเมิน แบบรูบริค (Rubric) หรือ อื่นๆ (ถ้ามี)', ['bold' => true, 'size' => 14]);
+            $section->addText('8.2 วิธีการประเมิน แบบรูบริค (Rubric) หรือ อื่นๆ (ถ้ามี)', array_merge($boldFont));
             
-            foreach ($data['s8_2_rubrics'] as $rubric) {
-                $section->addText(htmlspecialchars($rubric['title']), ['bold' => true, 'size' => 14]);
+            foreach ($docxData['s8_2_rubrics'] as $rubric) {
+                $section->addText(htmlspecialchars($rubric['title']), array_merge($boldFont));
                 $tableRubric = $section->addTable('MainTable');
                 $tableRubric->addRow();
-                $tableRubric->addCell(1500, $thStyle)->addText('ระดับ', $thFont, $cellCenter);
-                $tableRubric->addCell(8500, $thStyle)->addText(htmlspecialchars($rubric['header']), $thFont, $cellCenter);
+                $tableRubric->addCell(1500, $thStyle)->addText('ระดับ', $boldFont, $cellCenter);
+                $tableRubric->addCell(8500, $thStyle)->addText(htmlspecialchars($rubric['header']), $boldFont, $cellCenter);
                 
                 foreach ($rubric['levels'] as $level) {
                     $tableRubric->addRow();
                     $tableRubric->addCell(1500, $vAlignCenter)->addText($level['level'], null, $cellCenter);
                     $tableRubric->addCell(8500)->addText(htmlspecialchars($level['desc']));
                 }
-                $section->addTextBreak(0.5); // เว้นวรรคระหว่าง Rubric
+                $section->addTextBreak(0.5);
             }
 
             // === หมวดที่ 9 : สื่อการเรียนรู้ ===
             $section->addTextBreak(1);
-            $section->addText('หมวดที่ 9: สื่อการเรียนรู้และงานวิจัย', ['bold' => true, 'size' => 16, 'bgColor' => 'DBEAFE']);
+            $section->addText('หมวดที่ 9: สื่อการเรียนรู้และงานวิจัย', array_merge($boldFont, $head, $thStyle));
             
-            $section->addText('9.1 สื่อการเรียนรู้และสิ่งสนับสนุนการเรียนรู้', ['bold' => true, 'size' => 14]);
-            foreach ($data['s9_references'] as $item) {
-                $section->addListItem(htmlspecialchars($item), 0);
+            $section->addText('9.1 สื่อการเรียนรู้และสิ่งสนับสนุนการเรียนรู้', array_merge($boldFont));
+            if (!empty($docxData['s9_references']) && is_array($docxData['s9_references'])) {
+                foreach ($docxData['s9_references'] as $item) {
+                    $section->addListItem(htmlspecialchars($item), 0);
+                }
+            } else {
+                 $section->addListItem(htmlspecialchars($get('research', '...')), 0);
             }
             
-            $section->addText('9.2 งานวิจัยที่นำมาสอนในรายวิชา', ['bold' => true, 'size' => 14]);
-            $section->addText(htmlspecialchars($data['s9_research']));
+            $section->addText('9.2 งานวิจัยที่นำมาสอนในรายวิชา', array_merge($boldFont));
+            $section->addText(htmlspecialchars($docxData['s9_research']));
             
-            $section->addText('9.3 การบริการวิชาการ', ['bold' => true, 'size' => 14]);
-            $section->addText(htmlspecialchars($data['s9_academic_service']));
+            $section->addText('9.3 การบริการวิชาการ', array_merge($boldFont));
+            $section->addText(htmlspecialchars($docxData['s9_academic_service']));
 
-            $section->addText('9.4 งานทำนุบำรุงศิลปวัฒนธรรม', ['bold' => true, 'size' => 14]);
-            $section->addText(htmlspecialchars($data['s9_culture']));
+            $section->addText('9.4 งานทำนุบำรุงศิลปวัฒนธรรม', array_merge($boldFont));
+            $section->addText(htmlspecialchars($docxData['s9_culture']));
             
             // === หมวดที่ 10 : เกณฑ์การประเมิน ===
             $section->addTextBreak(1);
-            $section->addText('หมวดที่ 10 : เกณฑ์การประเมิน', ['bold' => true, 'size' => 16, 'bgColor' => 'DBEAFE']);
+            $section->addText('หมวดที่ 10 : เกณฑ์การประเมิน', array_merge($boldFont, $head, $thStyle));
             $table10 = $section->addTable('MainTable');
             $table10->addRow();
-            $table10->addCell(5000, $thStyle)->addText('ระดับผลการศึกษา', $thFont, $cellCenter);
-            $table10->addCell(5000, $thStyle)->addText('เกณฑ์การประเมินผล', $thFont, $cellCenter);
+            $table10->addCell(3000, $thStyle)->addText('ระดับผลการศึกษา', $boldFont, $cellCenter);
+            $table10->addCell(5000, $thStyle)->addText('เกณฑ์การประเมินผล', $boldFont, $cellCenter);
             
-            foreach ($data['s10_grading_criteria'] as $grade) {
-                $table10->addRow();
-                $table10->addCell(5000, $vAlignCenter)->addText($grade['grade'], null, $cellCenter);
-                $table10->addCell(5000, $vAlignCenter)->addText($grade['criteria'], null, $cellCenter);
+            if (!empty($docxData['s10_grading_criteria'])) {
+                foreach ($docxData['s10_grading_criteria'] as $grade) {
+                    $table10->addRow();
+                    $table10->addCell(5000, $vAlignCenter)->addText($grade['grade'], null, $cellCenter);
+                    $table10->addCell(5000, $vAlignCenter)->addText($grade['criteria'], null, $cellCenter);
+                }
+            } else {
+                 // Add default empty rows if no data
+                 $defaultGrades = ['A', 'B+', 'B', 'C+', 'C', 'D+', 'D', 'F'];
+                 foreach ($defaultGrades as $g) {
+                      $table10->addRow();
+                      $table10->addCell(5000, $vAlignCenter)->addText($g, null, $cellCenter);
+                      $table10->addCell(5000, $vAlignCenter)->addText('...', null, $cellCenter);
+                 }
             }
+
 
             // === หมวดที่ 11 : ขั้นตอนการแก้ไขคะแนน ===
             $section->addTextBreak(1);
-            $section->addText('หมวดที่ 11 : ขั้นตอนการแก้ไขคะแนน', ['bold' => true, 'size' => 16, 'bgColor' => 'DBEAFE']);
-            $section->addText(htmlspecialchars($data['s11_grade_correction']));
+            $section->addText('หมวดที่ 11 : ขั้นตอนการแก้ไขคะแนน', array_merge($boldFont, $head, $thStyle));
+            $section->addText(htmlspecialchars($docxData['s11_grade_correction']));
 
 
             // 5. สิ้นสุดการสร้างเอกสาร
             
             // 6. บันทึกไฟล์และส่งให้ดาวน์โหลด
-            $fileName = $data['fileName'] . '.docx';
-            
-            header('Content-Description: File Transfer');
-            header('Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-            header('Content-Disposition: attachment; filename="' . $fileName . '"');
-            header('Cache-Control: must-revalidate');
-            header('Pragma: public');
+            $fileName = $docxData['fileName'] . '.docx';
             
             $writer = IOFactory::createWriter($phpWord, 'Word2007');
-            $writer->save('php://output');
-            exit;
+            $tempFile = tempnam(sys_get_temp_dir(), 'phpword');
+            $writer->save($tempFile);
+
+            return response()->download($tempFile, $fileName)->deleteFileAfterSend(true);
 
         } catch (\Exception $e) {
-            // (จัดการ Error)
-            return response('เกิดข้อผิดพลาด: ' . $e->getMessage(), 500);
+            Log::error("Error exporting DOCX: " . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return response('เกิดข้อผิดพลาดในการสร้างเอกสาร: ' . $e->getMessage(), 500);
         }
     }
 }
