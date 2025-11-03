@@ -443,7 +443,6 @@ function submitForm() {
         })
         .then(saveData => {
             console.log("AI ถูกเรียกทั้งหมด:", aiCallCount);
-            hideLoadingPopup();
             window.location.href = saveData.redirect;
         })
         .catch(err => console.error(err));

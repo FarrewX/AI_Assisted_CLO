@@ -331,7 +331,7 @@
                                     <select name="plo{{ $i }}_level"
                                     class="border rounded px-2 py-1 text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
                                         <option value="">--เลือก--</option>
-                                        @foreach (['R - Remember', 'U - Understand', 'AP - Apply', 'AN - Analyze', 'E - Evaluate', 'C - Create'] as $levelValue)
+                                        @foreach (['R', 'U', 'AP', 'AN', 'E', 'C'] as $levelValue)
                                             <option value="{{ $levelValue }}" {{ ($ploData['level'] ?? '') === $levelValue ? 'selected' : '' }}>
                                                 {{ explode(' - ', $levelValue)[0] }}
                                             </option>
@@ -342,7 +342,7 @@
                                     <select name="plo{{ $i }}_type"
                                     class="border rounded px-2 py-1 text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
                                         <option value="">--เลือก--</option>
-                                        @foreach (['K - Knowledge', 'S - Skill', 'AR - Application', 'Rs - Responsibility'] as $typeValue)
+                                        @foreach (['K', 'S', 'AR', 'Rs'] as $typeValue)
                                             <option value="{{ $typeValue }}" {{ ($ploData['type'] ?? '') === $typeValue ? 'selected' : '' }}>
                                                 {{ explode(' - ', $typeValue)[0] }}
                                             </option>
@@ -401,16 +401,19 @@
                         <tr>
                             <th class="border border-gray-400 p-2 bg-gray-200 font-bold w-[10%]">รหัส</th>
                             <th class="border border-gray-400 p-2 bg-gray-200 font-bold w-[40%]">คำอธิบาย CLOs/LLLs</th>
-                             @for ($p = 1; $p <= 4; $p++)
+                            @foreach ($outcomeStatements as $p => $ploData)
                                 @php
                                     $ploLevel = '';
-                                    if(isset($outcomeStatements[$p]['level'])) {
-                                        $levelParts = explode(' - ', $outcomeStatements[$p]['level']);
+                                    // We already have $ploData from the loop
+                                    if(isset($ploData['level'])) {
+                                        // Handle cases where level might be just "R" or "R - Remember"
+                                        $levelParts = explode(' - ', $ploData['level']);
                                         $ploLevel = $levelParts[0] ?? '';
                                     }
                                 @endphp
+                                {{-- Use $p (the key, e.g., 1, 2, 5) for the PLO number --}}
                                 <th class="border border-gray-400 p-2 bg-gray-200 font-bold w-[12.5%]">PLO{{ $p }} {{ $ploLevel ? "($ploLevel)" : '' }}</th>
-                            @endfor
+                            @endforeach
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -1013,16 +1016,16 @@
                         <td class="text-center border border-black p-2.5 align-top">
                             <select name="plo${newRowIndex}_level" class="border rounded px-2 py-1 text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
                                 <option value="">--เลือก--</option>
-                                <option value="R - Remember">R</option> <option value="U - Understand">U</option>
-                                <option value="AP - Apply">AP</option> <option value="AN - Analyze">AN</option>
-                                <option value="E - Evaluate">E</option> <option value="C - Create">C</option>
+                                <option value="R">R</option> <option value="U">U</option>
+                                <option value="AP">AP</option> <option value="AN">AN</option>
+                                <option value="E">E</option> <option value="C">C</option>
                             </select>
                         </td>
                         <td class="text-center border border-black p-2.5 align-top">
                             <select name="plo${newRowIndex}_type" class="border rounded px-2 py-1 text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
                                 <option value="">--เลือก--</option>
-                                <option value="K - Knowledge">K</option> <option value="S - Skill">S</option>
-                                <option value="AR - Application">AR</option> <option value="Rs - Responsibility">Rs</option>
+                                <option value="K">K</option> <option value="S">S</option>
+                                <option value="AR">AR</option> <option value="Rs">Rs</option>
                             </select>
                         </td>
                     `;
@@ -1097,11 +1100,48 @@
         }
 
         // Section 5.3
-       try {
-            const cloLllData = [
-                { code: "CLO1", description: "ประเมินวิธีการวิเคราะห์ข้อมูล เพื่อแก้ไขปัญหาทางวิทยาการข้อมูลได้อย่างเหมาะสม" },
-                { code: "CLO2", description: "สร้างต้นแบบเพื่อการทำนายหรือการรู้จำจากชุดข้อมูลเพื่อประยุกต์ใช้ในการแก้ปัญหาจริง" },
-                { code: "CLO3", description: "สื่อสารผลลัพธ์การวิเคราะห์ข้อมูลให้ผู้อื่นเข้าใจและนำไปประยุกต์ใช้อย่างมีจริยธรรม" },
+        try {
+            // Get ai_text data
+            const aiTextJson = @json($data->ai_text ?? '{}');
+            let aiTextData = {};
+            let cloData = [];
+
+            try {
+                if (typeof aiTextJson === 'string' && aiTextJson.trim() !== '') {
+                    aiTextData = JSON.parse(aiTextJson);
+                } else if (typeof aiTextJson === 'object' && aiTextJson !== null) {
+                    aiTextData = aiTextJson; // Already an object
+                }
+            } catch (e) {
+                console.error("Error parsing ai_text JSON:", e, aiTextJson);
+            }
+
+            // Build CLO data from ai_text
+            if (Object.keys(aiTextData).length > 0) {
+                Object.keys(aiTextData).forEach(key => {
+                    // key is "CLO 1", "CLO 2" etc.
+                    const details = aiTextData[key];
+                    if (details && typeof details === 'object' && details.CLO) {
+                        cloData.push({
+                            code: key.replace(/\s/g, ''), // Normalize "CLO 1" to "CLO1"
+                            description: details.CLO
+                        });
+                    }
+                });
+                
+                // Sort CLO data numerically
+                cloData.sort((a, b) => {
+                    const numA = parseInt(a.code.replace('CLO', '')) || 0;
+                    const numB = parseInt(b.code.replace('CLO', '')) || 0;
+                    return numA - numB;
+                });
+                
+            } else {
+                console.warn("ai_text is empty or invalid, using fallback CLOs for 5.3");
+            }
+
+            // Define LLL data
+            const lllData = [
                 { code: "LLL1", description: "Creativity ความคิดสร้างสรรค์" },
                 { code: "LLL2", description: "Problem Solving การแก้ปัญหา" },
                 { code: "LLL3", description: "Critical Thinking การคิดเชิงวิพากษ์" },
@@ -1113,6 +1153,11 @@
                 { code: "LLL9", description: "Curiosity ความอยากรู้อยากเห็น" },
                 { code: "LLL10", description: "Reflection การสะท้อนทักษะความรู้" }
             ];
+            
+            // Combine lists
+            const cloLllData = [...cloData, ...lllData];
+
+            const ploCount = {{ count($outcomeStatements) }};
 
             const levelOptions = ["", "R", "U", "AP", "AN", "E", "C"];
             const courseAccordData = @json($data->course_accord ?? []);
@@ -1136,31 +1181,32 @@
                         </td>
                     `;
 
-                    for (let colIndex = 0; colIndex < 4; colIndex++) {
+                    for (let colIndex = 0; colIndex < ploCount; colIndex++) {
                         const td = document.createElement("td");
                         td.className = "border border-gray-400 p-2 text-center";
                         const ploDbIndex = colIndex + 1;
                         let savedCellData = { check: false, level: '' };
 
-                        if (courseAccordData && courseAccordData[rowIndex] !== undefined) {
-                            const rowData = courseAccordData[rowIndex];
+                        if (courseAccordData && courseAccordData[itemCode] !== undefined) {
+                            const rowData = courseAccordData[itemCode];
+                            
                             if (rowData && rowData[ploDbIndex] !== undefined && typeof rowData[ploDbIndex] === 'object' && rowData[ploDbIndex] !== null) {
-                                savedCellData = { check: rowData[ploDbIndex].check ?? false, level: rowData[ploDbIndex].level ?? '' };
-                            } else if (Array.isArray(rowData) && rowData.length > colIndex && typeof rowData[colIndex] === 'object' && rowData[colIndex] !== null) {
-                                console.warn(`Accessing courseAccordData[${rowIndex}] as array for colIndex ${colIndex}. Structure might be incorrect.`);
-                                savedCellData = { check: rowData[colIndex].check ?? false, level: rowData[colIndex].level ?? '' };
+                                 savedCellData = {
+                                     check: rowData[ploDbIndex].check ?? false,
+                                     level: rowData[ploDbIndex].level ?? ''
+                                 };
                             }
                         }
 
                         const checkbox = document.createElement("input");
                         checkbox.type = "checkbox";
                         checkbox.className = "mr-1.5 scale-125 plo-map-checkbox";
-                        checkbox.name = `plo_map_r${rowIndex}_c${colIndex}_check`;
+                        checkbox.name = `plo_map_${itemCode}_c${colIndex}_check`; 
                         checkbox.checked = savedCellData.check;
 
                         const select = document.createElement("select");
                         select.className = "w-[70px] p-1 border rounded plo-map-level";
-                        select.name = `plo_map_r${rowIndex}_c${colIndex}_level`;
+                        select.name = `plo_map_${itemCode}_c${colIndex}_level`;
                         levelOptions.forEach(opt => {
                             const op = document.createElement("option");
                             op.value = opt;
@@ -1176,7 +1222,7 @@
                     tbody.appendChild(tr);
                 });
             } else {
-                console.warn("Table body for PLO/CLO map (#ploTable tbody) not found.");
+                 console.warn("Table body for PLO/CLO map (#ploTable tbody) not found.");
             }
         } catch (e) {
             console.error("Error initializing Section 5.3 (PLO/CLO Map Display & Edit):", e);

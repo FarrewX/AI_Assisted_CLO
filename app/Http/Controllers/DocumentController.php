@@ -55,28 +55,12 @@ class DocumentController extends Controller
             abort(404, 'TQF Document (CourseYear) not found for this user.');
         }
 
-        $curricula = DB::table('curricula')->where('ref_id', $context->id)->first();
-        
-        $feedback = null;
-        $plans = null;
-        $generates = null;
-        
-        if ($curricula) {
-            $curriculaRefId = $curricula->ref_id;
-
-            $feedback = DB::table('feedback')->where('ref_id', $curriculaRefId)->first();
-            $plans = DB::table('plans')->where('ref_id', $curriculaRefId)->first();
-
-            $latestPrompt = DB::table('prompts')
-                            ->where('ref_id', $context->id)
-                            ->orderBy('updated_at', 'desc')
-                            ->first();
-            if($latestPrompt && property_exists($latestPrompt, 'id')){
-                 $generates = DB::table('generates')
-                            ->where('ref_id', $latestPrompt->id)
-                            ->orderBy('updated_at', 'desc')
-                            ->first();
-            }
+       $dbPlos = [];
+        try {
+            // Get PLOs and use 'plo' column as array key
+            $dbPlos = DB::table('plos')->get()->keyBy('plo'); 
+        } catch (\Exception $e) {
+            Log::error("Error fetching 'plos' table: " . $e->getMessage());
         }
 
         $curriculaDefaults = [
@@ -84,22 +68,111 @@ class DocumentController extends Controller
             'faculty'         => 'วิทยาศาสตร์',
             'major'           => 'วิทยาการคอมพิวเตอร์',
             'campus'          => 'เชียงใหม่',
-            'credits'         => '0 (0-0-0) (บรรยาย-ปฏิบัติ-ศึกษาด้วยตนเอง)',
+            'credits'         => '0(0-0-0)',
+            'curriculum_year' => $context->year ? $context->year + 543 : '',
+            'outcome_statement' => [],
+            'curriculum_map_data' => [],
+            'course_accord' => [],
+            'feedback' => '', 'improvement' => '', 's4_agreement' => '',
+            'references_data' => [], 'research_subjects' => '', 'academic_service' => '', 'art_culture' => '',
+            'teaching_methods' => null, 'lesson_plan' => [], 'assessment_strategies' => [],
+            'rubrics' => [],
+            'grading_criteria' => [],
+            'grade_correction' => '',
+            'ai_text' => ''
         ];
 
-        // Combine all data into one object
         $data = (array) $context + $curriculaDefaults;
+        $feedback = null;
+        $plans = null;
+        $generates = null;
+
+        $curricula = DB::table('curricula')->where('ref_id', $context->id)->first();
+
+        $savedOutcomeData = ($curricula && $curricula->outcome_statement) 
+                            ? json_decode($curricula->outcome_statement, true) 
+                            : [];
+        if (!is_array($savedOutcomeData)) $savedOutcomeData = [];
+
+        $finalOutcomeStatement = [];
+        
+        // Determine the loop limit: max of 4 (default), max key in DB, max key in saved JSON
+        $maxPloKeyDb = $dbPlos->keys()->isEmpty() ? 0 : $dbPlos->keys()->max();
+        $maxPloKeyDb = $dbPlos->keys()->isEmpty() ? 0 : $dbPlos->keys()->max();
+        $maxPloKeyJson = empty($savedOutcomeData) ? 0 : (max(array_keys($savedOutcomeData)) ?: 0);
+        $loopLimit = max(4, $maxPloKeyDb, $maxPloKeyJson);
+
+        for ($i = 1; $i <= $loopLimit; $i++) {
+            $ploId = $i;
+            $masterPlo = $dbPlos->get($ploId);
+            $savedData = $savedOutcomeData[$ploId] ?? []; 
+
+            if ($ploId == 1 && empty($finalOutcomeStatement[$ploId]['outcome'])) {
+                $finalOutcomeStatement[$ploId] = [
+                    'outcome' => $savedData['outcome'] ?? ($masterPlo->description ?? ''),
+                    'specific' => $savedData['specific'] ?? true,
+                    'generic' => $savedData['generic'] ?? false,
+                    'level' => $savedData['level'] ?? 'U',
+                    'type' => $savedData['type'] ?? 'K'
+                ];
+            }
+            if ($ploId == 2 && empty($finalOutcomeStatement[$ploId]['outcome'])) {
+                $finalOutcomeStatement[$ploId] = [
+                    'outcome' => $savedData['outcome'] ?? ($masterPlo->description ?? ''),
+                    'specific' => $savedData['specific'] ?? true,
+                    'generic' => $savedData['generic'] ?? false,
+                    'level' => $savedData['level'] ?? 'U',
+                    'type' => $savedData['type'] ?? 'K'
+                ];
+            }
+            if ($ploId == 3 && empty($finalOutcomeStatement[$ploId]['outcome'])) {
+                $finalOutcomeStatement[$ploId] = [
+                    'outcome' => $savedData['outcome'] ?? ($masterPlo->description ?? ''),
+                    'specific' => $savedData['specific'] ?? true,
+                    'generic' => $savedData['generic'] ?? false,
+                    'level' => $savedData['level'] ?? 'U',
+                    'type' => $savedData['type'] ?? 'K'
+                ];
+            }
+            if ($ploId == 4 && empty($finalOutcomeStatement[$ploId]['outcome'])) {
+                $finalOutcomeStatement[$ploId] = [
+                    'outcome' => $savedData['outcome'] ?? ($masterPlo->description ?? ''),
+                    'specific' => $savedData['specific'] ?? true,
+                    'generic' => $savedData['generic'] ?? false,
+                    'level' => $savedData['level'] ?? 'U',
+                    'type' => $savedData['type'] ?? 'K'
+                ];
+            }
+            if ($ploId == 5 && empty($finalOutcomeStatement[$ploId]['outcome'])) {
+                $finalOutcomeStatement[$ploId] = [
+                    'outcome' => $savedData['outcome'] ?? ($masterPlo->description ?? ''),
+                    'specific' => $savedData['specific'] ?? false,
+                    'generic' => $savedData['generic'] ?? true,
+                    'level' => $savedData['level'] ?? 'U',
+                    'type' => $savedData['type'] ?? 'K'
+                ];
+            }
+        }
 
         if ($curricula) {
+            $curriculaRefId = $curricula->ref_id;
+            $feedback = DB::table('feedback')->where('ref_id', $curriculaRefId)->first();
+            $plans = DB::table('plans')->where('ref_id', $curriculaRefId)->first();
+
+            $latestPrompt = DB::table('prompts')->where('ref_id', $context->id)->orderBy('updated_at', 'desc')->first();
+            if($latestPrompt && property_exists($latestPrompt, 'id')){
+                 $generates = DB::table('generates')->where('ref_id', $latestPrompt->id)->orderBy('updated_at', 'desc')->first();
+            }
+            
             $curriculaArray = (array) $curricula;
-            $curriculaArray['outcome_statement'] = isset($curricula->outcome_statement) ? json_decode($curricula->outcome_statement, true) : [];
-            $curriculaArray['curriculum_map_data'] = isset($curricula->curriculum_map_data) ? json_decode($curricula->curriculum_map_data, true) : [];
-            $curriculaArray['course_accord'] = isset($curricula->course_accord) ? json_decode($curricula->course_accord, true) : [];
-            $data = array_merge($data, $curriculaArray);
+            
+            $curriculaArray['outcome_statement'] = $finalOutcomeStatement;
+            $curriculaArray['curriculum_map_data'] = isset($curricula->curriculum_map_data) ? json_decode($curricula->curriculum_map_data, true) : $data['curriculum_map_data'];
+            $curriculaArray['course_accord'] = isset($curricula->course_accord) ? json_decode($curricula->course_accord, true) : $data['course_accord'];
+
+            $data = $curriculaArray + $data;
         } else {
-             $data['outcome_statement'] = [];
-             $data['curriculum_map_data'] = [];
-             $data['course_accord'] = [];
+             $data['outcome_statement'] = $finalOutcomeStatement;
         }
 
         if ($feedback) {
@@ -398,15 +471,24 @@ class DocumentController extends Controller
                 return response()->json(['success' => true, 'message' => "Field '{$field}' updated in JSON column '{$jsonColumn}'."]);
 
             } // Section 5
-            else if (Str::startsWith($field, 'plo') || Str::startsWith($field, 'curriculum_map_')) {
-
+            else if (Str::startsWith($field, 'plo') || Str::startsWith($field, 'curriculum_map_') || Str::startsWith($field, 'cloLll_desc_')) {
                 $targetTable = 'curricula';
                 $conditions = ['ref_id' => $curriculaId];
-                $currentData = DB::table($targetTable)->where($conditions)->first();
-                // Initialize arrays if data doesn't exist yet
-                $outcomeStatementData = $currentData && $currentData->outcome_statement ? json_decode($currentData->outcome_statement, true) : [];
-                $courseAccordData     = $currentData && $currentData->course_accord ? json_decode($currentData->course_accord, true) : [];
-                $curriculumMapData    = $currentData && $currentData->curriculum_map_data ? json_decode($currentData->curriculum_map_data, true) : [];
+                $currentData = DB::table('curricula')->where($conditions)->first();
+                
+                $dbPlos = [];
+                try {
+                    $dbPlos = DB::table('plos')->get()->keyBy('plo');
+                } catch (\Exception $e) {
+                    Log::error("Error fetching 'plos' table in savedataedit: " . $e->getMessage());
+                }
+                
+                $outcomeStatementData = ($currentData && $currentData->outcome_statement) ? json_decode($currentData->outcome_statement, true) : [];
+                $courseAccordData     = ($currentData && $currentData->course_accord) ? json_decode($currentData->course_accord, true) : [];
+                $curriculumMapData    = ($currentData && $currentData->curriculum_map_data) ? json_decode($currentData->curriculum_map_data, true) : [];
+                if (!is_array($outcomeStatementData)) $outcomeStatementData = [];
+                if (!is_array($courseAccordData)) $courseAccordData = [];
+                if (!is_array($curriculumMapData)) $curriculumMapData = [];
 
                 $processedValue = $value;
                 if (Str::contains($field, ['_specific', '_generic', '_check'])) {
@@ -416,63 +498,98 @@ class DocumentController extends Controller
                 $jsonColumn = null;
                 $jsonDataToSave = null;
 
-                // Section 5.3
-                if (Str::startsWith($field, 'plo_map_')) {
+                if (Str::startsWith($field, 'plo_map_')) { // Section 5.3
                     $jsonColumn = 'course_accord';
-                     if (preg_match('/plo_map_r(\d+)_c(\d+)_(\w+)/', $field, $matches)) {
-                        $rowIndex = (int)$matches[1]; $colIndex = (int)$matches[2]; $attribute = $matches[3]; $ploDbIndex = $colIndex + 1;
-                        if (!isset($courseAccordData[$rowIndex]) || !is_array($courseAccordData[$rowIndex])) $courseAccordData[$rowIndex] = [];
-                        if (!isset($courseAccordData[$rowIndex][$ploDbIndex]) || !is_array($courseAccordData[$rowIndex][$ploDbIndex])) $courseAccordData[$rowIndex][$ploDbIndex] = ['check' => false, 'level' => ''];
-                        $courseAccordData[$rowIndex][$ploDbIndex][$attribute] = $processedValue;
+                    if (preg_match('/plo_map_([a-zA-Z0-9]+)_c(\d+)_(\w+)/', $field, $matches)) {
+                        $cloCode = $matches[1];
+                        $colIndex = (int)$matches[2];
+                        $attribute = $matches[3];
+                        $ploDbIndex = $colIndex + 1;
+
+                        if (!isset($courseAccordData[$cloCode]) || !is_array($courseAccordData[$cloCode])) $courseAccordData[$cloCode] = [];
+                        if (!isset($courseAccordData[$cloCode][$ploDbIndex]) || !is_array($courseAccordData[$cloCode][$ploDbIndex])) $courseAccordData[$cloCode][$ploDbIndex] = ['check' => false, 'level' => ''];
+                        $courseAccordData[$cloCode][$ploDbIndex][$attribute] = $processedValue;
                         $jsonDataToSave = $courseAccordData;
                     } else { Log::warning("Could not parse plo_map field name: {$field}"); }
 
-                } 
-                // Section 5.2 
-                else if (Str::startsWith($field, 'curriculum_map_')) { 
+                } else if (Str::startsWith($field, 'cloLll_desc_')) { // Section 5.3 Description Update
+                    $targetTable = 'learning_outcomes';
+                    $code = Str::after($field, 'cloLll_desc_');
+                    $this->updateLearningOutcomeDescription($code, $value);
+                    return response()->json(['success' => true, 'message' => "Description for '{$code}' updated in '{$targetTable}'."]);
+                    
+                } else if (Str::startsWith($field, 'curriculum_map_')) { // Section 5.2
                     $jsonColumn = 'curriculum_map_data';
-                     if (preg_match('/curriculum_map_r(\d+)_c(\d+)/', $field, $matches)) {
+                    if (preg_match('/curriculum_map_r(\d+)_c(\d+)/', $field, $matches)) {
                         $rowIndex = (int)$matches[1]; $colIndex = (int)$matches[2];
-                        if (!isset($curriculumMapData[$rowIndex]) || !is_array($curriculumMapData[$rowIndex])) $curriculumMapData[$rowIndex] = [];
-                        // Store as object
-                        $curriculumMapData[$rowIndex][strval($colIndex)] = $processedValue;
+                        if (!isset($curriculumMapData[0]) || !is_object($curriculumMapData[0])) $curriculumMapData = [(object)[]];
+                        $curriculumMapData[0]->{strval($colIndex)} = $processedValue;
                         $jsonDataToSave = $curriculumMapData;
                     } else { Log::warning("Could not parse curriculum_map field name: {$field}"); }
-
-                }
-                // Section 5.1
-                else if (Str::startsWith($field, 'plo')) { 
+                    
+                } else if (Str::startsWith($field, 'plo')) { // Section 5.1
                     $jsonColumn = 'outcome_statement';
-                     if (preg_match('/plo(\d+)_(\w+)/', $field, $matches)) {
+                    
+                    // This ensures we save the 'outcome' from DB 'plos' + the changed data
+                    $finalOutcomeStatement = [];
+                    $maxPloKeyDb = $dbPlos->keys()->isEmpty() ? 0 : $dbPlos->keys()->max();
+                    $maxPloKeyJson = empty($outcomeStatementData) ? 0 : (max(array_keys($outcomeStatementData)) ?: 0);
+                    $loopLimit = max(4, $maxPloKeyDb, $maxPloKeyJson);
+
+                    for ($i = 1; $i <= $loopLimit; $i++) {
+                        $ploId = $i;
+                        $masterPlo = $dbPlos->get($ploId);
+                        $savedData = $outcomeStatementData[$ploId] ?? []; 
+                        
+                        $finalOutcomeStatement[$ploId] = [
+                            'outcome' => $savedData['outcome'] ?? ($masterPlo->description ?? ''), 
+                            'specific' => $savedData['specific'] ?? false,
+                            'generic' => $savedData['generic'] ?? false,
+                            'level' => $savedData['level'] ?? '',
+                            'type' => $savedData['type'] ?? ''
+                        ];
+                    }
+                    // [!!! END RE-BUILD !!!]
+                    
+                    if (preg_match('/plo(\d+)_(\w+)/', $field, $matches)) {
                         $ploIndex = (int)$matches[1]; $attribute = $matches[2];
-                        while (count($outcomeStatementData) <= $ploIndex) { $outcomeStatementData[] = null; }
-                        if (!isset($outcomeStatementData[$ploIndex]) || !is_array($outcomeStatementData[$ploIndex])) {
-                             $outcomeStatementData[$ploIndex] = ['outcome' => null, 'specific' => false, 'generic' => false, 'level' => null, 'type' => null];
+                        
+                        // Update the specific field that changed
+                        if (isset($finalOutcomeStatement[$ploIndex])) {
+                            $finalOutcomeStatement[$ploIndex][$attribute] = $processedValue;
+                        } else {
+                             // If it's a new row (e.g. PLO5)
+                             $finalOutcomeStatement[$ploIndex] = [
+                                 'outcome' => ($attribute === 'outcome') ? $processedValue : '',
+                                 'specific' => ($attribute === 'specific') ? $processedValue : false,
+                                 'generic' => ($attribute === 'generic') ? $processedValue : false,
+                                 'level' => ($attribute === 'level') ? $processedValue : '',
+                                 'type' => ($attribute === 'type') ? $processedValue : ''
+                             ];
                         }
-                        $outcomeStatementData[$ploIndex][$attribute] = $processedValue;
 
                         // Filter empty PLOs *after* updating
-                        $filteredOutcomeStatementData = array_filter($outcomeStatementData, function($plo) {
+                        $filteredOutcomeStatementData = array_filter($finalOutcomeStatement, function($plo) {
                             if (empty($plo)) return false;
-                            foreach ($plo as $val) { if (!in_array($val, [null, '', false], true)) return true; }
-                            return false;
+                            // Check if all values are default/empty
+                            if (empty($plo['outcome']) && !$plo['specific'] && !$plo['generic'] && empty($plo['level']) && empty($plo['type'])) {
+                                return false;
+                            }
+                            return true;
                         });
-                        // Re-index array keys sequentially if needed after filtering, though json_encode handles sparse arrays
                         $jsonDataToSave = $filteredOutcomeStatementData;
-
                     } else { Log::warning("Could not parse plo field name: {$field}"); }
-                }
-                // Save updated JSON if a column was identified and data prepared
+                 }
+
                 if ($jsonColumn && $jsonDataToSave !== null) {
-                    DB::table($targetTable)->where($conditions)->update([
+                    DB::table('curricula')->where($conditions)->update([
                         $jsonColumn => json_encode($jsonDataToSave, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT),
                         'updated_at' => now()
                     ]);
                     return response()->json(['success' => true, 'message' => "Field '{$field}' updated in JSON column '{$jsonColumn}'."]);
-                } else {
-                     // If parsing failed or no data to save, return appropriate message
-                    Log::warning("JSON column update skipped for field: {$field}");
-                    return response()->json(['success' => false, 'message' => "Could not process update for field '{$field}'."], 400);
+                } else if (!$jsonColumn && !Str::startsWith($field, 'cloLll_desc_')) {
+                    Log::warning("JSON column update skipped or failed for field: {$field}");
+                    return response()->json(['success' => false, 'message' => "Could not process JSON update for field '{$field}'."], 400);
                 }
 
             } else {
@@ -593,6 +710,13 @@ class DocumentController extends Controller
             abort(404, 'TQF Document (CourseYear) not found for this user.');
         }
 
+        $dbPlos = [];
+        try {
+            $dbPlos = DB::table('plos')->get()->keyBy('plo'); 
+        } catch (\Exception $e) {
+            Log::error("Error fetching 'plos' table: " . $e->getMessage());
+        }
+
         // Define the defaults array
         $curriculaDefaults = [
             'curriculum_name' => 'วิทยาศาสตรบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์',
@@ -614,10 +738,70 @@ class DocumentController extends Controller
         
         $data = $curriculaDefaults + (array) $context; // Start with defaults
 
-        // 2. Fetch TQF data
         $curricula = DB::table('curricula')->where('ref_id', $context->courseYearId)->first();
         $feedback = null; $plans = null; $generates = null;
-        
+        $savedOutcomeData = ($curricula && $curricula->outcome_statement) 
+                            ? json_decode($curricula->outcome_statement, true) 
+                            : [];
+        if (!is_array($savedOutcomeData)) $savedOutcomeData = [];
+
+        $finalOutcomeStatement = [];
+        $maxPloKeyDb = $dbPlos->keys()->isEmpty() ? 0 : $dbPlos->keys()->max();
+        $maxPloKeyJson = empty($savedOutcomeData) ? 0 : (max(array_keys($savedOutcomeData)) ?: 0);
+        $loopLimit = max(4, $maxPloKeyDb, $maxPloKeyJson); 
+
+        for ($i = 1; $i <= $loopLimit; $i++) {
+            $ploId = $i;
+            $masterPlo = $dbPlos->get($ploId);
+            $savedData = $savedOutcomeData[$ploId] ?? []; 
+
+            if ($ploId == 1 && empty($finalOutcomeStatement[$ploId]['outcome'])) {
+                $finalOutcomeStatement[$ploId] = [
+                    'outcome' => $savedData['outcome'] ?? ($masterPlo->description ?? ''),
+                    'specific' => $savedData['specific'] ?? true,
+                    'generic' => $savedData['generic'] ?? false,
+                    'level' => $savedData['level'] ?? 'U',
+                    'type' => $savedData['type'] ?? 'K'
+                ];
+            }
+            if ($ploId == 2 && empty($finalOutcomeStatement[$ploId]['outcome'])) {
+                $finalOutcomeStatement[$ploId] = [
+                    'outcome' => $savedData['outcome'] ?? ($masterPlo->description ?? ''),
+                    'specific' => $savedData['specific'] ?? true,
+                    'generic' => $savedData['generic'] ?? false,
+                    'level' => $savedData['level'] ?? 'U',
+                    'type' => $savedData['type'] ?? 'K'
+                ];
+            }
+            if ($ploId == 3 && empty($finalOutcomeStatement[$ploId]['outcome'])) {
+                $finalOutcomeStatement[$ploId] = [
+                    'outcome' => $savedData['outcome'] ?? ($masterPlo->description ?? ''),
+                    'specific' => $savedData['specific'] ?? true,
+                    'generic' => $savedData['generic'] ?? false,
+                    'level' => $savedData['level'] ?? 'U',
+                    'type' => $savedData['type'] ?? 'K'
+                ];
+            }
+            if ($ploId == 4 && empty($finalOutcomeStatement[$ploId]['outcome'])) {
+                $finalOutcomeStatement[$ploId] = [
+                    'outcome' => $savedData['outcome'] ?? ($masterPlo->description ?? ''),
+                    'specific' => $savedData['specific'] ?? true,
+                    'generic' => $savedData['generic'] ?? false,
+                    'level' => $savedData['level'] ?? 'U',
+                    'type' => $savedData['type'] ?? 'K'
+                ];
+            }
+            if ($ploId == 5 && empty($finalOutcomeStatement[$ploId]['outcome'])) {
+                $finalOutcomeStatement[$ploId] = [
+                    'outcome' => $savedData['outcome'] ?? ($masterPlo->description ?? ''),
+                    'specific' => $savedData['specific'] ?? false,
+                    'generic' => $savedData['generic'] ?? true,
+                    'level' => $savedData['level'] ?? 'U',
+                    'type' => $savedData['type'] ?? 'K'
+                ];
+            }
+        }
+
         if ($curricula) {
             $curriculaRefId = $curricula->ref_id;
             $feedback = DB::table('feedback')->where('ref_id', $curriculaRefId)->first();
@@ -629,10 +813,12 @@ class DocumentController extends Controller
             }
             
             $curriculaArray = (array) $curricula;
-            $curriculaArray['outcome_statement'] = isset($curricula->outcome_statement) ? json_decode($curricula->outcome_statement, true) : $data['outcome_statement'];
+            $curriculaArray['outcome_statement'] = $finalOutcomeStatement;
             $curriculaArray['curriculum_map_data'] = isset($curricula->curriculum_map_data) ? json_decode($curricula->curriculum_map_data, true) : $data['curriculum_map_data'];
             $curriculaArray['course_accord'] = isset($curricula->course_accord) ? json_decode($curricula->course_accord, true) : $data['course_accord'];
             $data = $curriculaArray + $data;
+        } else {
+             $data['outcome_statement'] = $finalOutcomeStatement;
         }
 
         if ($feedback) {
@@ -660,21 +846,36 @@ class DocumentController extends Controller
         }
 
         // 3. Use Hardcoded CLO/LLL Descriptions
-         $cloLllDescriptions = [
-             ['code' => "CLO1", 'description' => "ประเมินวิธีการวิเคราะห์ข้อมูล เพื่อแก้ไขปัญหาทางวิทยาการข้อมูลได้อย่างเหมาะสม"],
-             ['code' => "CLO2", 'description' => "สร้างต้นแบบเพื่อการทำนายหรือการรู้จำจากชุดข้อมูลเพื่อประยุกต์ใช้ในการแก้ปัญหาจริง"],
-             ['code' => "CLO3", 'description' => "สื่อสารผลลัพธ์การวิเคราะห์ข้อมูลให้ผู้อื่นเข้าใจและนำไปประยุกต์ใช้อย่างมีจริยธรรม"],
-             ['code' => "LLL1", 'description' => "Creativity ความคิดสร้างสรรค์"],
-             ['code' => "LLL2", 'description' => "Problem Solving การแก้ปัญหา"],
-             ['code' => "LLL3", 'description' => "Critical Thinking การคิดเชิงวิพากษ์"],
-             ['code' => "LLL4", 'description' => "Leadership การเป็นผู้นำ"],
-             ['code' => "LLL5", 'description' => "Communication การสื่อสาร"],
-             ['code' => "LLL6", 'description' => "Collaboration การประสานงาน"],
-             ['code' => "LLL7", 'description' => "Information Management การจัดการข้อมูล "],
-             ['code' => "LLL8", 'description' => "Adaptability การปรับตัว"],
-             ['code' => "LLL9", 'description' => "Curiosity ความอยากรู้อยากเห็น"],
-             ['code' => "LLL10", 'description' => "Reflection การสะท้อนทักษะความรู้"]
-         ];
+        $cloLllDescriptions = [];
+        $aiTextJson = $data['ai_text'] ?? null;
+        $aiTextData = $aiTextJson ? json_decode($aiTextJson, true) : [];
+
+        if (is_array($aiTextData) && json_last_error() === JSON_ERROR_NONE) {
+            foreach($aiTextData as $cloKey => $cloDetails) {
+                // $cloKey is "CLO 1", $cloDetails is {"CLO": "...", ...}
+                if (is_array($cloDetails) && isset($cloDetails['CLO'])) {
+                    $cloLllDescriptions[] = [
+                        'code' => trim(str_replace(' ', '', $cloKey)), // "CLO 1" -> "CLO1"
+                        'description' => $cloDetails['CLO']
+                    ];
+                }
+            }
+        }
+
+        $lllData = [
+            ['code' => "LLL1", 'description' => "Creativity ความคิดสร้างสรรค์"],
+            ['code' => "LLL2", 'description' => "Problem Solving การแก้ปัญหา"],
+            ['code' => "LLL3", 'description' => "Critical Thinking การคิดเชิงวิพากษ์"],
+            ['code' => "LLL4", 'description' => "Leadership การเป็นผู้นำ"],
+            ['code' => "LLL5", 'description' => "Communication การสื่อสาร"],
+            ['code' => "LLL6", 'description' => "Collaboration การประสานงาน"],
+            ['code' => "LLL7", 'description' => "Information Management การจัดการข้อมูล "],
+            ['code' => "LLL8", 'description' => "Adaptability การปรับตัว"],
+            ['code' => "LLL9", 'description' => "Curiosity ความอยากรู้อยากเห็น"],
+            ['code' => "LLL10", 'description' => "Reflection การสะท้อนทักษะความรู้"]
+        ];
+         
+        $cloLllDescriptions = array_merge($cloLllDescriptions, $lllData);
 
         // 4. Convert final merged array (which is $data) for mapping
         $dataArray = $data;
@@ -686,7 +887,6 @@ class DocumentController extends Controller
         $getJson = function($key, $default = []) use ($dataArray) {
             return !empty($dataArray[$key]) ? $dataArray[$key] : $default;
         };
-
 
         $docxData = [
             'logo_path' => public_path('image/mjulogo.jpg'),
@@ -812,14 +1012,24 @@ class DocumentController extends Controller
 
                 $mapping = ($code && isset($courseAccordData[$code])) ? $courseAccordData[$code] : [];
                 
-                $docxData['s5_3_clos_plo_mapping'][] = [
-                    'clo_id' => $code ?? '?',
+                $row = [
+                    'clo_id'   => $code ?? '?',
                     'clo_desc' => $cloInfo['description'] ?? '...',
-                    'plo1' => ($mapping['1'] ?? null) ? ($mapping['1']['check'] ? ($mapping['1']['level'] ?: '✓') : '') : '',
-                    'plo2' => ($mapping['2'] ?? null) ? ($mapping['2']['check'] ? ($mapping['2']['level'] ?: '✓') : '') : '',
-                    'plo3' => ($mapping['3'] ?? null) ? ($mapping['3']['check'] ? ($mapping['3']['level'] ?: '✓') : '') : '',
-                    'plo4' => ($mapping['4'] ?? null) ? ($mapping['4']['check'] ? ($mapping['4']['level'] ?: '✓') : '') : '',
                 ];
+
+                if (is_array($mapping)) {
+                    foreach ($mapping as $ploIndex => $ploData) {
+                        if (is_array($ploData)) {
+                            $row['plo' . $ploIndex] = $ploData['check']
+                                ? ($ploData['level'] ?: '✓')
+                                : '';
+                        } else {
+                            $row['plo' . $ploIndex] = '';
+                        }
+                    }
+                }
+                
+                $docxData['s5_3_clos_plo_mapping'][] = $row;
             }
         }
 
@@ -1061,8 +1271,16 @@ class DocumentController extends Controller
             $closData = json_decode($docxData['ai_text'], true); // Decode the ai_text JSON
             
             if (is_array($closData) && json_last_error() === JSON_ERROR_NONE) {
+                // [!!! FIX !!!] Sort keys numerically (CLO 1, CLO 2...)
+                uksort($closData, function ($a, $b) {
+                    preg_match('/(\d+)/', $a, $matchesA); preg_match('/(\d+)/', $b, $matchesB);
+                    $numA = isset($matchesA[1]) ? intval($matchesA[1]) : PHP_INT_MAX;
+                    $numB = isset($matchesB[1]) ? intval($matchesB[1]) : PHP_INT_MAX;
+                    return $numA <=> $numB;
+                });
+                
                 foreach ($closData as $cloKey => $cloDetails) {
-                    $cell2_2->addText(htmlspecialchars($cloKey) . ':', $boldFont); 
+                    $cell2_2->addText(htmlspecialchars($cloKey) . ':', ['bold' => true]); 
                     if (is_array($cloDetails)) {
                         foreach ($cloDetails as $key => $value) {
                              $cell2_2->addListItem(htmlspecialchars($key . ': ' . $value), 0, null, ['indent' => 360]);
@@ -1071,7 +1289,7 @@ class DocumentController extends Controller
                     $cell2_2->addTextBreak(0.5); // Add space between CLOs
                 }
             } else {
-                 $cell2_2->addText(htmlspecialchars($docxData['ai_text']));
+                 $cell2_2->addText(htmlspecialchars($docxData['clos']));
             }
 
             // === หมวดที่ 3 : การปรับปรุง ===
@@ -1165,10 +1383,14 @@ class DocumentController extends Controller
                 $table5_3->addRow();
                 $table5_3->addCell(1000, $vAlignCenter)->addText($map['clo_id'], null, $cellCenter);
                 $table5_3->addCell(5000)->addText(htmlspecialchars($map['clo_desc']));
-                $table5_3->addCell(1000, $vAlignCenter)->addText($map['plo1'], null, $cellCenter);
-                $table5_3->addCell(1000, $vAlignCenter)->addText($map['plo2'], null, $cellCenter);
-                $table5_3->addCell(1000, $vAlignCenter)->addText($map['plo3'], null, $cellCenter);
-                $table5_3->addCell(1000, $vAlignCenter)->addText($map['plo4'], null, $cellCenter);
+                // แสดงค่า PLO mapping ตามจำนวนจริง
+                if (!empty($docxData['s5_1_plos'])) {
+                    foreach ($docxData['s5_1_plos'] as $plo) {
+                        $key = 'plo' . ($plo['id'] ?? '');
+                        $table5_3->addCell(1000, $vAlignCenter)
+                                ->addText($map[$key] ?? '', null, $cellCenter);
+                    }
+                }
             }
 
             // === หมวดที่ 6 : CLOs, วิธีการสอน, การประเมิน ===
