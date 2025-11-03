@@ -82,7 +82,7 @@
                                                 $link = match($stepCount) {
                                                     0 => url('/form?course_id=' . $item->course_id . '&year=' . $item->year . '&term=' . $item->term . '&TQF=' . $item->TQF),
                                                     1 => url('/form?course_id=' . $item->course_id . '&year=' . $item->year . '&term=' . $item->term . '&TQF=' . $item->TQF),
-                                                    2 => url('/preview?course_id=' . $item->course_id . '&year=' . $item->year . '&term=' . $item->term . '&TQF=' . $item->TQF),
+                                                    2 => url('/editdoc?course_id=' . $item->course_id . '&year=' . $item->year . '&term=' . $item->term . '&TQF=' . $item->TQF),
                                                     3 => url(),
                                                     4 => null,
                                                     default => null

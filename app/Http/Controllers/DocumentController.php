@@ -15,7 +15,7 @@ use Illuminate\Support\Str;
 
 class DocumentController extends Controller
 {
-    public function preview(Request $request)
+    public function editdoc(Request $request)
     {
         $user = Auth::user();
         $course_id = $request->query('course_id');
@@ -211,7 +211,7 @@ class DocumentController extends Controller
         if(isset($data->lesson_plan)) $data->plan_data = $data->lesson_plan;
         if(isset($data->assessment_strategies)) $data->assessment_data = $data->assessment_strategies;
 
-        return view('component/preview', compact('data'));
+        return view('editdoc', compact('data'));
     }
 
     public function savedataedit(Request $request)
@@ -1188,7 +1188,7 @@ class DocumentController extends Controller
             $infoTable->addRow();
             $infoTable->addCell(1500)->addText('วิทยาเขต', $boldFont);
             $infoTable->addCell(2000)->addText(htmlspecialchars($docxData['campus']), $underlineFont);
-            $infoTable->addCell(2500, $mergedCellStyle)->addText('ภาคการศึกษา/ปีการศึกษา', $boldFont);
+            $infoTable->addCell(2700, $mergedCellStyle)->addText('ภาคการศึกษา/ปีการศึกษา', $boldFont);
             $infoTable->addCell(1000)->addText(($docxData['term'] . ' / ' . $docxData['academic_year']), $underlineFont);
             $infoTable->addCell(1700)->addText('', null);
             $infoTable->addCell(1500)->addText('', null);

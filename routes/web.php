@@ -57,7 +57,7 @@ Route::middleware('auth')->group(function () {
         return view('TQF');
     })->name('TQF');
 
-    Route::get('/preview', [DocumentController::class, 'preview'])->name('preview');
+    Route::get('/editdoc', [DocumentController::class, 'editdoc'])->name('editdoc');
 
     Route::get('/export-docx', [DocumentController::class, 'exportdocx'])->name('export.docx');
 
