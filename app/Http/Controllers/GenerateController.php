@@ -50,7 +50,7 @@ class GenerateController extends Controller
         // return response()->json(['message' => 'บันทึก generated เรียบร้อยแล้ว']);
 
         return response()->json([
-            'redirect' => route('preview', [
+            'redirect' => route('editdoc', [
                 'course_id' => $request->course_id,
                 'year' => $request->year,
                 'term' => $request->term,
