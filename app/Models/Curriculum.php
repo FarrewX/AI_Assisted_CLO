@@ -31,7 +31,7 @@ class Curriculum extends Model
         'hours_field_trip',
         'outcome_statement',
         'curriculum_map_data',
-        'description',
+        'course_accord',
     ];
 
     /**
@@ -40,7 +40,7 @@ class Curriculum extends Model
     protected $casts = [
         'outcome_statement' => 'array',
         'curriculum_map_data' => 'array',
-        'description' => 'array',
+        'course_accord' => 'array',
         'is_specific' => 'boolean',
         'is_core' => 'boolean',
         'is_major_required' => 'boolean',

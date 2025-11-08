@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class feedback extends Model
+class Feedback extends Model
 {
     use HasFactory;
 
@@ -16,16 +16,15 @@ class feedback extends Model
     protected $fillable = [
         'ref_id',
         'improvement',
-        's4_agreement',
+        'agreement',
         'research',
         'research_subjects',
         'academic_service',
         'art_culture',
-        's11_grade_correction',
     ];
 
     protected $casts = [
-        'improvement' => 'array',
+        'research' => 'array',
     ];
 
     public function curriculum()
