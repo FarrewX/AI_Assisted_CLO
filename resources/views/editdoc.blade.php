@@ -666,7 +666,8 @@
             </div>
         </div>
     </div> 
-    <script> document.addEventListener('DOMContentLoaded', () => {
+    <script> 
+    document.addEventListener('DOMContentLoaded', () => {
         async function saveData(fieldName, value, targetElement = null) {
             const saveUrl = '/savedataedit';
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -676,9 +677,6 @@
             const term = urlParams.get('term');
             const tqf = urlParams.get('TQF');
             
-            // ค้นหา element เพื่อแสดง feedback
-            // (เราใช้ attribute selector ที่ซับซ้อนขึ้นเพื่อหา id, name, หรือ data-field)
-            // เราใช้ CSS.escape เพื่อป้องกันอักขระพิเศษในชื่อ field
             // Find the element for feedback, try different selectors
             let element = document.querySelector(`[data-field="${CSS.escape(fieldName)}"]`);
             if (!element) element = document.querySelector(`[name="${CSS.escape(fieldName)}"]`);
@@ -1112,8 +1110,8 @@
                 } else if (typeof aiTextJson === 'object' && aiTextJson !== null) {
                     aiTextData = aiTextJson; // Already an object
                 }
-            } catch (e) {
-                console.error("Error parsing ai_text JSON:", e, aiTextJson);
+            } catch (parseError) {
+                console.error("Error parsing ai_text JSON:", parseError, aiTextJson);
             }
 
             // Build CLO data from ai_text
@@ -1224,8 +1222,8 @@
             } else {
                  console.warn("Table body for PLO/CLO map (#ploTable tbody) not found.");
             }
-        } catch (e) {
-            console.error("Error initializing Section 5.3 (PLO/CLO Map Display & Edit):", e);
+        } catch (s5Error) {
+            console.error("Error initializing Section 5.3 (PLO/CLO Map Display & Edit):", s5Error);
         }
 
         // Section 6
@@ -1242,7 +1240,7 @@
 
                 rows.forEach((row, rowIndex) => {
                     const cloCell = row.querySelector('.clo-cell-s6');
-                    let cloKey = cloCell ? cloCell.textContent.trim().replace(/ \[คลิกเพื่อแก้ไข\]$/, '').trim() : `CLO${rowIndex + 1}`;
+                    let cloKey = cloCell ? cloCell.textContent.trim().replace(/ \[คลิกเพื่อแก้ไข\]$/, '').trim().replace(/\s/g, '') : `CLO${rowIndex + 1}`;
                     if (!cloKey) cloKey = `CLO${rowIndex + 1}`;
 
                     const teachingMethods = [];
@@ -1290,10 +1288,43 @@
                     section6Data = {};
                 }
 
-                function _s6_createCheckboxHtml(optionsObject, cloKey, type, loadedData) {
+                let cloKeysFromAI = [];
+                try {
+                    const aiTextJson = @json($data->ai_text ?? '{}');
+                    let aiTextData = {};
+                    
+                    if (typeof aiTextJson === 'string' && aiTextJson.trim() !== '') {
+                        aiTextData = JSON.parse(aiTextJson);
+                    } else if (typeof aiTextJson === 'object' && aiTextData !== null) {
+                        aiTextData = aiTextJson;
+                    }
+                    
+                    if (Object.keys(aiTextData).length > 0) {
+                        Object.keys(aiTextData).forEach(key => {
+                            const details = aiTextData[key];
+                            if (details && typeof details === 'object' && details.CLO) {
+                                // Normalize key ("CLO 1" -> "CLO1")
+                                cloKeysFromAI.push(key.replace(/\s/g, ''));
+                            }
+                        });
+                        
+                        // Sort keys numerically
+                        cloKeysFromAI.sort((a, b) => {
+                            const numA = parseInt(a.replace('CLO', '')) || 0;
+                            const numB = parseInt(b.replace('CLO', '')) || 0;
+                            return numA - numB;
+                        });
+                    }
+                    console.log("Loaded CLO Keys from ai_text for S6:", cloKeysFromAI);
+                } catch (e) {
+                    console.error("Error parsing ai_text for S6:", e, @json($data->ai_text ?? '{}'));
+                }
+
+                // rowData (e.g., [ {"วิธีการสอน":...}, {"การประเมินผล":...} ])
+                function _s6_createCheckboxHtml(optionsObject, type, rowData) {
                     let html = '';
                     let checkedItems = [];
-                    const cloEntry = loadedData[cloKey];
+                    const cloEntry = rowData;
 
                     if(cloEntry && Array.isArray(cloEntry)) {
                         const typeKey = (type === 'teach') ? 'วิธีการสอน' : 'การประเมินผล';
@@ -1333,29 +1364,40 @@
                     const assessmentCell = newRow.querySelector('.assessment-cell-s6');
 
                     cloCell.textContent = cloKey;
-                    // No data-field needed on cloCell anymore
 
-                    teachingCell.innerHTML = _s6_createCheckboxHtml(data_s6_teachingOptions, cloKey, 'teach', section6Data);
-                    assessmentCell.innerHTML = _s6_createCheckboxHtml(data_s6_assessmentOptions, cloKey, 'assess', section6Data);
+                    teachingCell.innerHTML = _s6_createCheckboxHtml(data_s6_teachingOptions, 'teach', rowData);
+                    assessmentCell.innerHTML = _s6_createCheckboxHtml(data_s6_assessmentOptions, 'assess', rowData);
 
                     tableBody.appendChild(newRow);
                 }
 
                 tableBody.innerHTML = '';
-                const loadedCloKeys = Object.keys(section6Data);
-
-                if (loadedCloKeys.length > 0) {
-                    loadedCloKeys.forEach((key, index) => {
-                        _s6_addNewCloRow(key, section6Data[key], index);
+                
+                if (cloKeysFromAI.length > 0) {
+                    cloKeysFromAI.forEach((cloKey, index) => { // cloKey is "CLO1"
+                        const savedData = section6Data[cloKey] || null; 
+                        _s6_addNewCloRow(cloKey, savedData, index);
                     });
                 } else {
-                    _s6_addNewCloRow(null, null, 0);
+                    const loadedCloKeys = Object.keys(section6Data);
+                    if (loadedCloKeys.length > 0) {
+                        loadedCloKeys.sort((a, b) => {
+                             const numA = parseInt(a.replace('CLO', '')) || 0;
+                             const numB = parseInt(b.replace('CLO', '')) || 0;
+                             return numA - numB;
+                        });
+                        loadedCloKeys.forEach((key, index) => {
+                            _s6_addNewCloRow(key, section6Data[key], index);
+                        });
+                    } else {
+                        _s6_addNewCloRow(null, null, 0); 
+                    }
                 }
 
-                addBtn.addEventListener('click', () => {
+                addBtn.addEventListener('click', (event) => {
                     _s6_addNewCloRow();
                     const section6JSON = getSection6Data();
-                    saveData('section6_data', section6JSON);
+                    saveData('section6_data', section6JSON, event.target);
                 });
             }
             initializeCloTable_Section6();
@@ -1388,6 +1430,28 @@
                 return planData;
             }
 
+            function createCloOptions(cloKeys, selectedClo) {
+                let optionsHtml = '<option value="">--เลือก--</option>';
+                
+                // ตรวจสอบว่า cloKeys เป็น Array และมีข้อมูล
+                if (!Array.isArray(cloKeys) || cloKeys.length === 0) {
+                    console.warn("S7: No CLO keys from ai_text, using default fallback.");
+                    // Fallback ถ้า ai_text ว่าง
+                    optionsHtml += '<option value="CLO1" ' + (selectedClo === 'CLO1' ? 'selected' : '') + '>CLO 1</option>';
+                    optionsHtml += '<option value="CLO2" ' + (selectedClo === 'CLO2' ? 'selected' : '') + '>CLO 2</option>';
+                    optionsHtml += '<option value="CLO3" ' + (selectedClo === 'CLO3' ? 'selected' : '') + '>CLO 3</option>';
+                } else {
+                    // วน Loop สร้าง <option> จาก Keys ที่ได้
+                    cloKeys.forEach(cloKey => { // cloKey is "CLO1"
+                        const isSelected = (selectedClo === cloKey) ? 'selected' : '';
+                        // "CLO1" -> "CLO 1" (สำหรับแสดงผล)
+                        const cleanKey = cloKey.replace(/(\d+)$/, ' $1'); 
+                        optionsHtml += `<option value="${cloKey}" ${isSelected}>${cleanKey}</option>`; 
+                    });
+                }
+                return optionsHtml;
+            }
+
             function generateTableLesson(forceInputCount = false) {
                 const tbody = document.querySelector("#planTable tbody");
                 if (!tbody) { console.warn("Table body for lesson plan (#planTable tbody) not found."); return; }
@@ -1397,28 +1461,79 @@
                 // Load data
                 const loadedPlanData = @json($data->plan_data ?? []);
 
-                // Calculate count
-                const inputWeekCount = (weekCountInput && !isNaN(parseInt(weekCountInput.value))) ? parseInt(weekCountInput.value) : 10; // Default 10
-                const maxWeekInData = loadedPlanData.reduce((max, item) => Math.max(max, parseInt(item.week || 0)), 0);
+                // Find the last week that actually has data
+                let lastWeekWithData = 0;
+                if (Array.isArray(loadedPlanData) && loadedPlanData.length > 0) {
+                    // Loop backwards from the end
+                    for (let i = loadedPlanData.length - 1; i >= 0; i--) {
+                        const weekData = loadedPlanData[i] || {};
+                        // Check if all fields (except week) are empty
+                        const isEmpty = !(weekData.topic || weekData.objective || weekData.activity || weekData.tool || weekData.assessment || weekData.clo);
+                        
+                        if (!isEmpty) {
+                            lastWeekWithData = parseInt(weekData.week || 0);
+                            break; // Found the last non-empty week
+                        }
+                    }
+                }
                 
+                // Determine minimum required weeks (based on data)
+                const minWeekFromData = lastWeekWithData > 0 ? lastWeekWithData : 0; // e.g., 6 (or 0 if empty)
+
+                // Get count from input field
+                const inputWeekCount = (weekCountInput && !isNaN(parseInt(weekCountInput.value))) ? parseInt(weekCountInput.value) : 10; // Default 10
+
+                // Determine final weekCount
                 let weekCount;
                 if(forceInputCount) {
-                    // If button clicked, STRICTLY use the input value
-                    weekCount = inputWeekCount;
+                    // If button clicked (Req 3: Cannot go below data)
+                    weekCount = Math.max(inputWeekCount, minWeekFromData); 
                 } else {
-                    // On initial load, use the MAX value to prevent data loss
-                    weekCount = Math.max(inputWeekCount, maxWeekInData);
+                    // On initial load (Req 2: Start at input default OR data max, whichever is higher)
+                    weekCount = Math.max(inputWeekCount, minWeekFromData);
                 }
                 
                 // Enforce limits
                 if (weekCount > 20) weekCount = 20;
                 if (weekCount < 1) weekCount = 1;
-                if (weekCountInput) weekCountInput.value = weekCount; // Sync input
+                if (weekCountInput && parseInt(weekCountInput.value) !== weekCount) { // sync input
+                    weekCountInput.value = weekCount;
+                }
+
+                let cloKeysFromAI = [];
+                try {
+                    const aiTextJson = @json($data->ai_text ?? '{}');
+                    let aiTextData = {};
+                    if (typeof aiTextJson === 'string' && aiTextJson.trim() !== '') {
+                        aiTextData = JSON.parse(aiTextJson);
+                    } else if (typeof aiTextJson === 'object' && aiTextJson !== null) {
+                        aiTextData = aiTextJson;
+                    }
+                    
+                    if (Object.keys(aiTextData).length > 0) {
+                        Object.keys(aiTextData).forEach(key => {
+                            const details = aiTextData[key];
+                            if (details && typeof details === 'object' && details.CLO) {
+                                cloKeysFromAI.push(key.replace(/\s/g, '')); // "CLO 1" -> "CLO1"
+                            }
+                        });
+                        cloKeysFromAI.sort((a, b) => {
+                            const numA = parseInt(a.replace('CLO', '')) || 0;
+                            const numB = parseInt(b.replace('CLO', '')) || 0;
+                            return numA - numB;
+                        });
+                    }
+                } catch (e) {
+                    console.error("Error parsing ai_text for S7:", e, @json($data->ai_text ?? '{}'));
+                }
 
                 for (let i = 1; i <= weekCount; i++) {
                     const weekData = loadedPlanData.find(item => parseInt(item.week) === i) || {};
-
                     const row = document.createElement("tr");
+
+                    // Call the helper function
+                    const cloOptions = createCloOptions(cloKeysFromAI, weekData.clo || '');
+
                     row.innerHTML = `
                         <td class="border border-black p-2.5 align-top text-center">${i}</td>
                         <td class="border border-black p-1 align-top">
@@ -1438,10 +1553,7 @@
                         </td>
                         <td class="border border-black p-2.5 align-top text-center">
                             <select name="plan_clo_${i}" class="border rounded px-2 py-1 text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
-                                <option value="">--เลือก--</option>
-                                <option value="CLO1" ${(weekData.clo || '') === 'CLO1' ? 'selected' : ''}>CLO 1</option>
-                                <option value="CLO2" ${(weekData.clo || '') === 'CLO2' ? 'selected' : ''}>CLO 2</option>
-                                <option value="CLO3" ${(weekData.clo || '') === 'CLO3' ? 'selected' : ''}>CLO 3</option>
+                                ${cloOptions}
                             </select>
                         </td>
                     `;
@@ -1450,10 +1562,10 @@
             }
             const lessonBtn = document.getElementById('generateLessonTableBtn');
             if (lessonBtn) {
-                lessonBtn.addEventListener('click', () => {
+                lessonBtn.addEventListener('click', (event) => {
                     generateTableLesson(true);
                     const section7JSON = getSection7Data();
-                    saveData('section7_data', section7JSON);
+                    saveData('section7_data', section7JSON, event.target);
                 });
             } else {
                 console.warn("Button to generate lesson table (#generateLessonTableBtn) not found.");
@@ -1486,6 +1598,26 @@
                 return assessmentData;
             }
 
+            function createCloOptions_S8(cloKeys, selectedClo) {
+                let optionsHtml = '<option value="">--เลือก--</option>';
+                
+                if (!Array.isArray(cloKeys) || cloKeys.length === 0) {
+                    console.warn("S8: No CLO keys from ai_text, using default fallback.");
+                    // Fallback ถ้า ai_text ว่าง
+                    optionsHtml += '<option value="CLO1" ' + (selectedClo === 'CLO1' ? 'selected' : '') + '>CLO 1</option>';
+                    optionsHtml += '<option value="CLO2" ' + (selectedClo === 'CLO2' ? 'selected' : '') + '>CLO 2</option>';
+                    optionsHtml += '<option value="CLO3" ' + (selectedClo === 'CLO3' ? 'selected' : '') + '>CLO 3</option>';
+                } else {
+                    // วน Loop สร้าง <option> จาก Keys ที่ได้
+                    cloKeys.forEach(cloKey => { // cloKey is "CLO1"
+                        const isSelected = (selectedClo === cloKey) ? 'selected' : '';
+                        // "CLO1" -> "CLO 1" (สำหรับแสดงผล)
+                        const cleanKey = cloKey.replace(/(\d+)$/, ' $1'); 
+                        optionsHtml += `<option value="${cloKey}" ${isSelected}>${cleanKey}</option>`; 
+                    });
+                }
+                return optionsHtml;
+            }
 
             function generateTableAssessment(forceInputCount = false) {
                 const tbody = document.querySelector("#assessmentTable tbody");
@@ -1494,17 +1626,36 @@
                 const assessmentCountInput = document.getElementById("AssessmentCount");
                 
                 // Load data *first*
-                const loadedAssessmentData = @json($data->assessment_data ?? []); // Use alias
+                const loadedAssessmentData = @json($data->assessment_data ?? []);
 
-                // Calculate count based on MAX(input, data)
-                const inputCount = (assessmentCountInput && !isNaN(parseInt(assessmentCountInput.value))) ? parseInt(assessmentCountInput.value) : 3; // Default 3
-                const dataCount = loadedAssessmentData.length;
+                // Find the last item that actually has data
+                let lastItemWithData = 0;
+                if (Array.isArray(loadedAssessmentData) && loadedAssessmentData.length > 0) {
+                    for (let i = loadedAssessmentData.length - 1; i >= 0; i--) {
+                        const itemData = loadedAssessmentData[i] || {};
+                        const isEmpty = !(itemData.method || itemData.tool || itemData.percent || itemData.clo || itemData.clo_desc);
+                        
+                        if (!isEmpty) {
+                            lastItemWithData = i + 1; 
+                            break; 
+                        }
+                    }
+                }
                 
+                // Determine minimum required items
+                const minItemFromData = lastItemWithData > 0 ? lastItemWithData : 0; 
+                
+                // Get count from input field
+                const inputCount = (assessmentCountInput && !isNaN(parseInt(assessmentCountInput.value))) ? parseInt(assessmentCountInput.value) : 3; // Default 3
+
+                // Determine final itemCount
                 let assessmentCount;
                 if (forceInputCount) {
-                    assessmentCount = inputCount;
+                     // If button clicked (Req 3: Cannot go below data)
+                     assessmentCount = Math.max(inputCount, minItemFromData);
                 } else {
-                    assessmentCount = Math.max(inputCount, dataCount);
+                      // On initial load (Req 2: Start at input default OR data max)
+                     assessmentCount = Math.max(inputCount, minItemFromData);
                 }
 
                 // Enforce limits
@@ -1512,27 +1663,53 @@
                 if (assessmentCount < 1) assessmentCount = 1;
                 if (assessmentCountInput) assessmentCountInput.value = assessmentCount; // Sync input
 
+                let cloKeysFromAI = [];
+                try {
+                    const aiTextJson = @json($data->ai_text ?? '{}');
+                    let aiTextData = {};
+                    if (typeof aiTextJson === 'string' && aiTextJson.trim() !== '') {
+                        aiTextData = JSON.parse(aiTextJson);
+                    } else if (typeof aiTextJson === 'object' && aiTextJson !== null) {
+                        aiTextData = aiTextJson;
+                    }
+                    
+                    if (Object.keys(aiTextData).length > 0) {
+                        Object.keys(aiTextData).forEach(key => {
+                            const details = aiTextData[key];
+                            if (details && typeof details === 'object' && details.CLO) {
+                                cloKeysFromAI.push(key.replace(/\s/g, '')); // "CLO 1" -> "CLO1"
+                            }
+                        });
+                        cloKeysFromAI.sort((a, b) => {
+                            const numA = parseInt(a.replace('CLO', '')) || 0;
+                            const numB = parseInt(b.replace('CLO', '')) || 0;
+                            return numA - numB;
+                        });
+                    }
+                } catch (e) {
+                    console.error("Error parsing ai_text for S8:", e, @json($data->ai_text ?? '{}'));
+                }
 
                 for (let i = 0; i < assessmentCount; i++) {
-                    const rowData = loadedAssessmentData[i] || {}; // Get data or empty object
-
-                    const row = document.createElement("tr");
-                    row.innerHTML = `
+                      const rowData = loadedAssessmentData[i] || {};
+                      const row = document.createElement("tr");
+                      
+                      // Call the helper function
+                      const cloOptions = createCloOptions_S8(cloKeysFromAI, rowData.clo || '');
+                      
+                      row.innerHTML = `
                         <td class="border border-black p-1 align-top"><textarea name="assess_method_${i}" placeholder="เช่น แบบฝึกหัด, Quiz, สอบกลางภาค" class="w-full h-16 border border-gray-300 rounded p-1">${rowData.method || ''}</textarea></td>
                         <td class="border border-black p-1 align-top"><textarea name="assess_tool_${i}" placeholder="เช่น Lab, การนำเสนอ, โครงการ, รายงาน" class="w-full h-16 border border-gray-300 rounded p-1">${rowData.tool || ''}</textarea></td>
                         <td class="border border-black p-1 align-top"><input type="number" name="assess_percent_${i}" min="0" max="100" placeholder="%" class="w-full text-center border border-gray-300 rounded p-1" value="${rowData.percent || ''}"></td>
                         <td class="border border-black p-1 align-top">
                             <select name="assess_clo_${i}" class="w-full mb-1 p-1 border rounded">
-                                <option value="">--เลือก CLO--</option>
-                                <option value="CLO1" ${(rowData.clo || '') === 'CLO1' ? 'selected' : ''}>CLO1</option>
-                                <option value="CLO2" ${(rowData.clo || '') === 'CLO2' ? 'selected' : ''}>CLO2</option>
-                                <option value="CLO3" ${(rowData.clo || '') === 'CLO3' ? 'selected' : ''}>CLO3</option>
+                                ${cloOptions}
                             </select>
                             <textarea name="assess_clo_desc_${i}" placeholder="ระบุรายละเอียดความสอดคล้อง" class="w-full h-12 border border-gray-300 rounded p-1">${rowData.clo_desc || ''}</textarea>
                         </td>
                     `;
                     tbody.appendChild(row);
-                 }
+                }
              }
             const assessmentBtn = document.getElementById('generateAssessmentTableBtn');
             if(assessmentBtn) {
@@ -1595,7 +1772,7 @@
             const rubricContainer = document.getElementById('rubric-container');
             const addRubricBtn = document.getElementById('add-rubric-btn');
             const rubricTemplate = document.getElementById('rubric-template');
-            const loadedRubricsData = @json($data->rubrics ?? []); // Load data
+            const loadedRubricsData = @json($data->rubrics_data ?? []); // Load data
             const rubricLevels = [5, 4, 3, 2, 1, 0];
 
             function createRubricRow(rubricIndex, rowIndex, level, description) {
@@ -1719,7 +1896,7 @@
 
             const referenceList = document.getElementById('referenceList');
             const addReferenceBtn = document.getElementById('addReferenceItemBtn');
-            const loadedReferencesData = @json($data->research ?? []);
+            const loadedReferencesData = @json($data->references_data ?? []);
 
             function createReferenceItem(value = '', index = -1) {
                 if (index === -1) index = referenceList.children.length;

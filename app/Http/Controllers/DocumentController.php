@@ -38,8 +38,8 @@ class DocumentController extends Controller
             ->where('cy.term', $term)
             ->where('cy.TQF', $TQF)
             ->select(
-                'cy.id',
-                'u.name',
+                'cy.id as courseYearId',
+                'u.name as instructorName',
                 'c.course_id',
                 'c.course_name',
                 'c.course_name_en',
@@ -87,7 +87,7 @@ class DocumentController extends Controller
         $plans = null;
         $generates = null;
 
-        $curricula = DB::table('curricula')->where('ref_id', $context->id)->first();
+        $curricula = DB::table('curricula')->where('ref_id', $context->courseYearId)->first();
 
         $savedOutcomeData = ($curricula && $curricula->outcome_statement) 
                             ? json_decode($curricula->outcome_statement, true) 
@@ -159,7 +159,7 @@ class DocumentController extends Controller
             $feedback = DB::table('feedback')->where('ref_id', $curriculaRefId)->first();
             $plans = DB::table('plans')->where('ref_id', $curriculaRefId)->first();
 
-            $latestPrompt = DB::table('prompts')->where('ref_id', $context->id)->orderBy('updated_at', 'desc')->first();
+            $latestPrompt = DB::table('prompts')->where('ref_id', $context->courseYearId)->orderBy('updated_at', 'desc')->first();
             if($latestPrompt && property_exists($latestPrompt, 'id')){
                  $generates = DB::table('generates')->where('ref_id', $latestPrompt->id)->orderBy('updated_at', 'desc')->first();
             }
@@ -176,33 +176,25 @@ class DocumentController extends Controller
         }
 
         if ($feedback) {
-             $feedbackArray = (array) $feedback;
-             // Decode research JSON
-             $feedbackArray['research'] = isset($feedback->research) ? json_decode($feedback->research, true) : [];
-             $data = $data + $feedbackArray;
-        } else {
-             $data['research'] = [];
+            $feedbackArray = (array) $feedback;
+            $feedbackArray['references_data'] = isset($feedback->research) ? json_decode($feedback->research, true) : $data['references_data'];
+            if(isset($feedback->agreement)) $feedbackArray['s4_agreement'] = $feedback->agreement; 
+            $data = $feedbackArray + $data;
         }
         if ($plans) {
-             $plansArray = (array) $plans;
-             // Decode JSON columns from plans
-             $plansArray['teaching_methods'] = isset($plans->teaching_methods) ? json_decode($plans->teaching_methods, true) : null;
-             $plansArray['lesson_plan'] = isset($plans->lesson_plan) ? json_decode($plans->lesson_plan, true) : [];
-             $plansArray['assessment_strategies'] = isset($plans->assessment_strategies) ? json_decode($plans->assessment_strategies, true) : [];
-             $plansArray['rubrics'] = isset($plans->rubrics) ? json_decode($plans->rubrics, true) : [];
-             $plansArray['grading_criteria'] = isset($plans->grading_criteria) ? json_decode($plans->grading_criteria, true) : [];
-             $data = $data + $plansArray;
-        } else {
-             $data['teaching_methods'] = null;
-             $data['lesson_plan'] = [];
-             $data['assessment_strategies'] = [];
-             $data['rubrics'] = [];
-             $data['grading_criteria'] = [];
+            $plansArray = (array) $plans;
+            $plansArray['teaching_methods'] = isset($plans->teaching_methods) ? json_decode($plans->teaching_methods, true) : $data['teaching_methods'];
+            $plansArray['lesson_plan'] = isset($plans->lesson_plan) ? json_decode($plans->lesson_plan, true) : $data['lesson_plan'];
+            $plansArray['assessment_strategies'] = isset($plans->assessment_strategies) ? json_decode($plans->assessment_strategies, true) : $data['assessment_strategies'];
+            $plansArray['rubrics_data'] = isset($plans->rubrics) ? json_decode($plans->rubrics, true) : $data['rubrics'];
+            $plansArray['grading_criteria'] = isset($plans->grading_criteria) ? json_decode($plans->grading_criteria, true) : $data['grading_criteria'];
+            if(isset($plans->grade_correction)) $plansArray['grade_correction'] = $plans->grade_correction;
+            $data = $plansArray + $data;
         }
-         if ($generates) {
-             if (property_exists($generates, 'ai_text')) {
-                 $data['ai_text'] = $generates->ai_text;
-             }
+        if ($generates) {
+            if (property_exists($generates, 'ai_text')) {
+                $data['ai_text'] = $generates->ai_text;
+            }
         }
 
         // แปลงกลับเป็น Object
@@ -549,7 +541,6 @@ class DocumentController extends Controller
                             'type' => $savedData['type'] ?? ''
                         ];
                     }
-                    // [!!! END RE-BUILD !!!]
                     
                     if (preg_match('/plo(\d+)_(\w+)/', $field, $matches)) {
                         $ploIndex = (int)$matches[1]; $attribute = $matches[2];
@@ -622,26 +613,26 @@ class DocumentController extends Controller
          if (is_string($value)) {
             try {
                 if(!empty(trim($value))) {
-                    $decoded = json_decode($value, true); 
-                    if (json_last_error() === JSON_ERROR_NONE) {
-                        return $decoded;
-                    } else {
-                        Log::warning("Failed to decode JSON value string: " . $value . " - Error: " . json_last_error_msg());
-                        return $value; // Return original string if decode fails
-                    }
+                     $decoded = json_decode($value, true); 
+                     if (json_last_error() === JSON_ERROR_NONE) {
+                         return $decoded;
+                     } else {
+                         Log::warning("Failed to decode JSON value string: " . $value . " - Error: " . json_last_error_msg());
+                         return [];
+                     }
                 } else {
-                    return []; // Treat empty string as empty data (array)
+                     return [];
                 }
             } catch (\Exception $e) {
-                Log::error("Exception during JSON decode: " . $e->getMessage());
-                return $value; // Return original string on exception
+                 Log::error("Exception during JSON decode: " . $e->getMessage());
+                 return [];
             }
         }
         if (is_array($value) || is_object($value)) {
             return json_decode(json_encode($value), true);
         }
-        Log::warning("Received non-string/array/object value for JSON field.");
-        return $value ?? [];
+         Log::warning("Received non-string/array/object value for JSON field.");
+         return $value ?? [];
     }
     
     private function updateOrCreateWithDB($tableName, $conditions, $dataToUpdate, $defaults = [])
@@ -663,6 +654,22 @@ class DocumentController extends Controller
             $dataToInsert['updated_at'] = now();
              DB::table($tableName)->insert($dataToInsert);
             return $conditions['id'] ?? $conditions['ref_id'];
+        }
+    }
+
+    private function updateLearningOutcomeDescription($code, $description)
+    {
+        try {
+             DB::table('learning_outcomes')
+                ->where('code', $code)
+                ->update([
+                    'description' => $description,
+                ]);
+             Log::info("Updated description for code: {$code}");
+             return true;
+        } catch (\Exception $e) {
+             Log::error("Failed to update description for code {$code}: " . $e->getMessage());
+             return false;
         }
     }
 
@@ -1008,27 +1015,31 @@ class DocumentController extends Controller
         if(is_array($cloLllDescriptions) && is_array($courseAccordData)) {
             foreach($cloLllDescriptions as $rowIndex => $cloInfo) {
                 $cloInfo = (array) $cloInfo;
-                $code = $cloInfo['code'] ?? null;
+                $code = $cloInfo['code'] ?? null; // Get the code, e.g., "CLO1"
 
                 $mapping = ($code && isset($courseAccordData[$code])) ? $courseAccordData[$code] : [];
                 
                 $row = [
-                    'clo_id'   => $code ?? '?',
+                    'clo_id' => $code ?? '?',
                     'clo_desc' => $cloInfo['description'] ?? '...',
                 ];
 
-                if (is_array($mapping)) {
-                    foreach ($mapping as $ploIndex => $ploData) {
-                        if (is_array($ploData)) {
-                            $row['plo' . $ploIndex] = $ploData['check']
-                                ? ($ploData['level'] ?: '✓')
-                                : '';
+                if (!empty($docxData['s5_1_plos'])) {
+                    foreach ($docxData['s5_1_plos'] as $plo) {
+                        $ploDbIndex = $plo['id']; // 1, 2, 3, 4, 5...
+                        $key = 'plo' . $ploDbIndex; // plo1, plo2, plo5...
+                        
+                        $ploMapData = $mapping[(string)$ploDbIndex] ?? null;
+                        $checkMark = ($ploMapData && !empty($ploMapData['check'])) ? '✓' : '';
+                        $levelText = ($ploMapData && !empty($ploMapData['level'])) ? $ploMapData['level'] : '';
+                        
+                        if ($checkMark && $levelText) {
+                            $row[$key] = $checkMark . " (" . $levelText . ")"; // e.g., "✓ (AP)"
                         } else {
-                            $row['plo' . $ploIndex] = '';
+                            $row[$key] = $checkMark . $levelText; // e.g., "AP" or "✓" or ""
                         }
                     }
                 }
-                
                 $docxData['s5_3_clos_plo_mapping'][] = $row;
             }
         }
@@ -1271,7 +1282,6 @@ class DocumentController extends Controller
             $closData = json_decode($docxData['ai_text'], true); // Decode the ai_text JSON
             
             if (is_array($closData) && json_last_error() === JSON_ERROR_NONE) {
-                // [!!! FIX !!!] Sort keys numerically (CLO 1, CLO 2...)
                 uksort($closData, function ($a, $b) {
                     preg_match('/(\d+)/', $a, $matchesA); preg_match('/(\d+)/', $b, $matchesB);
                     $numA = isset($matchesA[1]) ? intval($matchesA[1]) : PHP_INT_MAX;
@@ -1383,12 +1393,12 @@ class DocumentController extends Controller
                 $table5_3->addRow();
                 $table5_3->addCell(1000, $vAlignCenter)->addText($map['clo_id'], null, $cellCenter);
                 $table5_3->addCell(5000)->addText(htmlspecialchars($map['clo_desc']));
-                // แสดงค่า PLO mapping ตามจำนวนจริง
+                
                 if (!empty($docxData['s5_1_plos'])) {
                     foreach ($docxData['s5_1_plos'] as $plo) {
-                        $key = 'plo' . ($plo['id'] ?? '');
+                        $key = 'plo' . ($plo['id'] ?? ''); // e.g., "plo1", "plo5"
                         $table5_3->addCell(1000, $vAlignCenter)
-                                ->addText($map[$key] ?? '', null, $cellCenter);
+                                 ->addText($map[$key] ?? '', null, $cellCenter); // Use $map['plo1'], $map['plo5'] etc.
                     }
                 }
             }
