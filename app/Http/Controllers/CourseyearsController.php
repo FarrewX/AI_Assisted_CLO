@@ -43,11 +43,11 @@ class CourseyearsController extends Controller
             ->where('year', $request->year)
             ->where('term', $request->term)
             ->where('TQF', $request->TQF)
-            ->where('user_id', $request->user_id)
+            // ->where('user_id', $request->user_id)
             ->exists();
 
         if ($duplicateUser) {
-            return back()->with('error', 'อาจารย์คนนี้มีข้อมูลในปี/เทอมนี้แล้ว');
+            return back()->with('error', 'อาจารย์ท่านอื่นมีข้อมูลใน ปี/เทอม/มคอ นี้แล้ว');
         }
 
         Courseyears::create([
@@ -68,12 +68,12 @@ class CourseyearsController extends Controller
             ->where('year', $request->year)
             ->where('term', $request->term)
             ->where('TQF', $request->TQF)
-            ->where('user_id', $request->user_id)
+            // ->where('user_id', $request->user_id)
             ->where('id', '!=', $id)
             ->exists();
 
         if ($duplicateUser) {
-            return back()->with('error', 'อาจารย์คนนี้มีข้อมูลใน ปี/เทอม/มคอ นี้แล้ว');
+            return back()->with('error', 'อาจารย์ท่านอื่นมีข้อมูลใน ปี/เทอม/มคอ นี้แล้ว');
         }
 
         $record = Courseyears::findOrFail($id);
