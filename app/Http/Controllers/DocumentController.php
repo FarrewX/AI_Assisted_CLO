@@ -161,7 +161,7 @@ class DocumentController extends Controller
 
             $latestPrompt = DB::table('prompts')->where('ref_id', $context->courseYearId)->orderBy('updated_at', 'desc')->first();
             if($latestPrompt && property_exists($latestPrompt, 'id')){
-                 $generates = DB::table('generates')->where('ref_id', $latestPrompt->id)->orderBy('updated_at', 'desc')->first();
+                 $generates = DB::table('generates')->where('ref_id', $latestPrompt->courseYearId)->orderBy('updated_at', 'desc')->first();
             }
             
             $curriculaArray = (array) $curricula;

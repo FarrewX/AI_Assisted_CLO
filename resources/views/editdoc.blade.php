@@ -153,8 +153,8 @@
                             </td> 
                         </tr> 
                         <tr> 
-                            <th class="border border-black p-2.5 align-top bg-blue-100 text-center">7. ผู้สอน</th> 
-                            <td colspan="3" class="border border-black p-2.5 align-top" id="instructors">{{ $data->name ?? '' }}</td>
+                            <th class="border border-black p-2.5 align-top bg-blue-100 text-center">7. ผู้สอน</th>
+                            <td colspan="3" class="border border-black p-2.5 align-top" id="instructors">{{ $data->instructorName ?? '' }}</td>
                             </tr> 
                         <tr>
                             <th class="border border-black p-2.5 align-top bg-blue-100 text-center">8.การแก้ไขล่าสุด</th>
