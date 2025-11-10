@@ -62,6 +62,8 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 
 ## run composer install
 - composer install
+- npm install
+- npm run build
 
 ## how install Ollama??
 
@@ -81,6 +83,10 @@ ollama run elo_generator
 ## phpWord
 (https://phpoffice.github.io/PHPWord/install.html)
 
-##
-chmod -R 775 storage
-chmod -R 775 bootstrap/cache
+## register
+php artisan optimize:clear
+php artisan config:clear
+php artisan cache:clear
+php artisan route:clear
+php artisan view:clear
+composer dump-autoload

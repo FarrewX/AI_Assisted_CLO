@@ -67,8 +67,10 @@ class AuthController extends Controller
         $user->role_id = '2';
         
         if ($user->save()) {
-            Auth::login($user);
+            Auth::login($user); 
+            $request->session()->regenerate();
             session(['debug_session_test' => 'Session ทำงานถูกต้อง']);
+
             return redirect()->route('home')->with('success', 'สมัครสมาชิกสำเร็จ! ยินดีต้อนรับ');
         }
 
