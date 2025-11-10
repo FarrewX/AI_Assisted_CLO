@@ -21,7 +21,7 @@ class PlosController extends Controller
     public function index()
     {
         $plos = Plos::all();
-        return view('setting.plo', compact('plos'));
+        return view('management.plo', compact('plos'));
     }
 
     public function update(Request $request, $id)

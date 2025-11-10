@@ -30,8 +30,6 @@ class DocumentController extends Controller
         $context = DB::table('courseyears as cy')
             ->leftJoin('users as u', 'cy.user_id', '=', 'u.user_id')
             ->leftJoin('courses as c', 'cy.course_id', '=', 'c.course_id')
-            ->leftJoin('prompts as p', 'cy.id', '=', 'p.ref_id')
-            ->leftJoin('generates as g', 'p.ref_id', '=', 'g.ref_id')
             ->where('cy.user_id', $user->user_id)
             ->where('cy.course_id', $course_id)
             ->where('cy.year', $year)
@@ -47,7 +45,6 @@ class DocumentController extends Controller
                 'c.course_detail_en',
                 'cy.year',
                 'cy.term',
-                'g.ai_text',
             )
             ->first();
             
@@ -159,9 +156,15 @@ class DocumentController extends Controller
             $feedback = DB::table('feedback')->where('ref_id', $curriculaRefId)->first();
             $plans = DB::table('plans')->where('ref_id', $curriculaRefId)->first();
 
-            $latestPrompt = DB::table('prompts')->where('ref_id', $context->courseYearId)->orderBy('updated_at', 'desc')->first();
-            if($latestPrompt && property_exists($latestPrompt, 'id')){
-                 $generates = DB::table('generates')->where('ref_id', $latestPrompt->courseYearId)->orderBy('updated_at', 'desc')->first();
+            $promptIds = DB::table('prompts')
+                            ->where('ref_id', $context->courseYearId)
+                            ->pluck('ref_id'); // Get an array of IDs [1, 2, 5]
+
+            if ($promptIds->isNotEmpty()) {
+                $generates = DB::table('generates')
+                                ->whereIn('ref_id', $promptIds)
+                                ->orderBy('created_at', 'desc')
+                                ->first();
             }
             
             $curriculaArray = (array) $curricula;
@@ -691,8 +694,6 @@ class DocumentController extends Controller
         $context = DB::table('courseyears as cy')
             ->leftJoin('users as u', 'cy.user_id', '=', 'u.user_id')
             ->leftJoin('courses as c', 'cy.course_id', '=', 'c.course_id')
-            ->leftJoin('prompts as p', 'cy.id', '=', 'p.ref_id')
-            ->leftJoin('generates as g', 'p.ref_id', '=', 'g.ref_id')
             ->where('cy.user_id', $user->user_id)
             ->where('cy.course_id', $course_id)
             ->where('cy.year', $year)
@@ -709,7 +710,6 @@ class DocumentController extends Controller
                 'cy.year',
                 'cy.term',
                 'cy.TQF',
-                'g.ai_text',
             )
             ->first();
             
@@ -741,6 +741,7 @@ class DocumentController extends Controller
             'rubrics' => [],
             'grading_criteria' => [],
             'grade_correction' => '',
+            'ai_text' => ''
         ];
         
         $data = $curriculaDefaults + (array) $context; // Start with defaults
@@ -761,15 +762,15 @@ class DocumentController extends Controller
             $ploId = $i;
             $masterPlo = $dbPlos->get($ploId);
             $savedData = $savedOutcomeData[$ploId] ?? []; 
-
+            
             if ($ploId == 1 && empty($finalOutcomeStatement[$ploId]['outcome'])) {
-                $finalOutcomeStatement[$ploId] = [
-                    'outcome' => $savedData['outcome'] ?? ($masterPlo->description ?? ''),
+            $finalOutcomeStatement[$ploId] = [
+                'outcome' => $savedData['outcome'] ?? ($masterPlo->description ?? ''), 
                     'specific' => $savedData['specific'] ?? true,
-                    'generic' => $savedData['generic'] ?? false,
+                'generic' => $savedData['generic'] ?? false,
                     'level' => $savedData['level'] ?? 'U',
                     'type' => $savedData['type'] ?? 'K'
-                ];
+            ];
             }
             if ($ploId == 2 && empty($finalOutcomeStatement[$ploId]['outcome'])) {
                 $finalOutcomeStatement[$ploId] = [
@@ -814,15 +815,22 @@ class DocumentController extends Controller
             $feedback = DB::table('feedback')->where('ref_id', $curriculaRefId)->first();
             $plans = DB::table('plans')->where('ref_id', $curriculaRefId)->first();
             
-            $latestPrompt = DB::table('prompts')->where('ref_id', $context->courseYearId)->orderBy('updated_at', 'desc')->first();
-            if($latestPrompt && property_exists($latestPrompt, 'id')){
-                $generates = DB::table('generates')->where('ref_id', $latestPrompt->id)->orderBy('updated_at', 'desc')->first();
+            $promptIds = DB::table('prompts')
+                            ->where('ref_id', $context->courseYearId)
+                            ->pluck('ref_id'); // Get an array of IDs [1, 2, 5]
+
+            if ($promptIds->isNotEmpty()) {
+                $generates = DB::table('generates')
+                                ->whereIn('ref_id', $promptIds)
+                                ->orderBy('created_at', 'desc')
+                                ->first();
             }
             
             $curriculaArray = (array) $curricula;
             $curriculaArray['outcome_statement'] = $finalOutcomeStatement;
             $curriculaArray['curriculum_map_data'] = isset($curricula->curriculum_map_data) ? json_decode($curricula->curriculum_map_data, true) : $data['curriculum_map_data'];
             $curriculaArray['course_accord'] = isset($curricula->course_accord) ? json_decode($curricula->course_accord, true) : $data['course_accord'];
+            
             $data = $curriculaArray + $data;
         } else {
              $data['outcome_statement'] = $finalOutcomeStatement;
@@ -852,14 +860,13 @@ class DocumentController extends Controller
             }
         }
 
-        // 3. Use Hardcoded CLO/LLL Descriptions
+        // 3. Build CLO/LLL Descriptions dynamically
         $cloLllDescriptions = [];
         $aiTextJson = $data['ai_text'] ?? null;
         $aiTextData = $aiTextJson ? json_decode($aiTextJson, true) : [];
 
         if (is_array($aiTextData) && json_last_error() === JSON_ERROR_NONE) {
             foreach($aiTextData as $cloKey => $cloDetails) {
-                // $cloKey is "CLO 1", $cloDetails is {"CLO": "...", ...}
                 if (is_array($cloDetails) && isset($cloDetails['CLO'])) {
                     $cloLllDescriptions[] = [
                         'code' => trim(str_replace(' ', '', $cloKey)), // "CLO 1" -> "CLO1"
@@ -1013,10 +1020,12 @@ class DocumentController extends Controller
         // 5.3 CLO-PLO Mapping
         $courseAccordData = $getJson('course_accord', []);
         if(is_array($cloLllDescriptions) && is_array($courseAccordData)) {
+            // Use the dynamically built $cloLllDescriptions
             foreach($cloLllDescriptions as $rowIndex => $cloInfo) {
                 $cloInfo = (array) $cloInfo;
                 $code = $cloInfo['code'] ?? null; // Get the code, e.g., "CLO1"
 
+                // Use the $code to access the mapping data
                 $mapping = ($code && isset($courseAccordData[$code])) ? $courseAccordData[$code] : [];
                 
                 $row = [
@@ -1024,6 +1033,7 @@ class DocumentController extends Controller
                     'clo_desc' => $cloInfo['description'] ?? '...',
                 ];
 
+                // Dynamically add PLOs based on $s5_1_plos
                 if (!empty($docxData['s5_1_plos'])) {
                     foreach ($docxData['s5_1_plos'] as $plo) {
                         $ploDbIndex = $plo['id']; // 1, 2, 3, 4, 5...
@@ -1136,7 +1146,6 @@ class DocumentController extends Controller
         // 10. Grading Criteria
         $gradingData = $getJson('grading_criteria', []);
         $grades = ['A', 'Bp', 'B', 'Cp', 'C', 'Dp', 'D', 'F'];
-        
         foreach($grades as $g) {
             $gradeKey = "grade_{$g}_level";
             $criteriaKey = "grade_{$g}_criteria";

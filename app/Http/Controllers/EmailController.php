@@ -19,7 +19,7 @@ class EmailController extends Controller
     public function index()
     {
         $emailConfig = EmailForSend::latest()->first();
-        return view('setting.email', compact('emailConfig'));
+        return view('management.email', compact('emailConfig'));
     }
 
     public function save(Request $request)

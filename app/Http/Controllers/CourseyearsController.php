@@ -30,7 +30,7 @@ class CourseyearsController extends Controller
                 ->get();
         }
 
-        return view('setting.course', compact('courses', 'users', 'professor', 'courseId'));
+        return view('management.course', compact('courses', 'users', 'professor', 'courseId'));
     }
 
     public function store(Request $request, $courseId)
