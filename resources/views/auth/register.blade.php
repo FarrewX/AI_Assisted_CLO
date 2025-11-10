@@ -115,8 +115,8 @@
         </div>
     @endif
     @if(session()->has('error'))
-        <div class="alert alert-error" style="background-color: #d1fae5; color: #065f46; padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
-            {{ session()->get('error') }}
+        <div class="alert alert-error" style="background-color: #fee2e2; color: #b91c1c; padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
+            {{ session('error') }}
         </div>
     @endif
     <div class="brand">
@@ -131,15 +131,27 @@
         @csrf
       <div class="field">
         <label for="name">ชื่อผู้ใช้</label>
-        <input id="name" name="name" type="text" placeholder="yourname" required />
+        <input id="name" name="name" type="text" placeholder="yourname" required value="{{ old('name') }}" />
       </div>
-      <div id="nameErr" class="error">กรุณากรอกชื่อผู้ใช้</div>
+      <div id="nameErr" class="error" @error('name') style="display:block;" @enderror>
+          @error('name')
+              ชื่อนี้ถูกใช้ไปแล้ว
+          @else
+              กรุณากรอกชื่อผู้ใช้
+          @enderror
+      </div>
 
       <div class="field">
         <label for="email">อีเมล</label>
-        <input id="email" name="email" type="email" placeholder="you@example.com" autocomplete="email" required />
+        <input id="email" name="email" type="email" placeholder="you@example.com" autocomplete="email" required value="{{ old('email') }}" />
       </div>
-      <div id="emailErr" class="error">กรุณากรอกอีเมลให้ถูกต้อง</div>
+      <div id="emailErr" class="error" @error('email') style="display:block;" @enderror>
+            @error('email')
+              อีเมลล์นี้ถูกใช้ไปแล้ว
+          @else
+              กรุณากรอกอีเมลให้ถูกต้อง
+          @enderror
+      </div>
 
       <div class="field">
         <label for="password">รหัสผ่าน</label>
@@ -193,10 +205,6 @@
       if (pass.value !== confirm.value) { confirmErr.style.display = 'block'; valid = false; }
 
       if (!valid) { e.preventDefault(); return; }
-
-      // กัน submit จริงเพื่อเดโม
-    //   e.preventDefault();
-    //   alert('สมัครสมาชิกสำเร็จ\nname: ' + name.value + '\nemail: ' + email.value);
     });
   </script>
 </body>

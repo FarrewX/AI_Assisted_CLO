@@ -118,7 +118,7 @@
         </div>
     @endif
     @if(session()->has('error'))
-        <div class="alert alert-error" style="background-color: #d1fae5; color: #065f46; padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
+        <div class="alert alert-error" style="background-color: #fee2e2; color: #b91c1c; padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
             {{ session('error') }}
         </div>
     @endif
@@ -182,11 +182,6 @@
       if (!pass.value || pass.value.length < 6) { passErr.style.display = 'block'; valid = false; }
 
       if (!valid) { e.preventDefault(); return; }
-
-      // ถ้ายังไม่มี backend: กัน submit จริงเพื่อเดโม UI
-      // ลบบรรทัดต่อไปนี้เมื่อเชื่อมต่อ backend แล้ว
-      // e.preventDefault();
-      // alert('ส่งข้อมูลเข้าสู่ระบบ\nusername: ' + email.value);
     });
   </script>
 </body>
