@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateAuthRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\DB;
 
 class AuthController extends Controller
 {
@@ -55,8 +56,9 @@ class AuthController extends Controller
 
         $user = new User();
 
-        $lastUser = User::orderBy('user_id', 'desc')->first();
-        $nextId = $lastUser ? ((int)$lastUser->user_id + 1) : 1;
+        // withTrashed() เพื่อค้นหา User ที่ถูกลบไปด้วย
+        $lastUserMax = User::withTrashed()->select(DB::raw('MAX(CAST(user_id AS UNSIGNED)) as max_id'))->first();
+        $nextId = $lastUserMax ? ($lastUserMax->max_id + 1) : 1;
 
         $user->user_id = str_pad($nextId, 6, '0', STR_PAD_LEFT);
         $user->name = $request->name;
@@ -65,7 +67,9 @@ class AuthController extends Controller
         $user->role_id = '2';
         
         if ($user->save()) {
-            return redirect()->route('login')->with('success', 'สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ.');
+            Auth::login($user);
+            session(['debug_session_test' => 'Session ทำงานถูกต้อง']);
+            return redirect()->route('home')->with('success', 'สมัครสมาชิกสำเร็จ! ยินดีต้อนรับ');
         }
 
         return redirect()->route('register')->with('error', 'สมัครสมาชิกไม่สำเร็จ! กรุณาลองใหม่อีกครั้ง.');

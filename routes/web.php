@@ -15,79 +15,83 @@ use App\Http\Controllers\EmailController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\GenerateController;
 
-// หน้า login/register ไม่ต้องล็อกอิน
-Route::get('/login', [AuthController::class, "login"])->name('login');
-Route::post('/login', [AuthController::class, "loginPost"])->name('login.post');
-Route::get('/register', [AuthController::class, "register"])->name('register');
-Route::post('/register', [AuthController::class, "registerPost"])->name('register.post');
+Route::middleware('web')->group(function () {
 
-// หน้าที่ต้องล็อกอิน
-Route::middleware('auth')->group(function () {
+    // หน้า login/register ไม่ต้องล็อกอิน
+    Route::get('/login', [AuthController::class, "login"])->name('login');
+    Route::post('/login', [AuthController::class, "loginPost"])->name('login.post');
+    Route::get('/register', [AuthController::class, "register"])->name('register');
+    Route::post('/register', [AuthController::class, "registerPost"])->name('register.post');
 
-    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    // หน้าที่ต้องล็อกอิน
+    Route::middleware('auth')->group(function () {
 
-    Route::get('/', [CourseController::class, 'index'])->name('home');
-    
-    Route::get('/form', function (Request $request) {
-        $user = Auth::user();
+        Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-        $courses = app(\App\Http\Controllers\CourseController::class)->formdata($request);
-        $plos = app(\App\Http\Controllers\PlosController::class)->plos();
+        Route::get('/', [CourseController::class, 'index'])->name('home');
+        
+        Route::get('/form', function (Request $request) {
+            $user = Auth::user();
 
-        return view('form', compact('courses', 'plos'));
+            $courses = app(\App\Http\Controllers\CourseController::class)->formdata($request);
+            $plos = app(\App\Http\Controllers\PlosController::class)->plos();
+
+            return view('form', compact('courses', 'plos'));
+        });
+
+        Route::post('/generate', [OllamaController::class, 'generateText']);
+        // Route::get('/generate/show', [GenerateController::class, 'showGenerated'])->name('show.generated');
+        Route::post('/generate/save', [GenerateController::class, 'saveGeneratedText'])->name('save.generate');
+
+        Route::get('/about', function () {
+            return view('about');
+        })->name('about');
+
+        Route::get('/guide', function () {
+            return view('guide');
+        })->name('guide');
+
+        Route::get('/message', function () {
+            return view('message');
+        })->name('message');
+
+        Route::get('/TQF', function () {
+            return view('TQF');
+        })->name('TQF');
+
+        Route::get('/editdoc', [DocumentController::class, 'editdoc'])->name('editdoc');
+
+        Route::get('/export-docx', [DocumentController::class, 'exportdocx'])->name('export.docx');
+
+        Route::post('/updatestartprompt', [CourseController::class, 'updateStartPrompt']);
+        Route::post('/getprompt', [CourseController::class, 'getPrompt']);
+        Route::post('/saveprompt', [CourseController::class, 'savePrompt'])->name('save.prompt');
+
+        Route::patch('/savedataedit', [DocumentController::class, 'savedataedit']);
+        Route::get('/getdataedit', [DocumentController::class, 'getInitialData']);
     });
 
-    Route::post('/generate', [OllamaController::class, 'generateText']);
-    // Route::get('/generate/show', [GenerateController::class, 'showGenerated'])->name('show.generated');
-    Route::post('/generate/save', [GenerateController::class, 'saveGeneratedText'])->name('save.generate');
+    Route::middleware(['auth', 'admin'])->group(function () {
+        Route::get('/management', function () {
+            return view('management');
+        })->name('management');
 
-    Route::get('/about', function () {
-        return view('about');
-    })->name('about');
+        Route::get('/notification', [NotificationController::class, 'index'])->name('notification');
 
-    Route::get('/guide', function () {
-        return view('guide');
-    })->name('guide');
+        Route::get('/send-email', [EmailController::class, 'showForm']);
+        Route::post('/send-email', [EmailController::class, 'send'])->name('send.email');
+        Route::get('/management/email', [EmailController::class, 'index'])->name('management.gmail');
+        Route::post('/management/email', [EmailController::class, 'save'])->name('email.save');
 
-    Route::get('/message', function () {
-        return view('message');
-    })->name('message');
+        Route::get('/management/plos', [PlosController::class, 'index'])->name('plos.index');
+        Route::post('/management/plos/update/{id}', [PlosController::class, 'update'])->name('plos.update');
+        Route::post('/management/plos/create', [PlosController::class, 'create'])->name('plos.create');
+        Route::delete('/management/plos/delete/{id}', [PlosController::class, 'destroy'])->name('plos.destroy');
 
-    Route::get('/TQF', function () {
-        return view('TQF');
-    })->name('TQF');
+        Route::get('/management/courses', [CourseyearsController::class, 'index'])->name('courses');
+        Route::post('/management/courses/{courseId}/professor', [CourseyearsController::class, 'store'])->name('professor.store');
+        Route::put('/management/courses/{courseId}/professor/{id}', [CourseyearsController::class, 'update'])->name('professor.update');
+        Route::delete('/management/courses/{courseId}/professor/{id}', [CourseyearsController::class, 'destroy'])->name('professor.destroy');
+    });
 
-    Route::get('/editdoc', [DocumentController::class, 'editdoc'])->name('editdoc');
-
-    Route::get('/export-docx', [DocumentController::class, 'exportdocx'])->name('export.docx');
-
-    Route::post('/updatestartprompt', [CourseController::class, 'updateStartPrompt']);
-    Route::post('/getprompt', [CourseController::class, 'getPrompt']);
-    Route::post('/saveprompt', [CourseController::class, 'savePrompt'])->name('save.prompt');
-
-    Route::patch('/savedataedit', [DocumentController::class, 'savedataedit']);
-    Route::get('/getdataedit', [DocumentController::class, 'getInitialData']);
-});
-
-Route::middleware(['auth', 'admin'])->group(function () {
-    Route::get('/management', function () {
-        return view('management');
-    })->name('management');
-
-    Route::get('/notification', [NotificationController::class, 'index'])->name('notification');
-
-    Route::get('/send-email', [EmailController::class, 'showForm']);
-    Route::post('/send-email', [EmailController::class, 'send'])->name('send.email');
-    Route::get('/management/email', [EmailController::class, 'index'])->name('management.gmail');
-    Route::post('/management/email', [EmailController::class, 'save'])->name('email.save');
-
-    Route::get('/management/plos', [PlosController::class, 'index'])->name('plos.index');
-    Route::post('/management/plos/update/{id}', [PlosController::class, 'update'])->name('plos.update');
-    Route::post('/management/plos/create', [PlosController::class, 'create'])->name('plos.create');
-    Route::delete('/management/plos/delete/{id}', [PlosController::class, 'destroy'])->name('plos.destroy');
-
-    Route::get('/management/courses', [CourseyearsController::class, 'index'])->name('courses');
-    Route::post('/management/courses/{courseId}/professor', [CourseyearsController::class, 'store'])->name('professor.store');
-    Route::put('/management/courses/{courseId}/professor/{id}', [CourseyearsController::class, 'update'])->name('professor.update');
-    Route::delete('/management/courses/{courseId}/professor/{id}', [CourseyearsController::class, 'destroy'])->name('professor.destroy');
 });

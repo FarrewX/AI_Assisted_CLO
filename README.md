@@ -80,3 +80,7 @@ ollama run elo_generator
 
 ## phpWord
 (https://phpoffice.github.io/PHPWord/install.html)
+
+##
+chmod -R 775 storage
+chmod -R 775 bootstrap/cache
