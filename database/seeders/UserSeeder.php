@@ -15,6 +15,7 @@ class UserSeeder extends Seeder
             [
                 'role_id' => '1',
                 'name' => 'Unknown User',
+                'username' => 'unknown',
                 'email' => 'unknown@example.com',
                 'password' => Hash::make('password'),
                 'created_at' => now(),

@@ -14,12 +14,7 @@ class Courseyears extends Model
     protected $keyType = 'int';
 
     protected $table = 'courseyears';
-    protected $fillable = ['id','user_id','course_id','year','term','TQF',];
-
-    public function course()
-    {
-        return $this->belongsTo(Course::class, 'course_id', 'course_id');
-    }
+    protected $fillable = ['id','CC_id', 'user_id', 'year', 'term', 'TQF'];
 
     public function prompts()
     {
@@ -33,11 +28,11 @@ class Courseyears extends Model
 
     public function status()
     {
-        return $this->hasOne(Status::class, 'ref_id', 'id');
+        return $this->hasOne(Status::class, 'id', 'ref_id');
     }
 
-    public function curriculum()
+    public function curriculum_course()
     {
-        return $this->hasOne(Curriculum::class, 'ref_id', 'id');
+        return $this->belongsTo(Curriculum_course::class, 'CC_id', 'id');
     }
 }

@@ -14,28 +14,16 @@ class Course extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
+        'id',
         'course_id',
-        'user_id',
-        'course_name',
+        'course_name_th',
         'course_name_en',
         'course_detail_th',
         'course_detail_en',
     ];
 
-    public function user() {
-        return $this->belongsTo(User::class, 'user_id', 'user_id');
-    }
-
-    public function prompts() {
-        return $this->hasMany(Prompt::class, 'course_id', 'course_id');
-    }
-
-    public function status() {
-        return $this->hasMany(Status::class, 'course_id', 'course_id');
-    }
-
-    public function courseYear()
-    {
-        return $this->hasMany(Courseyears::class, 'course_id', 'course_id');
-    }
+    public function curriculum_courses()
+        {
+            return $this->hasMany(Curriculum_course::class, 'course_id', 'course_id');
+        }
 }

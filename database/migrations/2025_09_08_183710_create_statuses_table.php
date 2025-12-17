@@ -15,7 +15,6 @@ return new class extends Migration
             $table->unsignedBigInteger('ref_id')->unique();;
             $table->timestamp('startprompt')->nullable();
             $table->timestamp('generated')->nullable();
-            $table->timestamp('downloaded')->nullable();
             $table->timestamp('success')->nullable();
             $table->timestamps();
 
