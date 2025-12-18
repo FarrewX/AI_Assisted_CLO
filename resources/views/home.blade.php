@@ -58,7 +58,7 @@
                     @endphp
 
                     <div class="mb-6 border p-3 rounded-lg bg-gray-50">
-                        <div class="font-semibold mb-2">• {{ $courseRow->course_name }}</div>
+                        <div class="font-semibold mb-2">• {{ $courseRow->course_name_th }}</div>
 
                         @foreach($termsGroup as $term => $TQFItems)
                             <div class="ml-4 mb-2">
@@ -73,8 +73,7 @@
                                                     0 => 'ยังไม่เริ่ม',
                                                     1 => 'prompt แล้ว',
                                                     2 => 'generated แล้ว',
-                                                    3 => 'ดาวน์โหลดแล้ว',
-                                                    4 => 'เสร็จสมบูรณ์',
+                                                    3 => 'เสร็จสมบูรณ์',
                                                     default => ''
                                                 };
                                                 
@@ -84,7 +83,6 @@
                                                     1 => url('/form?course_id=' . $item->course_id . '&year=' . $item->year . '&term=' . $item->term . '&TQF=' . $item->TQF),
                                                     2 => url('/editdoc?course_id=' . $item->course_id . '&year=' . $item->year . '&term=' . $item->term . '&TQF=' . $item->TQF),
                                                     3 => url(),
-                                                    4 => null,
                                                     default => null
                                                 };
 
@@ -93,7 +91,6 @@
                                                     1 => 'สร้างต่อ',
                                                     2 => 'แก้ไข',
                                                     3 => 'ตรวจสอบ',
-                                                    4 => 'preview',
                                                     default => ''
                                                 };
                                             @endphp

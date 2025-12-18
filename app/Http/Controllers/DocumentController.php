@@ -39,7 +39,7 @@ class DocumentController extends Controller
                 'cy.id as courseYearId',
                 'u.name as instructorName',
                 'c.course_id',
-                'c.course_name',
+                'c.course_name_th',
                 'c.course_name_en',
                 'c.course_detail_th',
                 'c.course_detail_en',
@@ -703,7 +703,7 @@ class DocumentController extends Controller
                 'cy.id as courseYearId',
                 'u.name as instructorName',
                 'c.course_id',
-                'c.course_name',
+                'c.course_name_th',
                 'c.course_name_en',
                 'c.course_detail_th',
                 'c.course_detail_en',
@@ -921,7 +921,7 @@ class DocumentController extends Controller
             'academic_year' => $get('year') ? $get('year') + 543 : '',
 
             // -- หมวด 1 --
-            's1_course_name' => $get('course_name', $get('course_name_en')),
+            's1_course_name' => $get('course_name_th', $get('course_name_en')),
             's1_course_id' => $get('course_id'),
             's1_credits' => $get('credits'),
             's1_curriculum_name' => $get('curriculum_name'),

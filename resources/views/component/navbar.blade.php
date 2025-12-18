@@ -12,15 +12,12 @@
             <!-- Desktop Menu -->
             <div class="flex items-center space-x-8">
                 <a href="{{ url('/') }}" class="text-lg font-bold">ELO Generator</a>
-                <a href="{{ url('/about') }}" class="hidden md:flex space-x-8 mt-1.5 text-sm font-medium hover:text-blue-600">about</a>
-                <a href="{{ url('/guide') }}" class="hidden md:flex space-x-8 mt-1.5 text-sm font-medium hover:text-blue-600">วิธีการใช้งานระบบ</a>
-
                 @if(Auth::check() && Auth::user()->role_id == 1)
-                    <a href="{{ url('/notification') }}" class="hidden md:flex space-x-8 mt-1.5 text-sm font-medium hover:text-blue-600">
-                        notification
-                    </a>
                     <a href="{{ url('/management') }}" class="hidden md:flex space-x-8 mt-1.5 text-sm font-medium hover:text-blue-600">
                         management
+                    </a>
+                    <a href="{{ url('/notification') }}" class="hidden md:flex space-x-8 mt-1.5 text-sm font-medium hover:text-blue-600">
+                        notification
                     </a>
                 @endif
             </div>

@@ -29,7 +29,7 @@ class NotificationController extends Controller
             ->whereNotNull('cy.user_id')
             ->select(
                 'cy.course_id',
-                'c.course_name',
+                'c.course_name_th',
                 'u.name',
                 'cy.term',
                 'cy.year',

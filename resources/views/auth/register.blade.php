@@ -119,6 +119,7 @@
             {{ session('error') }}
         </div>
     @endif
+
     <div class="brand">
       <div class="logo" aria-hidden="true"></div>
       <div>
@@ -130,15 +131,19 @@
     <form id="registerForm" action="{{ route('register.post') }}" method="POST" novalidate>
         @csrf
       <div class="field">
-        <label for="name">ชื่อผู้ใช้</label>
+        <label for="name">ชื่อจริง</label>
         <input id="name" name="name" type="text" placeholder="yourname" required value="{{ old('name') }}" />
       </div>
       <div id="nameErr" class="error" @error('name') style="display:block;" @enderror>
-          @error('name')
-              ชื่อนี้ถูกใช้ไปแล้ว
-          @else
-              กรุณากรอกชื่อผู้ใช้
-          @enderror
+          @error('name') {{ $message }} @else กรุณากรอกชื่อจริง @enderror
+      </div>
+
+      <div class="field">
+        <label for="username">ชื่อผู้ใช้</label>
+        <input id="username" name="username" type="text" placeholder="yourname" required value="{{ old('username') }}" />
+      </div>
+      <div id="usernameErr" class="error" @error('username') style="display:block;" @enderror>
+          @error('username') {{ $message }} @else กรุณากรอกชื่อผู้ใช้ @enderror
       </div>
 
       <div class="field">
@@ -146,11 +151,7 @@
         <input id="email" name="email" type="email" placeholder="you@example.com" autocomplete="email" required value="{{ old('email') }}" />
       </div>
       <div id="emailErr" class="error" @error('email') style="display:block;" @enderror>
-            @error('email')
-              อีเมลล์นี้ถูกใช้ไปแล้ว
-          @else
-              กรุณากรอกอีเมลให้ถูกต้อง
-          @enderror
+          @error('email') {{ $message }} @else กรุณากรอกอีเมลให้ถูกต้อง @enderror
       </div>
 
       <div class="field">
@@ -158,7 +159,9 @@
         <input id="password" name="password" type="password" placeholder="••••••••" autocomplete="new-password" required minlength="6" />
         <button type="button" class="toggle-pass" aria-label="แสดง/ซ่อนรหัสผ่าน" onclick="togglePass('password', this)">แสดง</button>
       </div>
-      <div id="passErr" class="error">รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร</div>
+      <div id="passErr" class="error" @error('password') style="display:block;" @enderror>
+          @error('password') {{ $message }} @else รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร @enderror
+      </div>
 
       <div class="field">
         <label for="confirm">ยืนยันรหัสผ่าน</label>
@@ -184,25 +187,52 @@
 
     document.getElementById('registerForm').addEventListener('submit', function (e) {
       const name = document.getElementById('name');
+      const username = document.getElementById('username');
       const email = document.getElementById('email');
       const pass = document.getElementById('password');
       const confirm = document.getElementById('confirm');
 
       const nameErr = document.getElementById('nameErr');
+      const usernameErr = document.getElementById('usernameErr');
       const emailErr = document.getElementById('emailErr');
       const passErr = document.getElementById('passErr');
       const confirmErr = document.getElementById('confirmErr');
 
       let valid = true;
       nameErr.style.display = 'none';
+      usernameErr.style.display = 'none';
       emailErr.style.display = 'none';
       passErr.style.display = 'none';
       confirmErr.style.display = 'none';
 
-      if (!name.value.trim()) { nameErr.style.display = 'block'; valid = false; }
-      if (!email.value.trim() || !email.value.includes('@')) { emailErr.style.display = 'block'; valid = false; }
-      if (!pass.value || pass.value.length < 6) { passErr.style.display = 'block'; valid = false; }
-      if (pass.value !== confirm.value) { confirmErr.style.display = 'block'; valid = false; }
+      if (!name.value.trim()) { 
+          nameErr.style.display = 'block'; 
+          nameErr.innerText = 'กรุณากรอกชื่อจริง';
+          valid = false; 
+      }
+      
+      if (!username.value.trim()) { 
+          usernameErr.style.display = 'block'; 
+          usernameErr.innerText = 'กรุณากรอกชื่อผู้ใช้';
+          valid = false; 
+      }
+
+      if (!email.value.trim() || !email.value.includes('@')) { 
+          emailErr.style.display = 'block'; 
+          emailErr.innerText = 'กรุณากรอกอีเมลให้ถูกต้อง';
+          valid = false; 
+      }
+
+      if (!pass.value || pass.value.length < 6) { 
+          passErr.style.display = 'block'; 
+          passErr.innerText = 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร';
+          valid = false; 
+      }
+
+      if (pass.value !== confirm.value) { 
+          confirmErr.style.display = 'block'; 
+          valid = false; 
+      }
 
       if (!valid) { e.preventDefault(); return; }
     });

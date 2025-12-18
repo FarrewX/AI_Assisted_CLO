@@ -97,7 +97,7 @@
                     <tbody>
                         <tr class="bg-gray-100 font-semibold">
                             <th class="w-1/4 border border-black p-2.5 align-top bg-blue-100 text-center">1. ชื่อวิชา</th>
-                            <td colspan="3" class="border border-black p-2.5 align-top" id="course_name">{{ $data->course_name }}</td>
+                            <td colspan="3" class="border border-black p-2.5 align-top" id="course_name_th">{{ $data->course_name_th }}</td>
                             </tr>
                         <tr>
                             <th class="border border-black p-2.5 align-top bg-blue-100 text-center">2. รหัสวิชา</th>
@@ -381,7 +381,7 @@
                             <tbody class="bg-white">
                                 <tr>
                                     <td class="border border-gray-400 p-2 text-left align-top">
-                                        {{ $data->course_id ?? '' }}<br>{{ $data->course_name ?? ($data->course_name_en ?? '') }}
+                                        {{ $data->course_id ?? '' }}<br>{{ $data->course_name_th ?? ($data->course_name_en ?? '') }}
                                     </td>
                                     {{-- สร้าง Cells ว่างๆ ไว้ก่อน รอ JS มาใส่ข้อมูล --}}
                                     @php $totalCols = array_sum($cols); @endphp

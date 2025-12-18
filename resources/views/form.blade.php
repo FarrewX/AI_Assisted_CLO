@@ -84,13 +84,13 @@
             <option value="" disabled selected>-- กรุณาเลือกรายวิชา --</option>
             @foreach ($courses as $course)
               <option value="{{ $course->course_id }}"
-                data-coursename="{{ $course->course_name }}"
+                data-coursename="{{ $course->course_name_th }}"
                 data-year="{{ $course->year }}"
                 data-term="{{ $course->term }}"
                 data-TQF="{{ $course->TQF }}"
                 data-detail="{{ $course->course_detail_th }}"
                 data-coursetext="{{ $course->course_text }}">
-                {{ $course->course_id }} - {{ $course->course_name }} (มคอ{{$course->TQF}} ภาคเรียน{{$course->term}}/{{ $course->year }})
+                {{ $course->course_id }} - {{ $course->course_name_th }} (มคอ{{$course->TQF}} ภาคเรียน{{$course->term}}/{{ $course->year }})
               </option>
             @endforeach
           </select>

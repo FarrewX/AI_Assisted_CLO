@@ -30,7 +30,7 @@ class AuthController extends Controller
 
         // ตรวจสอบผู้ใช้จาก email หรือ username
         $user = User::where('email', $request->email)
-                    ->orWhere('name', $request->email)
+                    ->orWhere('username', $request->email)
                     ->first();
 
         if ($user && Hash::check($request->password, $user->password)) {
@@ -49,32 +49,38 @@ class AuthController extends Controller
     public function registerPost(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255|unique:users',
+            'name' => 'required|string|max:255',
+            'username' => 'required|string|max:255|unique:users',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6|confirmed',
         ]);
 
-        $user = new User();
+        DB::transaction(function () use ($request) {
+            $user = new User();
 
-        // withTrashed() เพื่อค้นหา User ที่ถูกลบไปด้วย
-        $lastUserMax = User::withTrashed()->select(DB::raw('MAX(CAST(user_id AS UNSIGNED)) as max_id'))->first();
-        $nextId = $lastUserMax ? ($lastUserMax->max_id + 1) : 1;
+            $lastUser = User::withTrashed()
+                            ->select(DB::raw('CAST(user_id AS UNSIGNED) as max_id'))
+                            ->orderBy('max_id', 'desc')
+                            ->lockForUpdate()
+                            ->first();
 
-        $user->user_id = str_pad($nextId, 6, '0', STR_PAD_LEFT);
-        $user->name = $request->name;
-        $user->email = $request->email;
-        $user->password = Hash::make($request->password);
-        $user->role_id = '2';
-        
-        if ($user->save()) {
+            $nextId = $lastUser ? ($lastUser->max_id + 1) : 1;
+
+            $user->user_id = str_pad($nextId, 6, '0', STR_PAD_LEFT);
+            $user->name = $request->name;
+            $user->username = $request->username;
+            $user->email = $request->email;
+            $user->password = Hash::make($request->password);
+            $user->role_id = '2';
+            
+            $user->save();
+
             Auth::login($user); 
-            $request->session()->regenerate();
-            session(['debug_session_test' => 'Session ทำงานถูกต้อง']);
+        });
 
-            return redirect()->route('home')->with('success', 'สมัครสมาชิกสำเร็จ! ยินดีต้อนรับ');
-        }
+        $request->session()->regenerate();
 
-        return redirect()->route('register')->with('error', 'สมัครสมาชิกไม่สำเร็จ! กรุณาลองใหม่อีกครั้ง.');
+        return redirect()->route('home')->with('success', 'สมัครสมาชิกสำเร็จ! ยินดีต้อนรับ');
     }
 
     public function logout(Request $request)

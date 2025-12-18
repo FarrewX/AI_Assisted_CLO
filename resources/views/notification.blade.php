@@ -59,7 +59,7 @@
 
             <tr>
               <td class="px-4 py-3 border border-gray-300">{{ $course->course_id }}</td>
-              <td class="px-4 py-3 border border-gray-300">{{ $course->course_name }}</td>
+              <td class="px-4 py-3 border border-gray-300">{{ $course->course_name_th }}</td>
               <td class="px-4 py-3 border border-gray-300">{{ $course->name }}</td>
               <td class="px-4 py-3 border border-gray-300">{{ $course->term }}/{{ $course->year }}</td>
               <td class="px-4 py-3 border border-gray-300">{{ $course->TQF }}</td>

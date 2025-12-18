@@ -34,7 +34,7 @@
                     @foreach($courses as $course)
                         <option value="{{ $course->course_id }}" 
                             {{ request('course_id') == $course->course_id ? 'selected' : '' }}>
-                            {{ $course->course_name }}
+                            {{ $course->course_name_th }}
                         </option>
                     @endforeach
                 </select>
