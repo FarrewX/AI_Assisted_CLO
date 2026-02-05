@@ -12,11 +12,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('plos', function (Blueprint $table) {
+            $table->id();
+            $table->string('curriculum_year_ref');
             $table->tinyInteger('plo');
             $table->string('description');
             $table->string('domain')->nullable();
             $table->string('learning_level')->nullable();
             $table->timestamps();
+
+            $table->foreign('curriculum_year_ref')
+                ->references('curriculum_year')
+                ->on('curriculum')
+                ->onDelete('cascade');
         });
     }
 

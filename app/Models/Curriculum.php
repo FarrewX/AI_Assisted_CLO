@@ -13,11 +13,16 @@ class Curriculum extends Model
     public $incrementing = true;
     protected $keyType = 'int';
 
-    protected $table = 'curricula';
+    protected $table = 'curriculum';
     protected $fillable = ['curriculum_year', 'curriculum_name', 'faculty', 'major'];
 
     public function curriculum_courses()
     {
         return $this->hasMany(Curriculum_course::class, 'id', 'curriculum_id');
+    }
+
+    public function plos()
+    {
+        return $this->hasMany(Plos::class, 'curriculum_year_ref', 'curriculum_year');
     }
 }

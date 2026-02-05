@@ -84,10 +84,10 @@ class DocumentController extends Controller
         $plans = null;
         $generates = null;
 
-        $curricula = DB::table('curricula')->where('ref_id', $context->courseYearId)->first();
+        $curriculum = DB::table('curriculum')->where('ref_id', $context->courseYearId)->first();
 
-        $savedOutcomeData = ($curricula && $curricula->outcome_statement) 
-                            ? json_decode($curricula->outcome_statement, true) 
+        $savedOutcomeData = ($curriculum && $curriculum->outcome_statement) 
+                            ? json_decode($curriculum->outcome_statement, true) 
                             : [];
         if (!is_array($savedOutcomeData)) $savedOutcomeData = [];
 
@@ -151,8 +151,8 @@ class DocumentController extends Controller
             }
         }
 
-        if ($curricula) {
-            $curriculaRefId = $curricula->ref_id;
+        if ($curriculum) {
+            $curriculaRefId = $curriculum->ref_id;
             $feedback = DB::table('feedback')->where('ref_id', $curriculaRefId)->first();
             $plans = DB::table('plans')->where('ref_id', $curriculaRefId)->first();
 
@@ -167,11 +167,11 @@ class DocumentController extends Controller
                                 ->first();
             }
             
-            $curriculaArray = (array) $curricula;
+            $curriculaArray = (array) $curriculum;
             
             $curriculaArray['outcome_statement'] = $finalOutcomeStatement;
-            $curriculaArray['curriculum_map_data'] = isset($curricula->curriculum_map_data) ? json_decode($curricula->curriculum_map_data, true) : $data['curriculum_map_data'];
-            $curriculaArray['course_accord'] = isset($curricula->course_accord) ? json_decode($curricula->course_accord, true) : $data['course_accord'];
+            $curriculaArray['curriculum_map_data'] = isset($curriculum->curriculum_map_data) ? json_decode($curriculum->curriculum_map_data, true) : $data['curriculum_map_data'];
+            $curriculaArray['course_accord'] = isset($curriculum->course_accord) ? json_decode($curriculum->course_accord, true) : $data['course_accord'];
 
             $data = $curriculaArray + $data;
         } else {
@@ -263,7 +263,7 @@ class DocumentController extends Controller
                 'campus'          => 'เชียงใหม่',
                 'credits'         => '0 (0-0-0) (บรรยาย-ปฏิบัติ-ศึกษาด้วยตนเอง)',
             ];
-            $curriculaId = $this->updateOrCreateWithDB('curricula', $curriculaConditions, [], $curriculaDefaults);
+            $curriculaId = $this->updateOrCreateWithDB('curriculum', $curriculaConditions, [], $curriculaDefaults);
 
 
             // ตรรกะการกระจายข้อมูล (Data Router)
@@ -467,9 +467,9 @@ class DocumentController extends Controller
 
             } // Section 5
             else if (Str::startsWith($field, 'plo') || Str::startsWith($field, 'curriculum_map_') || Str::startsWith($field, 'cloLll_desc_')) {
-                $targetTable = 'curricula';
+                $targetTable = 'curriculum';
                 $conditions = ['ref_id' => $curriculaId];
-                $currentData = DB::table('curricula')->where($conditions)->first();
+                $currentData = DB::table('curriculum')->where($conditions)->first();
                 
                 $dbPlos = [];
                 try {
@@ -576,7 +576,7 @@ class DocumentController extends Controller
                  }
 
                 if ($jsonColumn && $jsonDataToSave !== null) {
-                    DB::table('curricula')->where($conditions)->update([
+                    DB::table('curriculum')->where($conditions)->update([
                         $jsonColumn => json_encode($jsonDataToSave, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT),
                         'updated_at' => now()
                     ]);
@@ -587,8 +587,8 @@ class DocumentController extends Controller
                 }
 
             } else {
-                // ค่า Default: บันทึกลงตาราง 'curricula'
-                $targetTable = 'curricula';
+                // ค่า Default: บันทึกลงตาราง 'curriculum'
+                $targetTable = 'curriculum';
                 $conditions = ['ref_id' => $curriculaId];
                 $dataToUpdate = [$field => $value];
                 $this->updateOrCreateWithDB($targetTable, $conditions, $dataToUpdate, $curriculaDefaults);
@@ -746,10 +746,10 @@ class DocumentController extends Controller
         
         $data = $curriculaDefaults + (array) $context; // Start with defaults
 
-        $curricula = DB::table('curricula')->where('ref_id', $context->courseYearId)->first();
+        $curriculum = DB::table('curriculum')->where('ref_id', $context->courseYearId)->first();
         $feedback = null; $plans = null; $generates = null;
-        $savedOutcomeData = ($curricula && $curricula->outcome_statement) 
-                            ? json_decode($curricula->outcome_statement, true) 
+        $savedOutcomeData = ($curriculum && $curriculum->outcome_statement) 
+                            ? json_decode($curriculum->outcome_statement, true) 
                             : [];
         if (!is_array($savedOutcomeData)) $savedOutcomeData = [];
 
@@ -810,8 +810,8 @@ class DocumentController extends Controller
             }
         }
 
-        if ($curricula) {
-            $curriculaRefId = $curricula->ref_id;
+        if ($curriculum) {
+            $curriculaRefId = $curriculum->ref_id;
             $feedback = DB::table('feedback')->where('ref_id', $curriculaRefId)->first();
             $plans = DB::table('plans')->where('ref_id', $curriculaRefId)->first();
             
@@ -826,10 +826,10 @@ class DocumentController extends Controller
                                 ->first();
             }
             
-            $curriculaArray = (array) $curricula;
+            $curriculaArray = (array) $curriculum;
             $curriculaArray['outcome_statement'] = $finalOutcomeStatement;
-            $curriculaArray['curriculum_map_data'] = isset($curricula->curriculum_map_data) ? json_decode($curricula->curriculum_map_data, true) : $data['curriculum_map_data'];
-            $curriculaArray['course_accord'] = isset($curricula->course_accord) ? json_decode($curricula->course_accord, true) : $data['course_accord'];
+            $curriculaArray['curriculum_map_data'] = isset($curriculum->curriculum_map_data) ? json_decode($curriculum->curriculum_map_data, true) : $data['curriculum_map_data'];
+            $curriculaArray['course_accord'] = isset($curriculum->course_accord) ? json_decode($curriculum->course_accord, true) : $data['course_accord'];
             
             $data = $curriculaArray + $data;
         } else {

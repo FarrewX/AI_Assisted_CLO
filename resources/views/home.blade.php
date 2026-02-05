@@ -67,8 +67,8 @@
                                     @foreach($TQFItems as $item)
                                         <li class="mb-3">
                                             @php
-                                                $stepCount = collect([$item->startprompt, $item->generated, $item->downloaded, $item->success])->filter()->count();
-                                                $progress = $stepCount / 4 * 100;
+                                                $stepCount = collect([$item->startprompt, $item->generated, $item->success])->filter()->count();
+                                                $progress = $stepCount / 3 * 100;
                                                 $status_text = match($stepCount) {
                                                     0 => 'ยังไม่เริ่ม',
                                                     1 => 'prompt แล้ว',
@@ -82,7 +82,6 @@
                                                     0 => url('/form?course_id=' . $item->course_id . '&year=' . $item->year . '&term=' . $item->term . '&TQF=' . $item->TQF),
                                                     1 => url('/form?course_id=' . $item->course_id . '&year=' . $item->year . '&term=' . $item->term . '&TQF=' . $item->TQF),
                                                     2 => url('/editdoc?course_id=' . $item->course_id . '&year=' . $item->year . '&term=' . $item->term . '&TQF=' . $item->TQF),
-                                                    3 => url(),
                                                     default => null
                                                 };
 

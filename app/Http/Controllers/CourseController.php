@@ -52,47 +52,45 @@ class CourseController extends Controller
         $currentYear = now()->year;
         $nextYear = $currentYear + 1;
 
-        // Subquery: เอา course_text ล่าสุดของแต่ละ cy.id
+        // Subquery: เอา course_text ล่าสุดของแต่ละ ref_id (courseyears.id)
         $latestPrompts = DB::table('prompts as p1')
             ->select('p1.ref_id', 'p1.course_text')
             ->whereRaw('p1.updated_at = (select max(p2.updated_at) from prompts as p2 where p2.ref_id = p1.ref_id)')
             ->groupBy('p1.ref_id', 'p1.course_text');
 
         $courses = DB::table('courseyears as cy')
-        ->join('users as u', 'u.user_id', '=', 'cy.user_id')
-        ->join('courses as c', 'cy.course_id', '=', 'c.course_id')
-        ->leftJoin('statuses as s', 'cy.id', '=', 's.ref_id')
-        ->leftJoinSub($latestPrompts, 'lp', function($join) {
-            $join->on('cy.id', '=', 'lp.ref_id');
-        })
-        ->where('u.user_id', $user->user_id)
-        ->whereIn('cy.year', [$currentYear, $nextYear])
-        ->where(function ($q) {
-            $q->whereNull('s.startprompt')
-            ->orWhereNull('s.generated')
-            ->orWhereNull('s.downloaded')
-            ->orWhereNull('s.success');
-        })
-        ->select(
-            'c.course_id',
-            'c.course_name_th',
-            'c.course_detail_th',
-            'cy.year',
-            'cy.term',
-            'cy.TQF',
-            's.startprompt',
-            's.generated',
-            's.downloaded',
-            's.success',
-            'lp.course_text',
-            'lp.ref_id',
-            
-        )
-        ->orderBy('cy.year', 'desc')
-        ->orderBy('cy.term', 'asc')
-        ->orderBy('cy.TQF', 'asc')
-
-        ->get();
+            // แก้ไข: Join ผ่านตารางกลาง curriculum_courses
+            ->join('curriculum_courses as cc', 'cy.CC_id', '=', 'cc.id')
+            ->join('courses as c', 'cc.course_id', '=', 'c.course_id')
+            ->join('users as u', 'u.user_id', '=', 'cy.user_id')
+            ->leftJoin('statuses as s', 'cy.id', '=', 's.ref_id')
+            ->leftJoinSub($latestPrompts, 'lp', function($join) {
+                $join->on('cy.id', '=', 'lp.ref_id');
+            })
+            ->where('u.user_id', $user->user_id)
+            ->whereIn('cy.year', [$currentYear, $nextYear])
+            ->where(function ($q) {
+                $q->whereNull('s.startprompt')
+                ->orWhereNull('s.generated')
+                ->orWhereNull('s.success');
+            })
+            ->select(
+                'c.course_id',
+                'c.course_name_th',
+                'c.course_detail_th',
+                'cy.year',
+                'cy.term',
+                'cy.TQF',
+                's.startprompt',
+                's.generated',
+                's.success',
+                'lp.course_text',
+                'lp.ref_id'
+            )
+            ->orderBy('cy.year', 'desc')
+            ->orderBy('cy.term', 'asc')
+            ->orderBy('cy.TQF', 'asc')
+            ->get();
 
         return $courses;
     }
@@ -106,7 +104,10 @@ class CourseController extends Controller
             return response()->json(['error' => 'course_id, year, term, and TQF are required'], 400);
         }
 
-        $cy = Courseyears::where('course_id', $courseId)
+        // แก้ไข: ค้นหาโดยวิ่งผ่านตารางกลาง (curriculum_course)
+        $cy = Courseyears::whereHas('curriculum_course', function($q) use ($courseId) {
+                $q->where('course_id', $courseId);
+            })
             ->where('user_id', $user->user_id)
             ->where('year', $request->year)
             ->where('term', $request->term)
@@ -135,8 +136,12 @@ class CourseController extends Controller
             'TQF'       => 'required|string',
         ]);
 
-        $cy = DB::table('courseyears')
-            ->where('course_id', $request->course_id)
+        // 1. หา Courseyears โดยวิ่งผ่านตารางกลาง
+        // ใช้ with เพื่อดึงข้อมูล Course Detail มาสำรองไว้เลย
+        $cy = Courseyears::with('curriculum_course.course')
+            ->whereHas('curriculum_course', function($q) use ($request) {
+                $q->where('course_id', $request->course_id);
+            })
             ->where('user_id', $user->user_id)
             ->where('year', $request->year)
             ->where('term', $request->term)
@@ -147,19 +152,12 @@ class CourseController extends Controller
             return response()->json(['message' => 'ไม่พบข้อมูลรายวิชา'], 404);
         }
 
-        // เช็คว่ามี prompt อยู่แล้วหรือยัง
+        // 2. เช็คว่ามี prompt ที่เคย Save ไว้ไหม (ในตาราง prompts)
         $prompt = DB::table('prompts')
-            ->where('course_id', $request->course_id)
-            ->where('ref_id', function($q) use ($user, $request) {
-                $q->select('id')
-                ->from('courseyears')
-                ->where('course_id', $request->course_id)
-                ->where('user_id', $user->user_id)
-                ->where('year', $request->year)
-                ->limit(1);
-            })
+            ->where('ref_id', $cy->id) // ใช้ ref_id (id ของ courseyears) เป็นหลัก
             ->first();
 
+        // อัปเดตสถานะว่าเริ่มทำแล้ว
         DB::table('statuses')->updateOrInsert(
             ['ref_id' => $cy->id],
             [
@@ -168,14 +166,21 @@ class CourseController extends Controller
             ]
         );
             
+        // กรณี 1: มี Prompt ที่เคย Save ไว้ -> ส่งกลับไป
         if ($prompt) {
             return response()->json(['prompt' => $prompt->course_text]);
         }
                 
-        // ถ้าไม่มี → ดึงจาก courses
-        $course = DB::table('courses')->where('course_id', $request->course_id)->first();
+        // กรณี 2: ยังไม่มี -> ดึงรายละเอียดวิชาจาก Master Data (table courses)
+        // เราดึงมาแล้วผ่าน Relation ข้างบน ($cy->curriculum_course->course)
+        $courseDetail = '';
+        if ($cy->curriculum_course && $cy->curriculum_course->course) {
+             // เช็คว่ามี detail_th หรือ detail_en
+             $c = $cy->curriculum_course->course;
+             $courseDetail = $c->course_detail_th ?? $c->course_detail_en ?? '';
+        }
 
-        return response()->json(['prompt' => $course->course_text ?? $course->course_detail_th ?? '']);
+        return response()->json(['prompt' => $courseDetail]);
     }
 
     public function savePrompt(Request $request)
@@ -190,8 +195,10 @@ class CourseController extends Controller
 
         $user = Auth::user();
 
-        $cy = DB::table('courseyears')
-            ->where('course_id', $data['course_id'])
+        // 1. หา Courseyears เพื่อเอา ID (ref_id)
+        $cy = Courseyears::whereHas('curriculum_course', function($q) use ($data) {
+                $q->where('course_id', $data['course_id']);
+            })
             ->where('user_id', $user->user_id)
             ->where('year', $data['year'])
             ->where('term', $data['term'])
@@ -202,12 +209,18 @@ class CourseController extends Controller
             return response()->json(['message' => 'ไม่พบข้อมูลรายวิชา'], 404);
         }
 
+        // 2. บันทึก Prompt
         DB::table('prompts')
             ->updateOrInsert(
-                ['ref_id' => $cy->id, 'course_id' => $data['course_id']],
-                ['course_text' => $data['prompt'], 'updated_at' => now()]
+                ['ref_id' => $cy->id], // เงื่อนไขการค้นหา
+                [
+                    'course_id'   => $data['course_id'], // เก็บไว้เผื่อดูง่ายๆ
+                    'course_text' => $data['prompt'],
+                    'updated_at'  => now()
+                ]
             );
 
+        // 3. อัปเดตสถานะ generated
         DB::table('statuses')->updateOrInsert(
             ['ref_id' => $cy->id],
             [

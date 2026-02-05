@@ -3,22 +3,14 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-
         <title>ELO_Generator</title>
-
-        <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
-
-        <!-- Styles / Scripts -->
         @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
             @vite(['resources/css/app.css', 'resources/js/app.js'])
         @else
         @endif
-
-        <!-- Select2 CSS -->
         <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-
     </head>
     <body>
         @include('component.navbar')
@@ -26,22 +18,41 @@
         <div class="container mx-auto p-4">
             <h1 class="text-2xl font-bold mb-4">จัดการ Courses</h1>
             
-            <!-- เลือกคอร์ส -->
-            <form method="GET" action="{{ route('courses') }}">
-                @csrf
-                <select id="course" name="course_id" class="border px-3 py-2 rounded w-1/2" onchange="this.form.submit()">
-                    <option value="">-- เลือกคอร์ส --</option>
-                    @foreach($courses as $course)
-                        <option value="{{ $course->course_id }}" 
-                            {{ request('course_id') == $course->course_id ? 'selected' : '' }}>
-                            {{ $course->course_name_th }}
-                        </option>
-                    @endforeach
-                </select>
+            <form method="GET" action="{{ route('courses') }}" class="mb-6 space-y-4">
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">เลือกหลักสูตร</label>
+                    <select id="curriculum" name="curriculum_id" class="border px-3 py-2 rounded w-1/2" onchange="this.form.submit()">
+                        <option value="">-- เลือกหลักสูตร --</option>
+                        @foreach($curricula as $curriculum)
+                            <option value="{{ $curriculum->id }}" 
+                                {{ request('curriculum_id') == $curriculum->id ? 'selected' : '' }}>
+                                {{ $curriculum->curriculum_name }} ({{ $curriculum->curriculum_year }})
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                @if(request('curriculum_id') && count($courses) > 0)
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">เลือกรายวิชา</label>
+                    <select id="course" name="course_id" class="border px-3 py-2 rounded w-1/2" onchange="this.form.submit()">
+                        <option value="">-- เลือกรายวิชา --</option>
+                        @foreach($courses as $course)
+                            <option value="{{ $course->course_id }}" 
+                                {{ request('course_id') == $course->course_id ? 'selected' : '' }}>
+                                {{ $course->course_id }} {{ $course->course_name_th }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+                @elseif(request('curriculum_id'))
+                    <div class="text-red-500 text-sm mt-2">ไม่มีรายวิชาในหลักสูตรนี้</div>
+                @endif
+
             </form>
 
             @if(isset($professor))
-                <!-- ตารางอาจารย์ -->
                 <table class="min-w-full border border-gray-300 mb-6 mt-4">
                     <thead>
                         <tr class="bg-gray-100">
@@ -56,15 +67,9 @@
                         @foreach($professor as $t)
                             <tr>
                                 <td class="border px-4 py-2">{{ $t->user->name }}</td>
-                                <td class="border px-4 py-2">
-                                    <span class="year-display">{{ $t->year }}</span>
-                                </td>
-                                <td class="border px-4 py-2">
-                                    <span class="term-display">{{ $t->term }}</span>
-                                </td>
-                                <td class="border px-4 py-2">
-                                    <span class="TQF-display">{{ $t->TQF }}</span>
-                                </td>
+                                <td class="border px-4 py-2"><span class="year-display">{{ $t->year }}</span></td>
+                                <td class="border px-4 py-2"><span class="term-display">{{ $t->term }}</span></td>
+                                <td class="border px-4 py-2"><span class="TQF-display">{{ $t->TQF }}</span></td>
                                 <td class="border px-4 py-2 text-center space-y-2 space-x-2">
                                     <button type="button" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded edit-btn"
                                         data-id="{{ $t->id }}"
@@ -76,12 +81,10 @@
                                         data-update-url="{{ route('professor.update', [$courseId, $t->id]) }}"
                                     >แก้ไข</button>
 
-                                    <!-- ปุ่มลบ -->
                                     <form method="POST" action="{{ route('professor.destroy', [$courseId, $t->id]) }}" class="inline-block ml-1 delete-form">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="button" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded delete-btn"
-                                            data-url="{{ route('professor.destroy', [$courseId, $t->id]) }}">
+                                        <button type="button" class="bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded delete-btn">
                                             ลบ
                                         </button>
                                     </form>
@@ -91,26 +94,6 @@
                     </tbody>
                 </table>
 
-                <!-- Popup Modal สำหรับ session messages -->
-                <div id="session-modal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50 hidden">
-                    <div class="bg-white rounded shadow-lg p-6 min-w-[250px] max-w-xs text-center">
-                        <div id="session-message" class="mb-4 font-bold text-center"></div>
-                        <button id="session-close" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">ปิด</button>
-                    </div>
-                </div>
-
-                <!-- Delete Confirmation Modal -->
-                <div id="delete-modal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50 hidden">
-                    <div class="bg-white rounded shadow-lg p-6 min-w-[250px] max-w-xs text-center">
-                        <div class="mb-4 font-bold">คุณแน่ใจหรือไม่ว่าต้องการลบอาจารย์นี้?</div>
-                        <div class="flex justify-center gap-2">
-                            <button id="delete-confirm" class="bg-red-500 text-white px-4 py-2 rounded">ลบ</button>
-                            <button id="delete-cancel" class="bg-gray-400 text-white px-4 py-2 rounded">ยกเลิก</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- เพิ่มอาจารย์ใหม่ -->
                 <div class="mt-4">
                     <h2 class="font-semibold mb-2">เพิ่มอาจารย์ในคอร์ส</h2>
                     <form method="POST" action="{{ route('professor.store', $courseId) }}">
@@ -135,63 +118,88 @@
                         <button class="bg-green-500 text-white px-3 py-1 rounded ml-2">เพิ่ม</button>
                     </form>
                 </div>
+            @endif
+            
+            <div id="edit-modal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50 hidden">
+                <div class="bg-white rounded shadow-lg p-6 min-w-[250px] max-w-xs text-center">
+                    <form id="edit-form" method="POST">
+                        @csrf
+                        @method('PUT')
+                        <div class="mb-4">
+                            <div class="font-bold mb-2">แก้ไขข้อมูลอาจารย์</div>
+                            <select name="user_id" id="edit-user-input" class="border px-2 py-1 rounded w-full mb-2">
+                                @foreach($users as $user)
+                                    <option value="{{ $user->user_id }}">{{ $user->name }}</option>
+                                @endforeach
+                            </select>
+                            <p>ภาคเรียน</p>
+                            <select name="term" id="edit-term-input" class="border px-2 py-1 rounded w-full mb-2" required>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                            </select>
+                            <p>ปีการศึกษา</p>
+                            <input type="number" name="year" id="edit-year-input" class="border px-2 py-1 rounded w-full mb-2" required>
+                            <p>มคอ</p>
+                            <select name="TQF" id="edit-TQF-input" class="border px-2 py-1 rounded w-full mb-2" required>
+                                <option value="3">3</option>
+                                <option value="5" disabled>5</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded mr-2">บันทึก</button>
+                        <button type="button" id="edit-cancel" class="bg-gray-400 text-white px-4 py-2 rounded">ยกเลิก</button>
+                    </form>
+                </div>
+            </div>
 
-                <!-- Edit Year Modal -->
-                <div id="edit-modal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50 hidden">
-                    <div class="bg-white rounded shadow-lg p-6 min-w-[250px] max-w-xs text-center">
-                        <form id="edit-form" method="POST">
-                            @csrf
-                            @method('PUT')
-                            <div class="mb-4">
-                                <div class="font-bold mb-2">แก้ไขข้อมูลอาจารย์</div>
-                                <select name="user_id" id="edit-user-input" class="border px-2 py-1 rounded w-full mb-2">
-                                    @foreach($users as $user)
-                                        <option value="{{ $user->user_id }}">{{ $user->name }}</option>
-                                    @endforeach
-                                </select>
-                                <p>ภาคเรียน</p>
-                                <select name="term" id="edit-term-input" class="border px-2 py-1 rounded w-full mb-2" required>
-                                    <option value="1">1</option>
-                                    <option value="2">2</option>
-                                    <option value="3">3</option>
-                                </select>
-
-                                <p>ปีการศึกษา</p>
-                                <input type="number" name="year" id="edit-year-input" class="border px-2 py-1 rounded w-full mb-2" required>
-
-                                <p>มคอ</p>
-                                <select name="TQF" id="edit-TQF-input" class="border px-2 py-1 rounded w-full mb-2" required>
-                                    <option value="3">3</option>
-                                    <option value="5" disabled>5</option>
-                                </select>
-                            </div>
-                            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded mr-2">บันทึก</button>
-                            <button type="button" id="edit-cancel" class="bg-gray-400 text-white px-4 py-2 rounded">ยกเลิก</button>
-                        </form>
+            <div id="delete-modal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50 hidden">
+                <div class="bg-white rounded shadow-lg p-6 min-w-[250px] max-w-xs text-center">
+                    <div class="mb-4 font-bold">คุณแน่ใจหรือไม่ว่าต้องการลบอาจารย์นี้?</div>
+                    <div class="flex justify-center gap-2">
+                        <button id="delete-confirm" class="bg-red-500 text-white px-4 py-2 rounded">ลบ</button>
+                        <button id="delete-cancel" class="bg-gray-400 text-white px-4 py-2 rounded">ยกเลิก</button>
                     </div>
                 </div>
-            @endif
+            </div>
+
+             <div id="session-modal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50 hidden">
+                <div class="bg-white rounded shadow-lg p-6 min-w-[250px] max-w-xs text-center">
+                    <div id="session-message" class="mb-4 font-bold text-center"></div>
+                    <button id="session-close" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">ปิด</button>
+                </div>
+            </div>
+            
         </div>
 
-        <!-- jQuery + Select2 -->
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
         <script>
         $(document).ready(function() {
-            // เปิดใช้งานค้นหาด้วย select2
-            $('#course').select2({
-                placeholder: "-- เลือกคอร์ส --",
+            // Apply Select2 to Curriculum Dropdown
+            $('#curriculum').select2({
+                placeholder: "-- เลือกหลักสูตร --",
                 allowClear: true,
-                width: 'resolve'
+                width: '100%' // ปรับให้เต็มความกว้างที่กำหนด
             }).on('select2:select', function (e) {
-                // เมื่อเลือกคอร์ส ให้ submit form ทันที
+                // เมื่อเลือกหลักสูตร ให้ submit เพื่อไปโหลดรายวิชาใหม่
+                $(this).closest('form').submit();
+            });
+
+            // Apply Select2 to Course Dropdown
+            $('#course').select2({
+                placeholder: "-- เลือกรายวิชา --",
+                allowClear: true,
+                width: '100%'
+            }).on('select2:select', function (e) {
                 $(this).closest('form').submit();
             });
         });
 
+        // Script เดิมของคุณ (Modal, Edit, Delete)
         document.addEventListener('DOMContentLoaded', function() {
+            // ... (ใส่ Script เดิมของคุณตรงนี้ได้เลยครับ ไม่ต้องแก้) ...
+            
             // ================== Edit modal ==================
             document.querySelectorAll('.edit-btn').forEach(function(btn) {
                 btn.addEventListener('click', function() {
@@ -220,60 +228,12 @@
                             }
                         }
                     }
-
                     modal.classList.remove('hidden');
                 });
             });
 
-            // ================== Edit modal duplicate check ==================
-            $('#edit-form').on('submit', function(e) {
-                var userId = $('#edit-user-input').val();
-                var year = $('#edit-year-input').val();
-                var term = $('#edit-term-input').val();
-                var TQF = $('#edit-TQF-input').val();
-                var currentId = null;
-
-                // หา id ของแถวที่กำลังแก้ไข (จาก form action)
-                var actionUrl = $(this).attr('action');
-                var match = actionUrl.match(/professor\/(\d+)$/);
-                if (match) {
-                    currentId = match[1];
-                }
-
-                var isDuplicate = false;
-
-                $('table tbody tr').each(function() {
-                    var rowUser = $(this).find('td:first').text().trim();
-                    var rowYear = $(this).find('.year-display').text().trim();
-                    var rowTerm = $(this).find('.term-display').text().trim();
-                    var rowTQF  = $(this).find('.TQF-display').text().trim();
-                    var editBtn = $(this).find('.edit-btn');
-                    var rowId   = editBtn.data('id') ? editBtn.data('id').toString() : '';
-
-                    // เงื่อนไขซ้ำ: same user + same year + same term + same TQF
-                    if (
-                        rowUser === $('#edit-user-input option:selected').text().trim() &&
-                        rowYear === year &&
-                        rowTerm === term &&
-                        rowTQF === TQF &&
-                        rowId !== currentId
-                    ) {
-                        isDuplicate = true;
-                        return false; // break
-                    }
-                });
-
-                if (isDuplicate) {
-                    $('#duplicate-modal').removeClass('hidden');
-                    e.preventDefault();
-                    return false;
-                }
-
-                $('#edit-modal').addClass('hidden');
-            });
-
-            // ปุ่ม cancel ปิด modal
-            document.getElementById('edit-cancel').onclick = function() {
+             // ปุ่ม cancel ปิด modal
+             document.getElementById('edit-cancel').onclick = function() {
                 document.getElementById('edit-modal').classList.add('hidden');
             };
 
@@ -285,19 +245,17 @@
 
             document.querySelectorAll('.delete-btn').forEach(function(btn) {
                 btn.addEventListener('click', function() {
-                    currentDeleteForm = btn.closest('form'); // เก็บ form ปัจจุบัน
+                    currentDeleteForm = btn.closest('form');
                     deleteModal.classList.remove('hidden');
                 });
             });
 
-            // กดลบจริง
             deleteConfirmBtn.addEventListener('click', function() {
                 if (currentDeleteForm) {
                     currentDeleteForm.submit();
                 }
             });
 
-            // กดยกเลิก
             deleteCancelBtn.addEventListener('click', function() {
                 deleteModal.classList.add('hidden');
                 currentDeleteForm = null;
@@ -316,7 +274,6 @@
                 @endif
                 sessionModal.classList.remove('hidden');
 
-                // ปุ่มปิด popup
                 document.getElementById('session-close').onclick = function() {
                     sessionModal.classList.add('hidden');
                 };

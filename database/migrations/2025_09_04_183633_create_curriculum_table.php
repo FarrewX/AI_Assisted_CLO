@@ -11,13 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('curricula', function (Blueprint $table) {
+        Schema::create('curriculum', function (Blueprint $table) {
             $table->id();
-            $table->string('curriculum_year');
+            $table->string('curriculum_year')->unique();
             $table->string('curriculum_name');
             $table->string('faculty');
             $table->string('major');
             $table->timestamps();
+
+            // $table->foreign('curriculum_year')->references('curriculum_year_ref')->on('plos')->onDelete('cascade');
         });
     }
 
@@ -26,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('curricula');
+        Schema::dropIfExists('curriculum');
     }
 };

@@ -10,8 +10,13 @@ class Plos extends Model
     /** @use HasFactory<\Database\Factories\PlosFactory> */
     use HasFactory;
 
-    protected $primaryKey = 'plo';
+    protected $primaryKey = 'id';
     public $incrementing = true;
 
-    protected $fillable = ['plo', 'description'];
+    protected $fillable = ['id', 'curriculum_year_ref', 'plo', 'description', 'domain', 'learning_level'];
+
+    public function Curriculum()
+    {
+        return $this->belongsTo(Curriculum::class, 'curriculum_year_ref', 'curriculum_year');
+    }
 }
