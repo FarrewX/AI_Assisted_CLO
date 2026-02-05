@@ -14,6 +14,8 @@ use App\Mail\NotificationMail;
 use App\Http\Controllers\EmailController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\GenerateController;
+use App\Http\Controllers\CourseManagementController;
+use App\Http\Controllers\CurriculumController;
 
 Route::middleware('web')->group(function () {
 
@@ -92,6 +94,17 @@ Route::middleware('web')->group(function () {
         Route::post('/management/courses/{courseId}/professor', [CourseyearsController::class, 'store'])->name('professor.store');
         Route::put('/management/courses/{courseId}/professor/{id}', [CourseyearsController::class, 'update'])->name('professor.update');
         Route::delete('/management/courses/{courseId}/professor/{id}', [CourseyearsController::class, 'destroy'])->name('professor.destroy');
+
+        Route::get('/management/curriculum', [CurriculumController::class, 'index'])->name('curriculum.index');
+        Route::post('/management/curriculum', [CurriculumController::class, 'store'])->name('curriculum.store');
+        Route::put('/management/curriculum/{id}', [CurriculumController::class, 'update'])->name('curriculum.update');
+        Route::delete('/management/curriculum/{id}', [CurriculumController::class, 'destroy'])->name('curriculum.destroy');
+
+        Route::get('/management/addcourses', [CourseManagementController::class, 'index'])->name('addcourse.list');
+        Route::post('/management/addcourses', [CourseManagementController::class, 'store'])->name('addcourse.create');
+        Route::put('/management/addcourses/{id}', [CourseManagementController::class, 'update'])->name('addcourse.update');
+        Route::delete('/management/addcourses/{id}', [CourseManagementController::class, 'destroy'])->name('addcourse.destroy');
+        Route::post('/management/addcourses/import', [CourseManagementController::class, 'import'])->name('addcourse.import');
     });
 
 });

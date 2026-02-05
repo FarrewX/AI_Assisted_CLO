@@ -17,38 +17,38 @@ use Psy\Command\WhereamiCommand;
 
 class CourseyearsController extends Controller
 {
-   public function index(Request $request)
+    public function index(Request $request)
     {
-        // 1. ดึงข้อมูลหลักสูตรทั้งหมดมาแสดงใน Dropdown แรก
-        $curriculum = Curriculum::all();
-
+        // 1. ดึงข้อมูลหลักสูตรทั้งหมด
+        $curriculum = Curriculum::all(); 
+        $users     = User::all();
+        
         $courses = [];
         $professor = null;
-        $users   = User::all();
         
-        // รับค่าจาก Dropdown
         $curriculumId = $request->curriculum_id;
         $courseId = $request->course_id;
 
-        // 2. ถ้ามีการเลือกหลักสูตรมาแล้ว ให้ไปดึงวิชา เฉพาะของหลักสูตรนั้น
+        // 2. ถ้าเลือกหลักสูตร -> ดึงรายวิชาที่ผูกกับหลักสูตรนั้น (ผ่านตารางกลาง curriculum_courses)
         if ($curriculumId) {
             $courses = Course::whereHas('curriculum_courses', function ($query) use ($curriculumId) {
                 $query->where('curriculum_id', $curriculumId);
             })->get();
         }
 
-        // 3. ถ้ามีการเลือกวิชา (และต้องเลือกหลักสูตรแล้ว) ให้ดึงข้อมูลอาจารย์
+        // 3. ถ้าเลือกทั้งหลักสูตรและวิชา -> ดึงข้อมูลการเปิดสอน (Courseyears)
         if ($curriculumId && $courseId) {
             $professor = Courseyears::with('user')
+                // Query วิ่งผ่าน CC_id ไปหาตารางกลาง เพื่อเช็ค course_id และ curriculum_id
                 ->whereHas('curriculum_course', function ($query) use ($courseId, $curriculumId) {
                     $query->where('course_id', $courseId)
-                        ->where('curriculum_id', $curriculumId); // เช็คทั้งคู่เพื่อความชัวร์
+                          ->where('curriculum_id', $curriculumId);
                 })
-                ->where('year', '>=', date('Y'))
                 ->orderBy('year', 'desc')
                 ->get();
         }
 
+        // ส่งตัวแปรกลับไปที่ View
         return view('management.course', compact('curriculum', 'courses', 'users', 'professor', 'courseId', 'curriculumId'));
     }
 
@@ -91,19 +91,18 @@ class CourseyearsController extends Controller
 
     public function update(Request $request, $courseId, $id)
     {
-        // ค้นหา Record เดิมเพื่อเอา CC_id มาใช้เช็ค
         $record = Courseyears::findOrFail($id);
 
-        // ตรวจสอบข้อมูลซ้ำ (เช็คจาก CC_id เดิมที่มีอยู่แล้ว)
-        $duplicateUser = Courseyears::where('CC_id', $record->CC_id)
+        // ตรวจสอบซ้ำ (ไม่นับตัวเอง)
+        $duplicate = Courseyears::where('CC_id', $record->CC_id) // ใช้ CC_id เดิม
             ->where('year', $request->year)
             ->where('term', $request->term)
             ->where('TQF', $request->TQF)
-            ->where('id', '!=', $id) // ไม่นับตัวเอง
+            ->where('id', '!=', $id)
             ->exists();
 
-        if ($duplicateUser) {
-            return back()->with('error', 'อาจารย์ท่านอื่นมีข้อมูลใน ปี/เทอม/มคอ นี้แล้ว');
+        if ($duplicate) {
+            return back()->with('error', 'ข้อมูลซ้ำกับรายการที่มีอยู่แล้ว');
         }
 
         // อัพเดทข้อมูล
@@ -111,8 +110,6 @@ class CourseyearsController extends Controller
         $record->year    = $request->year;
         $record->term    = $request->term;
         $record->TQF     = $request->TQF;
-        // หมายเหตุ: CC_id (course_id) ไม่ควรเปลี่ยนในการ edit อาจารย์ผู้สอน จึงไม่ต้อง update
-        
         $record->save();
 
         return back()->with('success', 'อัพเดทสำเร็จ');
@@ -122,7 +119,6 @@ class CourseyearsController extends Controller
     {
         $record = Courseyears::findOrFail($id);
         $record->delete();
-
         return back()->with('success', 'ลบอาจารย์สำเร็จ');
     }
 }

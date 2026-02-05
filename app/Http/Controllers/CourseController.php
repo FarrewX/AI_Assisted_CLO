@@ -22,28 +22,42 @@ class CourseController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
+        // รับค่าปีจาก request ถ้าไม่มีให้ใช้ปีปัจจุบัน
+        $selectedYear = $request->input('year', date('Y')); 
 
-        $selectedYear = $request->input('year', now()->year);
-
-        $courses = collect(DB::table('courseyears as cy')
+        $courses = DB::table('courseyears as cy')
             ->join('curriculum_courses as cc', 'cy.CC_id', '=', 'cc.id')
-            ->join('courses as c', 'cc.course_id', '=', 'c.course_id')
+            // -------------------------------------------------------
+            // จุดที่แก้ 1: Join ตาราง courses ผ่าน id แทน course_id
+            // -------------------------------------------------------
+            ->join('courses as c', 'cc.course_id', '=', 'c.id') 
+            
             ->leftJoin('statuses as s', 'cy.id', '=', 's.ref_id')
-            ->where('cy.user_id', $user->user_id)
+            ->where('cy.user_id', $user->user_id) // หรือ $user->id แล้วแต่โครงสร้าง User
             ->where('cy.year', $selectedYear)
             ->select(
-                'c.course_id',
-                'c.course_name_th as course_name_th',
+                // -------------------------------------------------------
+                // จุดที่แก้ 2: เลือก course_code แทน course_id
+                // และตั้งชื่อเล่น (AS) เป็น course_id เพื่อให้หน้า View ไม่พัง
+                // -------------------------------------------------------
+                'c.course_code as course_id', 
+                
+                'c.course_name_th',
+                'c.course_name_en', // เผื่อใช้
                 'cy.year',
                 'cy.term',
                 'cy.TQF',
+                'cy.CC_id', // จำเป็นสำหรับการ groupBy ในหน้า View
                 's.startprompt',
                 's.generated',
-                's.success'
+                's.success',
+                'cc.course_id as raw_course_id' // เก็บ id จริงไว้เผื่อใช้
             )
-            ->get());
+            ->orderBy('cy.term', 'asc')
+            ->orderBy('c.course_code', 'asc')
+            ->get();
 
-        return view('home', compact('courses', 'user', 'selectedYear'));
+        return view('home', compact('courses', 'selectedYear'));
     }
 
     public function formdata(Request $request)
@@ -231,5 +245,4 @@ class CourseController extends Controller
             
         return response()->json(['message' => 'Prompt saved successfully']);
     }
-
 }

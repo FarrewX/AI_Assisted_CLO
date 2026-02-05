@@ -18,8 +18,7 @@ return new class extends Migration
             $table->string('faculty');
             $table->string('major');
             $table->timestamps();
-
-            // $table->foreign('curriculum_year')->references('curriculum_year_ref')->on('plos')->onDelete('cascade');
+            $table->softDeletes()->nullable();
         });
     }
 

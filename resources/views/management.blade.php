@@ -21,21 +21,29 @@
         <div class="bg-white flex flex-col items-center gap-5" style="margin-top: 100px;">
             <h1 class="text-2xl font-bold mb-6">การจัดการ</h1>
             <div class="flex flex-wrap gap-4 justify-center w-full max-w-3xl">
+                <a href="{{ url('/management/curriculum') }}" 
+                    class="px-6 py-3 bg-sky-300 text-black font-bold rounded-lg shadow hover:bg-sky-400 flex-1 min-w-[160px] max-w-[calc(20%-1rem)] text-center">
+                        หลักสูตร (Curriculum)
+                </a>
                 <a href="{{ url('/management/plos') }}" 
                     class="px-6 py-3 bg-sky-300 text-black font-bold rounded-lg shadow hover:bg-sky-400 flex-1 min-w-[160px] max-w-[calc(20%-1rem)] text-center">
-                        จัดการ PLOs
+                        ผลลัพธ์การเรียนรู้ระดับหลักสูตร(PLOs)
+                </a>
+                <a href="{{ url('/management/addcourses') }}"
+                    class="px-6 py-3 bg-sky-300 text-black font-bold rounded-lg shadow hover:bg-sky-400 flex-1 min-w-[160px] max-w-[calc(20%-1rem)] text-center">
+                        เพิ่มวิชาลงหลักสูตร
                 </a>
                 <a href="{{ url('/management/courses') }}" 
                     class="px-6 py-3 bg-sky-300 text-black font-bold rounded-lg shadow hover:bg-sky-400 flex-1 min-w-[160px] max-w-[calc(20%-1rem)] text-center">
-                        จัดการ course
+                        เพิ่มอาจารย์ในคอร์ส
                 </a>
                 <a href="{{ url('/management/email') }}"
                     class="px-6 py-3 bg-sky-300 text-black font-bold rounded-lg shadow hover:bg-sky-400 flex-1 min-w-[160px] max-w-[calc(20%-1rem)] text-center">
-                        จัดการการส่ง Email
+                        อีเมลในการส่งแจ้งเตือน
                 </a>
                 <a href="{{ url('/management/users') }}" 
                     class="px-6 py-3 bg-sky-300 text-black font-bold rounded-lg shadow hover:bg-sky-400 flex-1 min-w-[160px] max-w-[calc(20%-1rem)] text-center">
-                        จัดการ ผู้ใช้
+                        ผู้ใช้
                 </a>
             </div>
         </div>

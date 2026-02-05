@@ -24,10 +24,9 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">เลือกหลักสูตร</label>
                     <select id="curriculum" name="curriculum_id" class="border px-3 py-2 rounded w-1/2" onchange="this.form.submit()">
                         <option value="">-- เลือกหลักสูตร --</option>
-                        @foreach($curricula as $curriculum)
-                            <option value="{{ $curriculum->id }}" 
-                                {{ request('curriculum_id') == $curriculum->id ? 'selected' : '' }}>
-                                {{ $curriculum->curriculum_name }} ({{ $curriculum->curriculum_year }})
+                        @foreach($curriculum as $cur)
+                            <option value="{{ $cur->id }}" {{ $curriculumId == $cur->id ? 'selected' : '' }}>
+                                {{ $cur->curriculum_year }} - {{ $cur->curriculum_name }}
                             </option>
                         @endforeach
                     </select>
@@ -39,9 +38,10 @@
                     <select id="course" name="course_id" class="border px-3 py-2 rounded w-1/2" onchange="this.form.submit()">
                         <option value="">-- เลือกรายวิชา --</option>
                         @foreach($courses as $course)
-                            <option value="{{ $course->course_id }}" 
-                                {{ request('course_id') == $course->course_id ? 'selected' : '' }}>
-                                {{ $course->course_id }} {{ $course->course_name_th }}
+                            {{-- ต้องใช้ id (PK) เป็น value และใช้ course_code ในการแสดงผล --}}
+                            <option value="{{ $course->id }}" 
+                                {{ request('course_id') == $course->id ? 'selected' : '' }}>
+                                {{ $course->course_code }} {{ $course->course_name_th }}
                             </option>
                         @endforeach
                     </select>
@@ -66,15 +66,18 @@
                     <tbody>
                         @foreach($professor as $t)
                             <tr>
-                                <td class="border px-4 py-2">{{ $t->user->name }}</td>
+                                <td class="border px-4 py-2">
+                                    {{ $t->user ? $t->user->name : 'ไม่พบข้อมูลอาจารย์ (ID: '.$t->user_id.')' }}
+                                </td>
+                                
                                 <td class="border px-4 py-2"><span class="year-display">{{ $t->year }}</span></td>
                                 <td class="border px-4 py-2"><span class="term-display">{{ $t->term }}</span></td>
                                 <td class="border px-4 py-2"><span class="TQF-display">{{ $t->TQF }}</span></td>
                                 <td class="border px-4 py-2 text-center space-y-2 space-x-2">
                                     <button type="button" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded edit-btn"
                                         data-id="{{ $t->id }}"
-                                        data-name="{{ $t->user->name }}"
-                                        data-user-id="{{ $t->user->user_id }}"
+                                        data-name="{{ $t->user->name ?? '' }}"
+                                        data-user-id="{{ $t->user->user_id ?? '' }}"
                                         data-year="{{ $t->year }}"
                                         data-term="{{ $t->term }}"
                                         data-TQF="{{ $t->TQF }}"
@@ -179,10 +182,9 @@
             // Apply Select2 to Curriculum Dropdown
             $('#curriculum').select2({
                 placeholder: "-- เลือกหลักสูตร --",
-                allowClear: true,
-                width: '100%' // ปรับให้เต็มความกว้างที่กำหนด
+                width: '100%',
+                minimumResultsForSearch: Infinity
             }).on('select2:select', function (e) {
-                // เมื่อเลือกหลักสูตร ให้ submit เพื่อไปโหลดรายวิชาใหม่
                 $(this).closest('form').submit();
             });
 
@@ -196,10 +198,8 @@
             });
         });
 
-        // Script เดิมของคุณ (Modal, Edit, Delete)
+        // Script เดิม (Modal, Edit, Delete)
         document.addEventListener('DOMContentLoaded', function() {
-            // ... (ใส่ Script เดิมของคุณตรงนี้ได้เลยครับ ไม่ต้องแก้) ...
-            
             // ================== Edit modal ==================
             document.querySelectorAll('.edit-btn').forEach(function(btn) {
                 btn.addEventListener('click', function() {
@@ -221,6 +221,7 @@
                     if (userId) {
                         userSelect.value = userId;
                     } else {
+                        // กรณีหา ID ไม่เจอ ให้ลองเทียบชื่อเอา (Fallback)
                         for (let i = 0; i < userSelect.options.length; i++) {
                             if (userSelect.options[i].text === name) {
                                 userSelect.selectedIndex = i;
