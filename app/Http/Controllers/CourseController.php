@@ -22,36 +22,25 @@ class CourseController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        // รับค่าปีจาก request ถ้าไม่มีให้ใช้ปีปัจจุบัน
         $selectedYear = $request->input('year', date('Y')); 
 
         $courses = DB::table('courseyears as cy')
             ->join('curriculum_courses as cc', 'cy.CC_id', '=', 'cc.id')
-            // -------------------------------------------------------
-            // จุดที่แก้ 1: Join ตาราง courses ผ่าน id แทน course_id
-            // -------------------------------------------------------
             ->join('courses as c', 'cc.course_id', '=', 'c.id') 
-            
             ->leftJoin('statuses as s', 'cy.id', '=', 's.ref_id')
-            ->where('cy.user_id', $user->user_id) // หรือ $user->id แล้วแต่โครงสร้าง User
+            ->where('cy.user_id', $user->user_id) 
             ->where('cy.year', $selectedYear)
             ->select(
-                // -------------------------------------------------------
-                // จุดที่แก้ 2: เลือก course_code แทน course_id
-                // และตั้งชื่อเล่น (AS) เป็น course_id เพื่อให้หน้า View ไม่พัง
-                // -------------------------------------------------------
-                'c.course_code as course_id', 
-                
+                'c.course_code',
                 'c.course_name_th',
-                'c.course_name_en', // เผื่อใช้
+                'c.course_name_en',
                 'cy.year',
                 'cy.term',
                 'cy.TQF',
-                'cy.CC_id', // จำเป็นสำหรับการ groupBy ในหน้า View
+                'cy.CC_id',
                 's.startprompt',
                 's.generated',
-                's.success',
-                'cc.course_id as raw_course_id' // เก็บ id จริงไว้เผื่อใช้
+                's.success'
             )
             ->orderBy('cy.term', 'asc')
             ->orderBy('c.course_code', 'asc')
@@ -75,7 +64,7 @@ class CourseController extends Controller
         $courses = DB::table('courseyears as cy')
             // แก้ไข: Join ผ่านตารางกลาง curriculum_courses
             ->join('curriculum_courses as cc', 'cy.CC_id', '=', 'cc.id')
-            ->join('courses as c', 'cc.course_id', '=', 'c.course_id')
+            ->join('courses as c', 'cc.course_code', '=', 'c.course_code')
             ->join('users as u', 'u.user_id', '=', 'cy.user_id')
             ->leftJoin('statuses as s', 'cy.id', '=', 's.ref_id')
             ->leftJoinSub($latestPrompts, 'lp', function($join) {
@@ -89,7 +78,7 @@ class CourseController extends Controller
                 ->orWhereNull('s.success');
             })
             ->select(
-                'c.course_id',
+                'c.course_code',
                 'c.course_name_th',
                 'c.course_detail_th',
                 'cy.year',
@@ -111,16 +100,16 @@ class CourseController extends Controller
 
     public function updateStartPrompt(Request $request)
     {
-        $courseId = $request->course_id;
+        $courseId = $request->course_code;
         $user = Auth::user();
 
         if (!$courseId || !$request->year || !$request->term || !$request->TQF) {
-            return response()->json(['error' => 'course_id, year, term, and TQF are required'], 400);
+            return response()->json(['error' => 'course_code, year, term, and TQF are required'], 400);
         }
 
         // แก้ไข: ค้นหาโดยวิ่งผ่านตารางกลาง (curriculum_course)
         $cy = Courseyears::whereHas('curriculum_course', function($q) use ($courseId) {
-                $q->where('course_id', $courseId);
+                $q->where('course_code', $courseId);
             })
             ->where('user_id', $user->user_id)
             ->where('year', $request->year)
@@ -144,7 +133,7 @@ class CourseController extends Controller
         $user = Auth::user();
 
         $request->validate([
-            'course_id' => 'required|string',
+            'course_code' => 'required|string',
             'year'      => 'required|integer',
             'term'      => 'required|string',
             'TQF'       => 'required|string',
@@ -154,7 +143,7 @@ class CourseController extends Controller
         // ใช้ with เพื่อดึงข้อมูล Course Detail มาสำรองไว้เลย
         $cy = Courseyears::with('curriculum_course.course')
             ->whereHas('curriculum_course', function($q) use ($request) {
-                $q->where('course_id', $request->course_id);
+                $q->where('course_code', $request->course_code);
             })
             ->where('user_id', $user->user_id)
             ->where('year', $request->year)
@@ -200,7 +189,7 @@ class CourseController extends Controller
     public function savePrompt(Request $request)
     {
         $data = $request->validate([
-            'course_id' => 'required|string',
+            'course_code' => 'required|string',
             'year'      => 'required|integer',
             'term'      => 'required|string',
             'TQF'       => 'required|string',
@@ -211,7 +200,7 @@ class CourseController extends Controller
 
         // 1. หา Courseyears เพื่อเอา ID (ref_id)
         $cy = Courseyears::whereHas('curriculum_course', function($q) use ($data) {
-                $q->where('course_id', $data['course_id']);
+                $q->where('course_code', $data['course_code']);
             })
             ->where('user_id', $user->user_id)
             ->where('year', $data['year'])
@@ -228,7 +217,7 @@ class CourseController extends Controller
             ->updateOrInsert(
                 ['ref_id' => $cy->id], // เงื่อนไขการค้นหา
                 [
-                    'course_id'   => $data['course_id'], // เก็บไว้เผื่อดูง่ายๆ
+                    'course_code'   => $data['course_code'], // เก็บไว้เผื่อดูง่ายๆ
                     'course_text' => $data['prompt'],
                     'updated_at'  => now()
                 ]

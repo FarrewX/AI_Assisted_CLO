@@ -70,18 +70,24 @@
                                     {{ $t->user ? $t->user->name : 'ไม่พบข้อมูลอาจารย์ (ID: '.$t->user_id.')' }}
                                 </td>
                                 
-                                <td class="border px-4 py-2"><span class="year-display">{{ $t->year }}</span></td>
+                                {{-- 🔥 จุดแก้ที่ 1: การแสดงผลในตาราง --}}
+                                <td class="border px-4 py-2">
+                                    <span class="year-display">
+                                        {{ $t->year < 2400 ? $t->year + 543 : $t->year }}
+                                    </span>
+                                </td>
+
                                 <td class="border px-4 py-2"><span class="term-display">{{ $t->term }}</span></td>
                                 <td class="border px-4 py-2"><span class="TQF-display">{{ $t->TQF }}</span></td>
                                 <td class="border px-4 py-2 text-center space-y-2 space-x-2">
                                     <button type="button" class="bg-yellow-500 hover:bg-yellow-600 text-white px-2 py-1 rounded edit-btn"
-                                        data-id="{{ $t->id }}"
-                                        data-name="{{ $t->user->name ?? '' }}"
-                                        data-user-id="{{ $t->user->user_id ?? '' }}"
-                                        data-year="{{ $t->year }}"
-                                        data-term="{{ $t->term }}"
-                                        data-TQF="{{ $t->TQF }}"
-                                        data-update-url="{{ route('professor.update', [$courseId, $t->id]) }}"
+                                            data-id="{{ $t->id }}"
+                                            data-name="{{ $t->user->name ?? '' }}"
+                                            data-user-id="{{ $t->user_id }}"
+                                            data-year="{{ $t->year < 2400 ? $t->year + 543 : $t->year }}"
+                                            data-term="{{ $t->term }}"
+                                            data-TQF="{{ $t->TQF }}"
+                                            data-update-url="{{ route('professor.update', [$courseId, $t->id]) }}"
                                     >แก้ไข</button>
 
                                     <form method="POST" action="{{ route('professor.destroy', [$courseId, $t->id]) }}" class="inline-block ml-1 delete-form">
@@ -101,12 +107,19 @@
                     <h2 class="font-semibold mb-2">เพิ่มอาจารย์ในคอร์ส</h2>
                     <form method="POST" action="{{ route('professor.store', $courseId) }}">
                         @csrf
+                        <input type="hidden" name="curriculum_id" value="{{ $curriculumId }}">
                         <select name="user_id" class="border px-2 py-1 rounded">
+                            <!-- <option value="">-- เลือกอาจารย์ --</option> -->
                             @foreach($users as $user)
-                                <option value="{{ $user->user_id }}">{{ $user->name }}</option>
+                                <option value="{{ $user->user_id }}"> 
+                                    {{ $user->name }}
+                                </option>
                             @endforeach
                         </select>
-                        <input type="number" name="year" class="border px-2 py-1 rounded w-24" placeholder="ปี" value="{{ date('Y') }}">
+                        <input type="number" name="year" class="border px-2 py-1 rounded w-24" 
+                               placeholder="ปี" 
+                               value="{{ date('Y') + 543 }}">
+
                         <select name="term" class="border px-2 py-1 rounded w-24">
                             <option value="">ภาคเรียน</option>
                             <option value="1">1</option>
@@ -129,10 +142,13 @@
                         @csrf
                         @method('PUT')
                         <div class="mb-4">
+                            <input type="hidden" name="curriculum_id" value="{{ $curriculumId }}">
                             <div class="font-bold mb-2">แก้ไขข้อมูลอาจารย์</div>
                             <select name="user_id" id="edit-user-input" class="border px-2 py-1 rounded w-full mb-2">
                                 @foreach($users as $user)
-                                    <option value="{{ $user->user_id }}">{{ $user->name }}</option>
+                                    <option value="{{ $user->user_id }}"> 
+                                        {{ $user->name }}
+                                    </option>
                                 @endforeach
                             </select>
                             <p>ภาคเรียน</p>
@@ -165,121 +181,155 @@
                 </div>
             </div>
 
-             <div id="session-modal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50 hidden">
-                <div class="bg-white rounded shadow-lg p-6 min-w-[250px] max-w-xs text-center">
-                    <div id="session-message" class="mb-4 font-bold text-center"></div>
-                    <button id="session-close" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">ปิด</button>
+            @if ($errors->any())
+            <div id="error-modal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 animate-fade-in">
+                <div class="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4 transform transition-all scale-100">
+                    <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                        <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                    </div>
+
+                    <div class="text-center">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900 mb-2">เกิดข้อผิดพลาด!</h3>
+                        <div class="mt-2 text-left">
+                            <ul class="text-sm text-red-600 list-disc pl-5 space-y-1 bg-red-50 p-3 rounded-lg border border-red-100">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="mt-5 sm:mt-6">
+                        <button type="button" onclick="document.getElementById('error-modal').remove()" 
+                            class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 sm:text-sm transition">
+                            ตกลง
+                        </button>
+                    </div>
                 </div>
             </div>
-            
+            @endif
+
+            @if(session('success') || session('error'))
+                <div id="session-modal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 animate-fade-in">
+                    <div class="bg-white rounded-xl shadow-2xl p-6 min-w-[300px] max-w-sm text-center transform transition-all scale-100 mx-4">
+                        
+                        @if(session('success'))
+                            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                                <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-900 mb-2">สำเร็จ</h3>
+                            <p class="text-gray-600 mb-6">{{ session('success') }}</p>
+                            <button onclick="closeSessionModal()" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition">
+                                ตกลง
+                            </button>
+                        @endif
+
+                        @if(session('error'))
+                            <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
+                                <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-900 mb-2">ผิดพลาด</h3>
+                            <p class="text-gray-600 mb-6">{{ session('error') }}</p>
+                            <button onclick="closeSessionModal()" class="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition">
+                                ปิด
+                            </button>
+                        @endif
+
+                    </div>
+                </div>
+            @endif
         </div>
 
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-        <script>
-        $(document).ready(function() {
-            // Apply Select2 to Curriculum Dropdown
-            $('#curriculum').select2({
-                placeholder: "-- เลือกหลักสูตร --",
-                width: '100%',
-                minimumResultsForSearch: Infinity
-            }).on('select2:select', function (e) {
-                $(this).closest('form').submit();
-            });
+       <script>
+            $(document).ready(function() {
+                // 1. Setup Select2 ตัวกรองด้านบน
+                $('#curriculum').select2({ placeholder: "-- เลือกหลักสูตร --", width: '100%', minimumResultsForSearch: Infinity })
+                    .on('select2:select', function (e) { $(this).closest('form').submit(); });
 
-            // Apply Select2 to Course Dropdown
-            $('#course').select2({
-                placeholder: "-- เลือกรายวิชา --",
-                allowClear: true,
-                width: '100%'
-            }).on('select2:select', function (e) {
-                $(this).closest('form').submit();
-            });
-        });
+                $('#course').select2({ placeholder: "-- เลือกรายวิชา --", allowClear: true, width: '100%' })
+                    .on('select2:select', function (e) { $(this).closest('form').submit(); });
 
-        // Script เดิม (Modal, Edit, Delete)
-        document.addEventListener('DOMContentLoaded', function() {
-            // ================== Edit modal ==================
-            document.querySelectorAll('.edit-btn').forEach(function(btn) {
-                btn.addEventListener('click', function() {
-                    const modal = document.getElementById('edit-modal');
-                    const form = document.getElementById('edit-form');
-                    const name = btn.getAttribute('data-name');
-                    const year = btn.getAttribute('data-year');
-                    const term = btn.getAttribute('data-term');
-                    const TQF = btn.getAttribute('data-TQF');
-                    const url = btn.getAttribute('data-update-url');
-                    const userId = btn.getAttribute('data-user-id');
+                // 2. Logic ปุ่มแก้ไข
+                $('.edit-btn').on('click', function() {
+                    const btn = $(this);
+                    
+                    // ดึงค่า
+                    const userId = btn.attr('data-user-id'); // ใช้ attr เพื่อความชัวร์
+                    const year = btn.data('year');
+                    const term = btn.data('term');
+                    const TQF = btn.data('tqf');
+                    const url = btn.data('update-url');
 
-                    document.getElementById('edit-year-input').value = year;
-                    document.getElementById('edit-term-input').value = term;
-                    document.getElementById('edit-TQF-input').value = TQF;
-                    form.action = url;
+                    // ใส่ค่าลง Input
+                    $('#edit-year-input').val(year);
+                    $('#edit-term-input').val(term);
+                    $('#edit-TQF-input').val(TQF);
+                    
+                    // 🔥 เลือกอาจารย์คนปัจจุบัน
+                    $('#edit-user-input').val(userId);
 
-                    let userSelect = document.getElementById('edit-user-input');
-                    if (userId) {
-                        userSelect.value = userId;
-                    } else {
-                        // กรณีหา ID ไม่เจอ ให้ลองเทียบชื่อเอา (Fallback)
-                        for (let i = 0; i < userSelect.options.length; i++) {
-                            if (userSelect.options[i].text === name) {
-                                userSelect.selectedIndex = i;
-                                break;
-                            }
-                        }
-                    }
-                    modal.classList.remove('hidden');
+                    // ตั้งค่า Action Form
+                    $('#edit-form').attr('action', url);
+
+                    // เปิด Modal
+                    $('#edit-modal').removeClass('hidden');
                 });
-            });
 
-             // ปุ่ม cancel ปิด modal
-             document.getElementById('edit-cancel').onclick = function() {
-                document.getElementById('edit-modal').classList.add('hidden');
-            };
-
-            // ================== Delete modal ==================
-            let deleteModal = document.getElementById('delete-modal');
-            let deleteConfirmBtn = document.getElementById('delete-confirm');
-            let deleteCancelBtn = document.getElementById('delete-cancel');
-            let currentDeleteForm = null;
-
-            document.querySelectorAll('.delete-btn').forEach(function(btn) {
-                btn.addEventListener('click', function() {
-                    currentDeleteForm = btn.closest('form');
-                    deleteModal.classList.remove('hidden');
+                // ปุ่มปิด Modal แก้ไข
+                $('#edit-cancel').on('click', function() {
+                    $('#edit-modal').addClass('hidden');
                 });
-            });
 
-            deleteConfirmBtn.addEventListener('click', function() {
-                if (currentDeleteForm) {
-                    currentDeleteForm.submit();
-                }
-            });
+                // 3. Logic ปุ่มลบ
+                let deleteModal = $('#delete-modal');
+                let currentDeleteForm = null;
 
-            deleteCancelBtn.addEventListener('click', function() {
-                deleteModal.classList.add('hidden');
-                currentDeleteForm = null;
-            });
+                $('.delete-btn').on('click', function() {
+                    currentDeleteForm = $(this).closest('form');
+                    deleteModal.removeClass('hidden');
+                });
 
-            // ================== Session popup ==================
-            @if(session('error') || session('success'))
-                let sessionModal = document.getElementById('session-modal');
-                let sessionMessage = document.getElementById('session-message');
-                @if(session('error'))
-                    sessionMessage.textContent = "{{ session('error') }}";
-                    sessionMessage.classList.add('text-red-600');
-                @elseif(session('success'))
-                    sessionMessage.textContent = "{{ session('success') }}";
-                    sessionMessage.classList.add('text-green-600');
+                $('#delete-confirm').on('click', function() {
+                    if (currentDeleteForm) currentDeleteForm.submit();
+                });
+
+                $('#delete-cancel').on('click', function() {
+                    deleteModal.addClass('hidden');
+                    currentDeleteForm = null;
+                });
+
+                // 4. Session Popup Logic
+                @if(session('error') || session('success'))
+                    let sessionModal = $('#session-modal');
+                    let sessionMessage = $('#session-message');
+                    
+                    @if(session('error'))
+                        sessionMessage.text("{{ session('error') }}").addClass('text-red-600');
+                    @elseif(session('success'))
+                        sessionMessage.text("{{ session('success') }}").addClass('text-green-600');
+                    @endif
+                    
+                    sessionModal.removeClass('hidden');
+
+                    $('#session-close').on('click', function() {
+                        closeSessionModal();
+                    });
                 @endif
-                sessionModal.classList.remove('hidden');
+            });
 
-                document.getElementById('session-close').onclick = function() {
-                    sessionModal.classList.add('hidden');
-                };
-            @endif
-        });
+            function closeSessionModal() {
+                const modal = document.getElementById('session-modal');
+                if (modal) {
+                    modal.style.opacity = '0';
+                    modal.style.transition = 'opacity 0.3s ease';
+                    setTimeout(() => modal.remove(), 300);
+                }
+            }
         </script>
     </body>
 </html>

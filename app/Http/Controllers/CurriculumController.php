@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Curriculum;
 use Illuminate\Http\Request;
+use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class CurriculumController extends Controller
@@ -59,15 +61,42 @@ class CurriculumController extends Controller
         $curriculum = Curriculum::findOrFail($id);
 
         $request->validate([
-            'curriculum_year' => 'required|string|max:255',
-            'curriculum_name' => 'required|string|max:255',
-            'faculty'         => 'required|string|max:255',
-            'major'           => 'required|string|max:255',
+            'curriculum_year' => 'required|numeric',
+            'curriculum_name' => 'required|string',
+            'faculty'         => 'required|string',
+            'major'           => 'required|string',
         ]);
 
-        $curriculum->update($request->all());
+        try {
+            // ถ้ามีการเปลี่ยนปีหลักสูตร (ค่าเก่า ไม่เท่ากับ ค่าใหม่)
+            if ($request->curriculum_year != $curriculum->curriculum_year) {
+                
+                $existsInPlos = DB::table('plos')
+                    ->where('curriculum_year_ref', $curriculum->curriculum_year)
+                    ->exists();
 
-        return back()->with('success', 'แก้ไขหลักสูตรเรียบร้อยแล้ว');
+                if ($existsInPlos) {
+                    return back()->with('error', 'ไม่สามารถเปลี่ยนปีหลักสูตรได้ เนื่องจากมีข้อมูล PLO เชื่อมโยงกับปีนี้อยู่');
+                }
+            }
+            // ถ้าไม่มีปัญหาเรื่องความซ้ำซ้อน ให้ทำการอัปเดตข้อมูล
+            $curriculum->update([
+                'curriculum_year' => $request->curriculum_year,
+                'curriculum_name' => $request->curriculum_name,
+                'faculty'         => $request->faculty,
+                'major'           => $request->major,
+            ]);
+
+            return back()->with('success', 'แก้ไขหลักสูตรเรียบร้อยแล้ว');
+
+        } catch (QueryException $e) {
+            // Error code 23000 คือ Integrity constraint violation (Foreign Key fail)
+            if ($e->getCode() == '23000') {
+                return back()->with('error', 'ไม่สามารถแก้ไขข้อมูลได้ เนื่องจากปีหลักสูตรนี้ถูกใช้งานอยู่ในตารางอื่น (PLO หรือ รายวิชา)');
+            }
+
+            return back()->with('error', 'เกิดข้อผิดพลาดฐานข้อมูล: ' . $e->getMessage());
+        }
     }
 
     public function destroy($id)

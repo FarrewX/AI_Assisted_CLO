@@ -41,9 +41,12 @@
                     <form method="GET" action="{{ route('home') }}" class="flex items-center space-x-2">
                         <label for="year" class="text-sm text-gray-600">ปีการศึกษา:</label>
                         <select name="year" id="year" onchange="this.form.submit()" 
-                                class="border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 py-1 pl-3 pr-8 text-sm bg-gray-50">
-                            @foreach(range(date('Y') + 1, date('Y') - 5) as $y)
-                                <option value="{{ $y }}" {{ request('year', date('Y')) == $y ? 'selected' : '' }}>
+                            class="border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 py-1 pl-3 pr-8 text-sm bg-gray-50">
+                            @php
+                                $currentYearBE = date('Y') + 543;
+                            @endphp
+                            @foreach(range($currentYearBE + 1, $currentYearBE - 5) as $y)
+                                <option value="{{ $y }}" {{ request('year', $currentYearBE) == $y ? 'selected' : '' }}>
                                     {{ $y }}
                                 </option>
                             @endforeach
@@ -54,12 +57,10 @@
                 @forelse ($courses->groupBy('CC_id') as $ccId => $courseGroup)
                     @php
                         $courseRow = $courseGroup->first();
-                        // ดึงชื่อวิชาจาก Relation (ป้องกัน Error ถ้าไม่มีข้อมูล)
-                        $courseName = $courseRow->curriculum_course->course->course_name_th 
-                                      ?? $courseRow->curriculum_course->course->course_name_en 
-                                      ?? 'รหัสวิชา: ' . ($courseRow->curriculum_course->course_id ?? '-');
-                        
-                        $courseCode = $courseRow->curriculum_course->course->course_code ?? '';
+                        $courseName = $courseRow->course_name_th 
+                                      ?? $courseRow->course_name_en 
+                                      ?? 'รหัสวิชา: ' . ($courseRow->course_code ?? '-');
+                        $courseCode = $courseRow->course_code ?? '';
                         $termsGroup = $courseGroup->groupBy('term');
                     @endphp
 
@@ -78,7 +79,6 @@
                                     <div class="space-y-3">
                                         @foreach($TQFItems as $item)
                                             @php
-                                                // คำนวณสถานะ
                                                 $stepCount = collect([$item->startprompt, $item->generated, $item->success])->filter()->count();
                                                 $progress = ($stepCount / 3) * 100;
                                                 
@@ -86,14 +86,15 @@
                                                     0 => ['text' => 'ยังไม่เริ่ม', 'color' => 'text-gray-500', 'bg' => 'bg-gray-200', 'btn' => 'เริ่มต้น', 'url' => '/form'],
                                                     1 => ['text' => 'Prompt แล้ว', 'color' => 'text-orange-500', 'bg' => 'bg-orange-500', 'btn' => 'สร้างต่อ', 'url' => '/form'],
                                                     2 => ['text' => 'Generated แล้ว', 'color' => 'text-blue-500', 'bg' => 'bg-blue-500', 'btn' => 'แก้ไข', 'url' => '/editdoc'],
-                                                    3 => ['text' => 'เสร็จสมบูรณ์', 'color' => 'text-green-600', 'bg' => 'bg-green-500', 'btn' => 'ตรวจสอบ', 'url' => '/editdoc'], // หรือหน้า view
+                                                    3 => ['text' => 'เสร็จสมบูรณ์', 'color' => 'text-green-600', 'bg' => 'bg-green-500', 'btn' => 'ตรวจสอบ', 'url' => '/editdoc'],
                                                     default => ['text' => '-', 'color' => 'text-gray-400', 'bg' => 'bg-gray-200', 'btn' => '', 'url' => '#']
                                                 };
 
-                                                // สร้าง URL พร้อม Query String
+                                                $displayYear = ($item->year < 2400) ? $item->year + 543 : $item->year;
+
                                                 $url = url($statusConfig['url']) . '?' . http_build_query([
-                                                    'course_id' => $item->curriculum_course->course_id ?? '', // แก้ให้ดึง course_id ที่ถูกต้อง
-                                                    'year' => $item->year,
+                                                    'course_code' => $item->course_code ?? '', 
+                                                    'year' => $displayYear, // ใช้ปีที่แปลงแล้ว (หรือปีจาก DB)
                                                     'term' => $item->term,
                                                     'TQF' => $item->TQF
                                                 ]);
@@ -112,10 +113,8 @@
                                                              style="width: {{ $progress }}%"></div>
                                                     </div>
                                                 </div>
-
                                                 <div>
-                                                    <a href="{{ $url }}" 
-                                                       class="inline-block text-sm bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:border-blue-300 px-4 py-2 rounded-md transition shadow-sm">
+                                                    <a href="{{ $url }}" class="inline-block text-sm bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:border-blue-300 px-4 py-2 rounded-md transition shadow-sm">
                                                         {{ $statusConfig['btn'] }}
                                                     </a>
                                                 </div>
@@ -131,7 +130,9 @@
                         <div class="text-gray-400 mb-2">
                             <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                         </div>
-                        <p class="text-gray-500 text-lg">ไม่พบรายวิชาในปีการศึกษา {{ request('year', date('Y')) }}</p>
+                        <p class="text-gray-500 text-lg">
+                            ไม่พบรายวิชาในปีการศึกษา {{ request('year', date('Y') + 543) }}
+                        </p>
                     </div>
                 @endforelse
             </div>
