@@ -32,14 +32,7 @@ Route::middleware('web')->group(function () {
 
         Route::get('/', [CourseController::class, 'index'])->name('home');
         
-        Route::get('/form', function (Request $request) {
-            $user = Auth::user();
-
-            $courses = app(\App\Http\Controllers\CourseController::class)->formdata($request);
-            $plos = app(\App\Http\Controllers\PlosController::class)->plos();
-
-            return view('form', compact('courses', 'plos'));
-        });
+        Route::get('/form', [CourseController::class, 'formdata'])->name('form');
 
         Route::post('/generate', [OllamaController::class, 'generateText']);
         // Route::get('/generate/show', [GenerateController::class, 'showGenerated'])->name('show.generated');

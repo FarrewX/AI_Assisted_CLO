@@ -12,15 +12,6 @@ use Illuminate\Validation\Rule;
 
 class PlosController extends Controller
 {
-    public function plos()
-    {
-        $plos = DB::table('plos')
-            ->select('plo', 'description')
-            ->get();
-        
-        return $plos;
-    }
-
     public function index(Request $request)
     {
         // ดึงรายชื่อหลักสูตรมาใส่ Dropdown (เรียงปีล่าสุดขึ้นก่อน)

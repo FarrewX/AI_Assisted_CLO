@@ -13,7 +13,6 @@ return new class extends Migration
     {
         Schema::create('prompts', function (Blueprint $table) {
             $table->unsignedBigInteger('ref_id');
-            $table->string('course_id');
             $table->text('course_text');
             $table->timestamps();
 

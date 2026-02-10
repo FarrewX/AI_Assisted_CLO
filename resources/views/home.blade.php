@@ -23,16 +23,16 @@
                 <h2 class="text-xl text-gray-600 mt-1">อาจารย์ {{ Auth::user()->name ?? 'ผู้ใช้งาน' }}</h2>
             </div>
 
-            <div class="flex flex-wrap justify-center gap-4 mb-10 w-full max-w-2xl">
+            <!-- <div class="flex flex-wrap justify-center gap-4 mb-10 w-full max-w-2xl">
                 <a href="{{ url('/form') }}" 
                    class="flex-1 min-w-[200px] text-center px-6 py-4 bg-sky-500 text-white font-bold rounded-xl shadow-md hover:bg-sky-600 transition transform hover:-translate-y-1">
-                    + สร้าง TQF ใหม่
+                    + สร้าง มคอ. ใหม่
                 </a>
                 <a href="{{ url('/TQF/all') }}" 
                    class="flex-1 min-w-[200px] text-center px-6 py-4 bg-emerald-500 text-white font-bold rounded-xl shadow-md hover:bg-emerald-600 transition transform hover:-translate-y-1">
-                    📂 TQF ทั้งหมดที่ดาวน์โหลด
+                    📂 มคอ. ทั้งหมดที่ดาวน์โหลด
                 </a>
-            </div>
+            </div> -->
 
             <div class="w-full max-w-3xl bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <div class="flex items-center justify-between mb-6 border-b pb-4">
@@ -44,9 +44,10 @@
                             class="border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 py-1 pl-3 pr-8 text-sm bg-gray-50">
                             @php
                                 $currentYearBE = date('Y') + 543;
+                                $displayYear = $selectedYear ?? $currentYearBE; 
                             @endphp
                             @foreach(range($currentYearBE + 1, $currentYearBE - 5) as $y)
-                                <option value="{{ $y }}" {{ request('year', $currentYearBE) == $y ? 'selected' : '' }}>
+                                <option value="{{ $y }}" {{ $displayYear == $y ? 'selected' : '' }}>
                                     {{ $y }}
                                 </option>
                             @endforeach
@@ -93,7 +94,7 @@
                                                 $displayYear = ($item->year < 2400) ? $item->year + 543 : $item->year;
 
                                                 $url = url($statusConfig['url']) . '?' . http_build_query([
-                                                    'course_code' => $item->course_code ?? '', 
+                                                    'CC_id' => $item->CC_id,
                                                     'year' => $displayYear, // ใช้ปีที่แปลงแล้ว (หรือปีจาก DB)
                                                     'term' => $item->term,
                                                     'TQF' => $item->TQF
@@ -103,7 +104,7 @@
                                             <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-gray-50 p-3 rounded-md border border-gray-100 hover:shadow-sm transition">
                                                 <div class="flex-1 mb-2 sm:mb-0">
                                                     <div class="flex items-center gap-2">
-                                                        <span class="font-bold text-gray-800">TQF {{ $item->TQF }}</span>
+                                                        <span class="font-bold text-gray-800">มคอ.{{ $item->TQF }}</span>
                                                         <span class="text-xs {{ $statusConfig['color'] }} border px-2 py-0.5 rounded-full bg-white">
                                                             {{ $statusConfig['text'] }}
                                                         </span>

@@ -31,11 +31,11 @@
                 </a>
                 <a href="{{ url('/management/addcourses') }}"
                     class="px-6 py-3 bg-sky-300 text-black font-bold rounded-lg shadow hover:bg-sky-400 flex-1 min-w-[160px] max-w-[calc(20%-1rem)] text-center">
-                        เพิ่มวิชาลงหลักสูตร
+                        แก้ไข/เพิ่มวิชาลงหลักสูตร
                 </a>
                 <a href="{{ url('/management/courses') }}" 
                     class="px-6 py-3 bg-sky-300 text-black font-bold rounded-lg shadow hover:bg-sky-400 flex-1 min-w-[160px] max-w-[calc(20%-1rem)] text-center">
-                        เพิ่มอาจารย์ในคอร์ส
+                        แก้ไข/เพิ่มอาจารย์ในคอร์ส
                 </a>
                 <a href="{{ url('/management/email') }}"
                     class="px-6 py-3 bg-sky-300 text-black font-bold rounded-lg shadow hover:bg-sky-400 flex-1 min-w-[160px] max-w-[calc(20%-1rem)] text-center">

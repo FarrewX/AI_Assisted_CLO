@@ -12,25 +12,20 @@
   <script src="//unpkg.com/alpinejs" defer></script>
 </head>
 <body>
-    <div x-data="{ ploOpen: false }">
-
-  <!-- ปุ่มซ้ายบน -->
+  <div x-data="{ ploOpen: false }">
   <div class="fixed top-4 left-4 flex gap-3 z-50">
-      <!-- ปุ่ม back -->
       <button type="button" onclick="window.history.back()"
           class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md shadow">
           ← back
       </button>
 
-      <!-- ปุ่มเปิด PLO -->
       <button @click="ploOpen = true"
           class="px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-md shadow">
           เปิด PLO
       </button>
   </div>
 
-  <!-- Sidebar PLO -->
-  <div class="fixed inset-y-0 left-0 w-72 z-50 flex" x-show="ploOpen"
+  <div class="fixed inset-y-0 left-0 w-72 z-50 flex" x-show="ploOpen" style="display: none;"
       x-transition:enter="transition ease-out duration-300"
       x-transition:enter-start="opacity-0"
       x-transition:enter-end="opacity-100"
@@ -59,7 +54,6 @@
       </div>
   </div>
 
-  <!-- Modal Popup -->
   <div id="popup-modal" class="fixed inset-0 flex items-center justify-center z-50 hidden">
       <div class="absolute inset-0 backdrop-blur-sm bg-black/30"></div>
       <div class="relative bg-white rounded shadow-lg p-6 min-w-[250px] max-w-xs text-center">
@@ -69,96 +63,97 @@
       </div>
   </div>
 
-  <!-- ฟอร์มตรงกลาง -->
-  <div class="flex items-center justify-center min-h-screen">
-    <div class="bg-white p-6 rounded-xl shadow-md w-[500px] relative">
+  <div class="flex items-center justify-center min-h-screen pt-16">
+    <div class="bg-white p-6 rounded-xl shadow-md w-[600px] relative">
       <h2 class="text-center text-[30px] font-bold text-gray-800 mb-4">ELO_Generate</h2>
 
       <form id="eloForm" method="POST" class="space-y-4">
         @csrf
-        <!-- รายวิชา -->
         <div>
           <label for="course" class="block font-semibold text-gray-700 mb-1">เลือกรายวิชา :</label>
-          <select id="course" name="course"
-            class="w-full p-2 border border-gray-300 rounded-md">
-            <option value="" disabled selected>-- กรุณาเลือกรายวิชา --</option>
-            @foreach ($courses as $course)
-              <option value="{{ $course->course_id }}"
-                data-coursename="{{ $course->course_name_th }}"
-                data-year="{{ $course->year }}"
-                data-term="{{ $course->term }}"
-                data-TQF="{{ $course->TQF }}"
-                data-detail="{{ $course->course_detail_th }}"
-                data-coursetext="{{ $course->course_text }}">
-                {{ $course->course_id }} - {{ $course->course_name_th }} (มคอ{{$course->TQF}} ภาคเรียน{{$course->term}}/{{ $course->year }})
-              </option>
-            @endforeach
-          </select>
+          <select id="course" name="course" class="w-full p-2 border border-gray-300 rounded-md text-sm">
+            @if(isset($course_options))
+                @foreach ($course_options as $course)
+                    <option value="{{ $course->course_pk }}"
+                        data-cc-id="{{ $course->cc_id }}"
+                        data-coursecode="{{ $course->course_code }}"
+                        data-coursename="{{ $course->course_name_th }}"
+                        data-year="{{ $course->year }}" 
+                        data-term="{{ $course->term }}"
+                        data-TQF="{{ $course->TQF }}"
+                        data-detail="{{ $course->course_detail_th }}"
+                        data-coursetext="{{ $course->course_text }}">
+                        {{ $course->course_code }} {{ $course->course_name_th }} (ภาค{{$course->term}}/{{ $course->year }}) [หลักสูตร {{ $course->curriculum_year }}]
+                    </option>
+                @endforeach
+            @endif
+        </select>
         </div>
 
-        <!-- รายละเอียด -->
         <div>
           <label for="prompt" class="block font-semibold text-gray-700 mb-1">รายละเอียดรายวิชา :</label>
-          <textarea id="prompt" name="prompt" rows="4"
+          <textarea id="prompt" name="prompt" rows="5"
               placeholder="กรอกรายละเอียดรายวิชาที่ต้องการให้ AI สร้าง..."
               class="w-full p-2 border border-gray-300 rounded-md focus:ring focus:ring-blue-200"></textarea>
         </div>
 
-        <!-- เลือกจำนวน CLO -->
-        <div>
-          <label for="numClo" class="block font-semibold text-gray-700 mb-1">จำนวน CLO ที่ต้องการ :</label>
-          <select id="numClo" name="numClo"
-              class="w-32 p-2 border border-gray-300 rounded-md">
-            @for ($i = 1; $i <= 5; $i++)
-              <option value="{{ $i }}">{{ $i }}</option>
-            @endfor
-          </select>
+        <div class="grid grid-cols-1 gap-4">
+            <div>
+              <label for="numClo" class="block font-semibold text-gray-700 mb-1">จำนวน CLO ที่ต้องการ :</label>
+              <select id="numClo" name="numClo" class="w-full p-2 border border-gray-300 rounded-md">
+                @for ($i = 1; $i <= 5; $i++)
+                  <option value="{{ $i }}" {{ $i == 0 ? 'selected' : '' }}>{{ $i }}</option>
+                @endfor
+              </select>
+            </div>
+
+            <div id="selectPloboxes">
+              <label class="block font-semibold text-gray-700 mb-2">เลือก PLO ที่เกี่ยวข้อง :</label>
+              <div class="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-3 border rounded-md bg-gray-50">
+                @if(isset($plos) && count($plos) > 0)
+                    @foreach($plos as $selectPlo)
+                      <label class="flex items-center space-x-2 cursor-pointer hover:bg-gray-100 p-1 rounded">
+                        <input type="checkbox" name="selectPlo[]" value="{{ $selectPlo->plo }}"
+                              class="rounded selectPlo text-blue-600 focus:ring-blue-500 border-gray-300">
+                        <span class="text-sm font-medium">PLO {{ $selectPlo->plo }}</span>
+                      </label>
+                    @endforeach
+                @else
+                    <p class="text-red-500 text-sm">ไม่พบข้อมูล PLO</p>
+                @endif
+              </div>
+            </div>
         </div>
 
-        <!-- เลือก PLO -->
-        <div id="selectPloboxes" class="mt-4">
-          <div class="flex flex-wrap gap-4">
-            @foreach($plos as $selectPlo)
-              <label class="flex items-center space-x-2">
-                <input type="checkbox" name="selectPlo[]" value="{{ $selectPlo->plo }}"
-                       class="rounded selectPlo">
-                <span>PLO {{ $selectPlo->plo }}</span>
-              </label>
-            @endforeach
-          </div>
-        </div>
-
-        <!-- ปุ่ม Generate -->
         <button type="button" onclick="openPreview()"
-          class="w-full inline-flex items-center justify-center whitespace-nowrap bg-blue-500 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-md shadow-md hover:shadow-lg transition">
-          Generate
+          class="w-full mt-4 inline-flex items-center justify-center whitespace-nowrap bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2.5 rounded-md shadow-md hover:shadow-lg transition">
+          Generate AI
         </button>
       </form>
     </div>
   </div>
 
-  <!-- Modal Preview -->
   <div id="previewModal"
-       class="fixed inset-0 bg-gray-100 hidden flex items-center justify-center z-50"
+       class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden flex items-center justify-center z-50"
        onclick="closeOnBackground(event)">
-    <div class="bg-white w-[500px] rounded-lg shadow-lg p-6"
+    <div class="bg-white w-[500px] rounded-xl shadow-2xl p-6 transform transition-all scale-100"
          onclick="event.stopPropagation()">
-      <h3 class="text-lg font-bold mb-3">ยืนยันข้อมูลที่กรอก</h3>
-      <div id="previewContent" class="space-y-2 text-sm text-gray-700"></div>
-      <div class="flex justify-end gap-3 mt-4">
+      <h3 class="text-xl font-bold mb-4 border-b pb-2 text-gray-800">ยืนยันข้อมูล</h3>
+      <div id="previewContent" class="space-y-3 text-sm text-gray-700"></div>
+      <div class="flex justify-end gap-3 mt-6">
         <button onclick="closePreview()"
-            class="px-4 py-2 bg-red-700 hover:bg-red-400 text-white rounded-md">ยกเลิก</button>
+            class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md transition">ยกเลิก</button>
         <button onclick="submitForm()"
-            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md">ยืนยัน</button>
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow transition">ยืนยันและสร้าง</button>
       </div>
     </div>
   </div>
 
-  <!-- Popup Loading -->
-  <div id="loadingPopup" class="hidden fixed inset-0 bg-gray-100 bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg shadow-lg p-6 flex flex-col items-center">
-      <div class="loader border-4 border-blue-500 border-t-transparent rounded-full w-10 h-10 animate-spin mb-3"></div>
-      <p class="text-gray-700 font-semibold text-lg">กำลัง Generate...</p>
+  <div id="loadingPopup" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 backdrop-blur-sm">
+    <div class="bg-white rounded-xl shadow-2xl p-8 flex flex-col items-center">
+      <div class="loader border-4 border-blue-200 border-t-blue-600 rounded-full w-12 h-12 animate-spin mb-4"></div>
+      <p class="text-gray-800 font-bold text-lg">กำลังประมวลผลด้วย AI...</p>
+      <p class="text-gray-500 text-sm mt-1">กรุณารอสักครู่ ห้ามปิดหน้านี้</p>
     </div>
   </div>
 </div>
@@ -176,47 +171,51 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const params = new URLSearchParams(window.location.search);
-    const courseId = params.get('course_id');
-    const year = params.get('year');
-    const term = params.get('term');
-    const TQF = params.get('TQF');
-
+    const urlCCId = params.get('CC_id'); // รับ CC_id จาก URL
+    
     const courseSelect = document.getElementById('course');
 
-    if (courseSelect && courseId) {
-        // เลือก option ที่ตรง courseId + year + term + TQF
-        const option = Array.from(courseSelect.options).find(opt =>
-          opt.value.toString() === courseId.toString() &&
-          opt.getAttribute('data-year').toString() === year.toString() &&
-          opt.getAttribute('data-term').toString() === term.toString() &&
-          opt.getAttribute('data-TQF').toString() === TQF.toString()
+    if (courseSelect && urlCCId) {
+        // ค้นหา Option ที่มี data-cc-id ตรงกับ URL
+        const option = Array.from(courseSelect.options).find(opt => 
+            opt.getAttribute('data-cc-id') === urlCCId
         );
+
         if (option) {
-          option.selected = true;
-          fetchPrompt(
-              courseId,
-              option.getAttribute('data-year'),
-              option.getAttribute('data-term'),
-              option.getAttribute('data-TQF')
-          );
+            option.selected = true;
+            
+            // ดึงข้อมูลมาแสดงทันที
+            loadPromptFromOption(option);
         }
     }
 });
 
 document.getElementById('course').addEventListener('change', function () {
     const selectedOption = this.options[this.selectedIndex];
-    const courseId = this.value;
-    const year = selectedOption.getAttribute('data-year');
-    const term = selectedOption.getAttribute('data-term');
-    const TQF = selectedOption.getAttribute('data-TQF');
-
-    if (!courseId || !year) return;
-
-    fetchPrompt(courseId, year, term, TQF);
+    loadPromptFromOption(selectedOption);
 });
 
-function fetchPrompt(courseId, year, term, TQF) {
-    if (!courseId || !year) return;
+function loadPromptFromOption(option) {
+    const savedPrompt = option.getAttribute('data-coursetext');
+    const defaultDetail = option.getAttribute('data-detail');
+    
+    // แสดง Prompt ใน Textarea
+    if (savedPrompt && savedPrompt !== 'null' && savedPrompt.trim() !== '') {
+        document.getElementById('prompt').value = savedPrompt;
+    } else {
+        document.getElementById('prompt').value = defaultDetail || '';
+    }
+
+    // (Optional) ถ้าต้องการดึงสดจาก Server อีกรอบเพื่อความชัวร์
+    const CCid = option.getAttribute('data-cc-id');
+    const year = option.getAttribute('data-year');
+    const term = option.getAttribute('data-term');
+    const TQF = option.getAttribute('data-TQF');
+    fetchPrompt(CCid, year, term, TQF); 
+}
+
+function fetchPrompt(CCid, year, term, TQF) {
+    if (!CCid) return;
 
     fetch('/getprompt', {
         method: 'POST',
@@ -225,11 +224,13 @@ function fetchPrompt(courseId, year, term, TQF) {
             'Content-Type': 'application/json',
             'X-CSRF-TOKEN': '{{ csrf_token() }}'
         },
-        body: JSON.stringify({ course_id: courseId, year: year, term: term, TQF: TQF })
+        body: JSON.stringify({ CC_id: CCid, year, term, TQF })
     })
     .then(res => res.json())
     .then(data => {
-        document.getElementById('prompt').value = data.prompt || '';
+        if(data.prompt) {
+            document.getElementById('prompt').value = data.prompt;
+        }
     })
     .catch(err => console.error(err));
 }
@@ -260,20 +261,21 @@ function openPreview() {
   document.getElementById("previewModal").classList.remove("hidden");
   // ดึงค่าจาก option ที่เลือก
   let selectedOption = courseSelect.options[courseSelect.selectedIndex];
-  let selectedText = selectedOption.text.replace(/\(.*?\)/, "").trim();
+  let selectedText = selectedOption.text.trim();
   let year = selectedOption.getAttribute('data-year');
   let term = selectedOption.getAttribute('data-term');
   let TQF  = selectedOption.getAttribute('data-TQF');
 
   // preview main info
   let content = `
-    <p><b>รายวิชา:</b> ${selectedText}</p>
-    <p><b>ปีการศึกษา:</b> ${year}</p>
-    <p><b>ภาคเรียน:</b> ${term}</p>
-    <p><b>มคอ:</b> ${TQF}</p>
-    <p><b>รายละเอียด:</b> ${prompt}</p>
-    <p><b>จำนวน CLO:</b> ${numClo}</p>
-    <p><b>PLO ที่เลือก:</b> ${ploLabels.join(', ')}</p>
+    <div class="grid grid-cols-1 gap-2">
+        <p><span class="font-semibold">รายวิชา:</span> ${selectedText}</p>
+        <p><span class="font-semibold">รายละเอียด:</span> <br><span class="text-gray-600 bg-gray-50 p-2 block rounded mt-1 border">${prompt}</span></p>
+        <div class="flex gap-4">
+            <p><span class="font-semibold">จำนวน CLO:</span> ${numClo}</p>
+            <p><span class="font-semibold">PLO ที่เลือก:</span> ${ploLabels.join(', ')}</p>
+        </div>
+    </div>
   `;
 
   document.getElementById("previewContent").innerHTML = content;
@@ -284,28 +286,37 @@ function closeOnBackground(event) { if (event.target.id === "previewModal") clos
 let aiCallCount = 0;
 
 function submitForm() {
+    closePreview(); 
+
     let courseSelect = document.getElementById("course");
     let prompt = document.getElementById("prompt").value.trim();
     let numClo = document.getElementById("numClo").value;
+    
+    // ดึง PLO ที่เลือก
     let ploChecked = Array.from(document.querySelectorAll('.selectPlo:checked'));
     let ploLabels = ploChecked.map(cb => cb.parentElement.querySelector('span').textContent.trim());
 
-    // ดึงค่า course ที่เลือก
+    // ดึงค่าจาก Option ที่เลือก
     let selectedOption = courseSelect.options[courseSelect.selectedIndex];
-    let courseId = courseSelect.value;
+    
+    // ดึงค่าสำคัญที่ต้องใช้
+    let CCid = selectedOption.getAttribute('data-cc-id'); 
+    let coursePk = courseSelect.value; // ID ของ courses table
+    let courseCode = selectedOption.getAttribute('data-coursecode');
     let coursename = selectedOption.getAttribute('data-coursename');
-    let year = parseInt(selectedOption.getAttribute('data-year'), 10);
+    let year = selectedOption.getAttribute('data-year');
     let term = selectedOption.getAttribute('data-term');
     let TQF  = selectedOption.getAttribute('data-TQF');
     let selectedText = selectedOption.text.replace(/\(.*?\)/, "").trim();
 
-    if (!courseId || !prompt) {
-        alert("กรุณากรอกข้อมูลให้ครบ");
+    if (!CCid) {
+        alert("กรุณาเลือกรายวิชาให้ถูกต้อง");
         return;
     }
 
     showLoadingPopup();
     
+    // Save Prompt ก่อน (ส่ง CC_id ไปด้วย)
     fetch('/saveprompt', {
         method: 'POST',
         headers: {
@@ -313,11 +324,18 @@ function submitForm() {
             'Content-Type': 'application/json',
             'X-CSRF-TOKEN': '{{ csrf_token() }}'
         },
-        body: JSON.stringify({ course_id: courseId, year, term, TQF, prompt })
+        body: JSON.stringify({ 
+            CC_id: CCid,
+            course_pk: coursePk,
+            year, term, TQF, prompt 
+        })
     })
-    .then(res => res.json())
+    .then(res => {
+        if (!res.ok) throw new Error('Failed to save prompt');
+        return res.json();
+    })
     .then(data => {
-        //เรียก AI
+        // เรียก AI Generate
         return fetch('/generate', {
             method: 'POST',
             headers: {
@@ -325,12 +343,21 @@ function submitForm() {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
             },
-            body: JSON.stringify({ courseId, prompt, coursename, numClo, ploLabels, year, term, TQF })
-        },aiCallCount++);
+            body: JSON.stringify({ 
+                courseId: coursePk, 
+                courseCode, 
+                prompt, 
+                coursename, 
+                numClo, 
+                ploLabels, 
+                year, 
+                term, 
+                TQF 
+            })
+        });
     })
     .then(res => res.json())
     .then(data => { 
-        // ดึงข้อความ AI
         let generatedText = data.response?.choices?.[0]?.text || '';
         console.log("Prompt string:", data.prompt_string);
         console.log("AI generated text:", generatedText);
@@ -411,6 +438,7 @@ function submitForm() {
                 .trim();
         }
 
+        // Save AI Response (ส่ง CC_id ไปด้วย)
         return fetch('/generate/save', {
             method: 'POST',
             headers: {
@@ -419,15 +447,17 @@ function submitForm() {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
             },
             body: JSON.stringify({
-                course_id: courseId,
+                CC_id: CCid,
+                course_id: coursePk,
                 year,
                 term,
                 TQF,
                 ai_response: aiResponseToSave
             })
         })
-        .then(res => {
-          // ตรวจ header ว่าเป็น JSON หรือไม่
+    })
+    .then(res => {
+         // ตรวจ header ว่าเป็น JSON หรือไม่
           const contentType = res.headers.get('content-type') || '';
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           
@@ -440,36 +470,33 @@ function submitForm() {
               return { message: 'HTML response (redirect or error page)' };
             });
           }
-        })
-        .then(saveData => {
-            console.log("AI ถูกเรียกทั้งหมด:", aiCallCount);
-            window.location.href = saveData.redirect;
-        })
-        .catch(err => console.error(err));
     })
-    .catch(err => console.error(err));
+    .then(saveData => {
+        if (saveData.redirect) {
+            window.location.href = saveData.redirect;
+        } else {
+            alert('บันทึกสำเร็จ แต่ไม่มี Redirect URL');
+            hideLoadingPopup();
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert("เกิดข้อผิดพลาด: " + err.message);
+        hideLoadingPopup();
+    });
 }
 
-function showLoadingPopup() {
-  document.getElementById('loadingPopup').classList.remove('hidden');
-}
-
-function hideLoadingPopup() {
-  document.getElementById('loadingPopup').classList.add('hidden');
-}
+function showLoadingPopup() { document.getElementById('loadingPopup').classList.remove('hidden'); }
+function hideLoadingPopup() { document.getElementById('loadingPopup').classList.add('hidden'); }
 
 // จำกัดจำนวนการเลือก PLO ตามจำนวน CLO ที่เลือก
-document.getElementById('numClo').addEventListener('change', function() {
-  updatePloCheckboxLimit();
-});
+document.getElementById('numClo').addEventListener('change', updatePloCheckboxLimit);
 function updatePloCheckboxLimit() {
   const max = parseInt(document.getElementById('numClo').value, 10) || 1;
   const checkboxes = document.querySelectorAll('.selectPlo');
   let checkedCount = 0;
-  checkboxes.forEach(cb => {
-    if (cb.checked) checkedCount++;
-  });
-  // ถ้าเลือกเกิน max ให้ uncheck
+  checkboxes.forEach(cb => { if (cb.checked) checkedCount++; });
+  
   if (checkedCount > max) {
     let count = 0;
     checkboxes.forEach(cb => {
@@ -479,18 +506,17 @@ function updatePloCheckboxLimit() {
       }
     });
   }
-  // ปิดการเลือกถ้าเกิน max
   checkboxes.forEach(cb => {
     if (!cb.checked && document.querySelectorAll('.selectPlo:checked').length >= max) {
       cb.disabled = true;
+      cb.parentElement.classList.add('opacity-50');
     } else {
       cb.disabled = false;
+      cb.parentElement.classList.remove('opacity-50');
     }
   });
 }
-// เรียกครั้งแรก
 updatePloCheckboxLimit();
-// อัปเดตเมื่อมีการคลิก checkbox
 document.querySelectorAll('.selectPlo').forEach(cb => {
   cb.addEventListener('change', updatePloCheckboxLimit);
 });
