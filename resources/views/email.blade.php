@@ -10,8 +10,8 @@
 <body class="bg-gray-50 font-sans antialiased">
     @include('component.navbar')
 
-    <div class="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8 mt-20">
-        <div class="mb-8 text-center">
+    <div class="max-w-4xl mx-auto py-2 px-4 sm:px-6 lg:px-8 mt-20">
+        <div class="text-center">
             <h1 class="text-3xl font-extrabold text-gray-900 sm:text-4xl">
                 <i class="fa-solid fa-paper-plane text-orange-500 mr-2"></i> ระบบส่งการแจ้งเตือน
             </h1>
@@ -76,10 +76,10 @@
             
             <div class="px-8 py-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between">
                 <span class="text-xs text-gray-400 italic">
-                    <i class="fa-solid fa-shield-halved mr-1"></i> ระบบจะส่งเมลโดยใช้ Gmail สาขาที่ตั้งค่าไว้ในฐานข้อมูล
+                    <i class="mr-1 text-gray-500 p-1 underline">ระบบจะส่งเมลโดยใช้ Gmail สาขาที่ตั้งค่าไว้ในฐานข้อมูล</i> 
                 </span>
                 <span class="text-xs text-orange-400 font-bold uppercase tracking-widest">
-                    AI ELO System
+                    AI ELO GENERATOR
                 </span>
             </div>
         </div>

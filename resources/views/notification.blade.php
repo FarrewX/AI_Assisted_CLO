@@ -18,7 +18,7 @@
         <div class="flex justify-between items-center mb-8">
             <div>
                 <h1 class="text-2xl font-bold text-gray-800">
-                    <i class="fa-solid fa-list-check text-orange-500 mr-2"></i> รายชื่อที่ยังไม่เริ่มดำเนินการ
+                    <i class="fa-solid fa-list-check text-blue-500 mr-2"></i> รายชื่อที่ยังไม่เริ่มดำเนินการ
                 </h1>
                 <p class="text-gray-500 text-sm mt-1">ตรวจสอบรายชื่อวิชาและอาจารย์ที่ยังไม่ได้เริ่มต้นใช้งานระบบ</p>
             </div>
@@ -32,7 +32,7 @@
         <div class="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100">
             <table class="w-full text-left border-collapse">
                 <thead>
-                    <tr class="bg-gray-800 text-white">
+                    <tr class="bg-blue-900 text-white">
                         <th class="px-6 py-4 font-semibold uppercase text-xs tracking-wider">รหัสวิชา</th>
                         <th class="px-6 py-4 font-semibold uppercase text-xs tracking-wider">อาจารย์ผู้สอน</th>
                         <th class="px-6 py-4 font-semibold uppercase text-xs tracking-wider text-center">ปีการศึกษา</th>
@@ -42,7 +42,7 @@
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     @forelse($courses as $item)
-                        <tr class="hover:bg-orange-50 transition duration-150">
+                        <tr class="hover:bg-blue-50 transition duration-150">
                             <td class="px-6 py-4 font-medium text-gray-700">
                                 {{-- เรียกจาก curriculum_course ทะลุไปหา course แล้วค่อยเอา course_code --}}
                                 {{ $item->curriculum_course->course->course_code }}
@@ -50,7 +50,7 @@
                             
                             <td class="px-6 py-4">
                                 <div class="flex items-center">
-                                    <div class="h-9 w-9 rounded-full bg-orange-100 flex items-center justify-center text-orange-500 mr-3 border border-orange-200">
+                                    <div class="h-9 w-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-500 mr-3 border border-blue-200">
                                         <i class="fa-solid fa-user-tie"></i>
                                     </div>
                                     <div>
