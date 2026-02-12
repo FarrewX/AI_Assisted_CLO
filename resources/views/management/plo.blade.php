@@ -3,13 +3,14 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>ELO_Generator - Manage PLOs</title>
         
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
         
         @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
-            @vite(['resources/css/app.css', 'resources/js/app.js'])
+            @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/management/plo.js'])
         @endif
 
         <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
@@ -26,7 +27,7 @@
             }
         </style>
     </head>
-    <body>
+    <body data-current-year="{{ $selectedYear ?? '' }}">
         @include('component.navbar')
 
         <div class="container mx-auto p-4">
@@ -86,8 +87,12 @@
                                     {{ $plo->learning_level }}
                                 </td>
                                 <td class="px-4 py-2 text-center space-x-1">
-                                    <button type="button" class="edit-btn bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded text-sm transition">แก้ไข</button>
-                                    <button type="button" class="delete-btn bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition">ลบ</button>
+                                    <button type="button" class="edit-btn text-amber-500 hover:text-amber-700 transition p-1 rounded-md hover:bg-amber-50">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 25 25" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                    </button>
+                                    <button type="button" class="delete-btn text-red-500 hover:text-red-600 transition p-1 rounded-md hover:bg-red-50">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                    </button>
                                 </td>
                             </tr>
                             @empty
@@ -166,7 +171,6 @@
             <div id="edit-plo-modal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 hidden backdrop-blur-sm">
                 <div class="bg-white rounded-lg shadow-2xl p-6 min-w-[400px] max-w-lg w-full">
                     <h2 class="text-xl font-bold mb-4 text-gray-800 border-b pb-2">แก้ไข PLO</h2>
-                    
                     <input type="hidden" id="edit-id">
 
                     <div class="mb-3">
@@ -192,25 +196,59 @@
 
                     <div class="flex justify-end space-x-2 pt-2">
                         <button id="edit-plo-cancel" class="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded">ยกเลิก</button>
-                        <button id="edit-plo-save" class="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded shadow">บันทึกการแก้ไข</button>
+                        <button id="edit-plo-save" class="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded shadow">บันทึกการแก้ไข</button>
                     </div>
                 </div>
             </div>
         @endif
 
-        <div id="popup-modal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-[60] hidden">
-            <div class="bg-white rounded shadow-lg p-6 min-w-[300px] text-center transform transition-all scale-100">
-                <div id="popup-message" class="mb-4 text-lg font-bold"></div>
-                <button id="popup-close" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded shadow">ตกลง</button>
+        <div id="popup-modal" class="fixed inset-0 z-[60] flex items-center justify-center hidden bg-gray-900/50 backdrop-blur-sm transition-opacity duration-300">
+            <div class="relative w-full max-w-sm p-6 mx-4 bg-white shadow-2xl rounded-2xl transform transition-all scale-100">
+                
+                <div id="popup-icon-container" class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 mb-4 transition-colors duration-300">
+                    
+                    <svg id="icon-success" class="h-8 w-8 text-green-600 hidden" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                    </svg>
+                    
+                    <svg id="icon-error" class="h-8 w-8 text-red-600 hidden" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                    </svg>
+                </div>
+
+                <div class="text-center">
+                    <h3 id="popup-title" class="text-lg font-bold text-gray-900 mb-1">แจ้งเตือน</h3>
+                    
+                    <p id="popup-message" class="text-gray-500 text-sm mb-6"></p>
+                    
+                    <button id="popup-close" class="w-full inline-flex justify-center rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-all duration-200">
+                        ตกลง
+                    </button>
+                </div>
             </div>
         </div>
 
-        <div id="confirm-modal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-[60] hidden">
-            <div class="bg-white rounded shadow-lg p-6 min-w-[300px] text-center">
-                <div class="mb-4 text-lg font-semibold text-gray-800" id="confirm-message">ยืนยันการทำรายการ?</div>
-                <div class="flex justify-center space-x-3">
-                    <button id="confirm-cancel" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded">ยกเลิก</button>
-                    <button id="confirm-ok" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow">ยืนยัน</button>
+        <div id="confirm-modal" class="fixed inset-0 z-[60] flex items-center justify-center hidden bg-gray-900/50 backdrop-blur-sm transition-opacity duration-300">
+            <div class="relative w-full max-w-sm p-6 mx-4 bg-white shadow-2xl rounded-2xl transform transition-all scale-100">
+                
+                <div class="flex flex-col items-center text-center">
+                    <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-amber-100 mb-4">
+                        <svg class="h-8 w-8 text-amber-500" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+                        </svg>
+                    </div>
+
+                    <h3 class="text-lg font-bold text-gray-900 mb-2">ยืนยันการทำรายการ</h3>
+                    <p id="confirm-message" class="text-sm text-gray-500 mb-6">คุณแน่ใจหรือไม่ที่จะดำเนินการนี้? การกระทำนี้อาจไม่สามารถย้อนกลับได้</p>
+
+                    <div class="flex gap-3 w-full">
+                        <button id="confirm-cancel" class="flex-1 rounded-xl bg-white border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50 hover:text-gray-900 transition-all duration-200">
+                            ยกเลิก
+                        </button>
+                        <button id="confirm-ok" class="flex-1 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 hover:shadow-md transition-all duration-200">
+                            ยืนยัน
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -218,207 +256,5 @@
         <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-
-        <script>
-            // 1. Setup Select2
-            $(document).ready(function() {
-                $('#year_select').select2({
-                    placeholder: "-- เลือกปี พ.ศ. --",
-                    width: '100%',
-                    minimumResultsForSearch: Infinity 
-                }).on('select2:select', function (e) {
-                    $(this).closest('form').submit();
-                });
-            });
-
-            // 2. Helper Functions (จัดการ Modal)
-            const toggleModal = (id, show) => {
-                const el = document.getElementById(id);
-                if (el) {
-                    if(show) el.classList.remove('hidden');
-                    else el.classList.add('hidden');
-                } else {
-                    console.error('ไม่พบ Modal ID: ' + id);
-                }
-            };
-
-            const showPopup = (msg, isSuccess = false) => {
-                const popupMsg = document.getElementById('popup-message');
-                if(popupMsg) {
-                    popupMsg.textContent = msg;
-                    // เปลี่ยนสีข้อความตามผลลัพธ์
-                    popupMsg.className = isSuccess ? 'mb-4 text-lg text-green-600 font-bold' : 'mb-4 text-lg text-red-600 font-bold';
-                }
-                toggleModal('popup-modal', true);
-            };
-
-            const closePopupBtn = document.getElementById('popup-close');
-            if(closePopupBtn) closePopupBtn.onclick = () => toggleModal('popup-modal', false);
-
-            let confirmCallback = null;
-            const showConfirm = (msg, cb) => {
-                document.getElementById('confirm-message').textContent = msg;
-                confirmCallback = cb;
-                toggleModal('confirm-modal', true);
-            };
-            
-            const confirmOkBtn = document.getElementById('confirm-ok');
-            const confirmCancelBtn = document.getElementById('confirm-cancel');
-            if(confirmOkBtn) {
-                confirmOkBtn.onclick = () => {
-                    toggleModal('confirm-modal', false);
-                    if(confirmCallback) confirmCallback();
-                };
-            }
-            if(confirmCancelBtn) {
-                confirmCancelBtn.onclick = () => {
-                    toggleModal('confirm-modal', false);
-                    confirmCallback = null;
-                };
-            }
-
-            // 3. Main Logic (ทำงานเมื่อโหลดหน้าเสร็จ)
-            document.addEventListener('DOMContentLoaded', function() {
-                
-                @if(isset($selectedYear))
-                const CURRENT_YEAR = "{{ $selectedYear }}";
-
-                // --- LOGIC: ADD PLO ---
-                const addBtn = document.getElementById('add-plo-btn');
-                const addCancel = document.getElementById('add-plo-cancel');
-                const addSave = document.getElementById('add-plo-save');
-
-                if(addBtn) addBtn.onclick = () => toggleModal('add-plo-modal', true);
-                if(addCancel) addCancel.onclick = () => toggleModal('add-plo-modal', false);
-
-                if(addSave) {
-                    addSave.onclick = () => {
-                        const ploInput = document.getElementById('new-plo');
-                        const descInput = document.getElementById('new-desc');
-                        const domainInput = document.getElementById('new-domain');
-                        const levelInput = document.getElementById('new-level');
-
-                        const ploNum = ploInput ? ploInput.value : '';
-                        const desc = descInput ? descInput.value.trim() : '';
-                        const domain = domainInput ? domainInput.value.trim() : '';
-                        const level = levelInput ? levelInput.value.trim() : '';
-
-                        if(!desc) { showPopup('กรุณากรอก Description'); return; }
-
-                        axios.post('/management/plos/create', {
-                            curriculum_year_ref: CURRENT_YEAR,
-                            plo: ploNum,
-                            description: desc,
-                            domain: domain,
-                            learning_level: level,
-                            _token: '{{ csrf_token() }}'
-                        })
-                        .then(res => {
-                            showPopup('บันทึกข้อมูลสำเร็จ', true);
-                            setTimeout(() => location.reload(), 1500);
-                        })
-                        .catch(err => {
-                            console.error(err);
-                            showPopup('เกิดข้อผิดพลาด: ' + (err.response?.data?.message || err.message));
-                        });
-                    };
-                }
-
-                // --- LOGIC: EDIT & DELETE (Event Delegation) ---
-                document.addEventListener('click', function(e) {
-                    
-                    // 1. ปุ่ม EDIT
-                    const editBtn = e.target.closest('.edit-btn');
-                    if (editBtn) {
-                        e.preventDefault(); // ป้องกันการทำงานซ้ำซ้อน
-                        const tr = editBtn.closest('tr');
-                        if(!tr) return;
-
-                        // ดึงข้อมูลจาก Data Attribute
-                        const id = tr.dataset.id;
-                        const ploNum = tr.dataset.ploNum;
-                        const domain = tr.dataset.domain;
-                        const level = tr.dataset.level;
-                        
-                        // ดึง Description
-                        const descEl = tr.querySelector('.desc-text');
-                        const desc = descEl ? descEl.innerText : tr.children[1].innerText.trim();
-
-                        // ตรวจสอบว่ามี Input ID เหล่านี้จริงหรือไม่
-                        const editIdInput = document.getElementById('edit-id');
-                        const editPloInput = document.getElementById('edit-plo-num');
-                        const editDescInput = document.getElementById('edit-desc');
-                        const editDomainInput = document.getElementById('edit-domain');
-                        const editLevelInput = document.getElementById('edit-level');
-
-                        if(editIdInput) editIdInput.value = id;
-                        if(editPloInput) editPloInput.value = ploNum;
-                        if(editDescInput) editDescInput.value = desc;
-                        if(editDomainInput) editDomainInput.value = domain;
-                        if(editLevelInput) editLevelInput.value = level;
-
-                        toggleModal('edit-plo-modal', true);
-                        return;
-                    }
-
-                    // 2. ปุ่ม DELETE
-                    const deleteBtn = e.target.closest('.delete-btn');
-                    if (deleteBtn) {
-                        e.preventDefault();
-                        const tr = deleteBtn.closest('tr');
-                        const id = tr.dataset.id;
-                        const ploNum = tr.dataset.ploNum;
-
-                        showConfirm(`ต้องการลบ PLO ${ploNum} หรือไม่?`, () => {
-                            axios.delete(`/management/plos/delete/${id}`, {
-                                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
-                            })
-                            .then(res => {
-                                showPopup('ลบข้อมูลสำเร็จ', true);
-                                tr.remove();
-                            })
-                            .catch(err => {
-                                console.error(err);
-                                showPopup('เกิดข้อผิดพลาดในการลบ');
-                            });
-                        });
-                        return;
-                    }
-                });
-
-                // --- LOGIC: SAVE EDIT ---
-                const editCancel = document.getElementById('edit-plo-cancel');
-                const editSave = document.getElementById('edit-plo-save');
-
-                if(editCancel) editCancel.onclick = () => toggleModal('edit-plo-modal', false);
-
-                if(editSave) {
-                    editSave.onclick = () => {
-                        const id = document.getElementById('edit-id').value;
-                        const desc = document.getElementById('edit-desc').value.trim();
-                        const domain = document.getElementById('edit-domain').value.trim();
-                        const level = document.getElementById('edit-level').value.trim();
-
-                        showConfirm('ต้องการบันทึกการแก้ไขหรือไม่?', () => {
-                            axios.post(`/management/plos/update/${id}`, { 
-                                description: desc,
-                                domain: domain,
-                                learning_level: level,
-                                _token: '{{ csrf_token() }}'
-                            })
-                            .then(res => {
-                                showPopup('แก้ไขข้อมูลสำเร็จ', true);
-                                setTimeout(() => location.reload(), 1500);
-                            })
-                            .catch(err => {
-                                console.error(err);
-                                showPopup('เกิดข้อผิดพลาดในการแก้ไข: ' + (err.response?.data?.message || err.message));
-                            });
-                        });
-                    };
-                }
-                @endif
-            });
-        </script>
     </body>
 </html>

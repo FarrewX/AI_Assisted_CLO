@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/management/addcourse.js'])
     @endif
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <style>
@@ -36,7 +36,10 @@
 
         @if(isset($selectedCurriculumId) && $selectedCurriculumId)
             <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6 flex flex-wrap gap-4 justify-between items-center">
-                <button id="btn-add" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow flex items-center gap-2 transition">
+                <button id="btn-add" 
+                    data-route-create="{{ route('addcourse.create') }}"
+                    data-curriculum-id="{{ $selectedCurriculumId ?? '' }}"
+                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow flex items-center gap-2 transition">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
                     เพิ่มรายวิชาใหม่
                 </button>
@@ -81,8 +84,12 @@
                             <td class="px-6 py-4 text-gray-500">{{ $c->course_name_en ?? '-' }}</td>
                             <td class="px-6 py-4 text-center">{{ $c->credit ?? '-' }}</td>
                             <td class="px-6 py-4 text-center space-x-2">
-                                <button class="btn-edit text-indigo-600 hover:text-indigo-900 font-semibold transition">แก้ไข</button>
-                                <button class="btn-delete text-red-600 hover:text-red-900 font-semibold transition">ลบ</button>
+                                <button class="btn-edit text-amber-500 hover:text-amber-700 font-semibold transition">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                </button>
+                                <button class="btn-delete text-red-600 hover:text-red-900 font-semibold transition">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                </button>
                             </td>
                         </tr>
                         @empty
@@ -218,87 +225,45 @@
     @endif
 
     @if(session('success') || session('error'))
-    <div id="toast-notification" class="fixed bottom-5 right-5 bg-white p-4 rounded-lg shadow-lg border-l-4 {{ session('error') ? 'border-red-500' : 'border-green-500' }}">
-        <div class="text-sm font-bold {{ session('error') ? 'text-red-600' : 'text-green-600' }}">
-            {{ session('success') ?? session('error') }}
-        </div>
-    </div>
-    <script>setTimeout(() => { document.getElementById('toast-notification')?.remove(); }, 3000);</script>
-    @endif
+        <div id="popup-notification" class="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm transition-opacity duration-300">
+            
+            <div class="relative w-full max-w-sm p-6 mx-4 bg-white shadow-2xl rounded-2xl transform transition-all scale-100">
+                
+                <button type="button" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition focus:outline-none" onclick="document.getElementById('popup-notification').remove()">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
 
-    @if ($errors->any())
-        <div class="fixed top-20 right-5 z-50 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-lg max-w-md">
-            <div class="flex justify-between items-start">
-                <div>
-                    <p class="font-bold">เกิดข้อผิดพลาดในการบันทึก:</p>
-                    <ul class="list-disc ml-5 mt-1 text-sm">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
+                <div class="text-center">
+                    <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full mb-4 {{ session('error') ? 'bg-red-100' : 'bg-green-100' }}">
+                        @if(session('error'))
+                            <svg class="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                            </svg>
+                        @else
+                            <svg class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                        @endif
+                    </div>
+
+                    <h3 class="text-lg font-bold text-gray-900 mb-1">
+                        {{ session('error') ? 'เกิดข้อผิดพลาด' : 'ทำรายการสำเร็จ' }}
+                    </h3>
+                    <p class="text-sm text-gray-500 mb-6">
+                        {{ session('success') ?? session('error') }}
+                    </p>
+
+                    <button onclick="document.getElementById('popup-notification').remove()" 
+                        class="w-full inline-flex justify-center rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2
+                        {{ session('error') ? 'bg-red-600 hover:bg-red-500 focus-visible:outline-red-600' : 'bg-green-600 hover:bg-green-500 focus-visible:outline-green-600' }}">
+                        ตกลง
+                    </button>
                 </div>
-                <button onclick="this.parentElement.parentElement.remove()" class="text-red-500 hover:text-red-700 font-bold ml-4">X</button>
             </div>
         </div>
     @endif
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script>
-        $(document).ready(function() {
-            // Select2
-            $('#curriculum_select').select2({
-                placeholder: "-- ค้นหาและเลือกหลักสูตร --",
-                allowClear: true,
-                width: '100%'
-            }).on('select2:select', function (e) {
-                $(this).closest('form').submit();
-            });
-
-            // Modal Logic
-            const modal = document.getElementById('addcourse-modal');
-            const form = document.getElementById('addcourse-form');
-            const modalTitle = document.getElementById('modal-title');
-            const methodField = document.getElementById('method-field');
-            const toggleModal = (id, show) => document.getElementById(id).classList.toggle('hidden', !show);
-
-            document.getElementById('btn-add').onclick = () => {
-                form.action = "{{ route('addcourse.create') }}";
-                methodField.value = "POST";
-                modalTitle.textContent = "เพิ่มรายวิชาใหม่";
-                form.reset();
-                // set default curriculum_id again because reset() clears hidden inputs
-                form.querySelector('input[name="curriculum_id"]').value = "{{ $selectedCurriculumId ?? '' }}";
-                toggleModal('addcourse-modal', true);
-            };
-
-            document.addEventListener('click', (e) => {
-                if(e.target.classList.contains('btn-edit')) {
-                    const tr = e.target.closest('tr');
-                    const data = tr.dataset;
-                    form.action = `/management/addcourses/${data.id}`; 
-                    methodField.value = "PUT";
-                    modalTitle.textContent = `แก้ไขรายวิชา: ${data.code}`;
-                    
-                    document.getElementById('input-code').value = data.code;
-                    document.getElementById('input-name-th').value = data.nameTh;
-                    document.getElementById('input-name-en').value = data.nameEn || '';
-                    document.getElementById('input-detail-th').value = data.detailTh || '';
-                    document.getElementById('input-detail-en').value = data.detailEn || '';
-                    document.getElementById('input-credit').value = data.credit || '';
-                    toggleModal('addcourse-modal', true);
-                }
-                if(e.target.classList.contains('btn-delete')) {
-                    const tr = e.target.closest('tr');
-                    const deleteForm = document.getElementById('delete-form');
-                    deleteForm.action = `/management/addcourses/${tr.dataset.id}`;
-                    toggleModal('delete-modal', true);
-                }
-            });
-
-            document.getElementById('btn-close-modal').onclick = () => toggleModal('addcourse-modal', false);
-            document.getElementById('btn-close-delete').onclick = () => toggleModal('delete-modal', false);
-        });
-    </script>
 </body>
 </html>

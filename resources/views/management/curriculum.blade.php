@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
+        @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/management/curriculum.js'])
     @endif
 </head>
 <body class="bg-gray-50">
@@ -16,12 +16,18 @@
     <div class="container mx-auto p-4 pt-20">
         <div class="flex justify-between items-center mb-6">
             <h1 class="text-2xl font-bold text-gray-800">จัดการหลักสูตร (Curriculum)</h1>
-            <button id="btn-add" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow flex items-center gap-2 transition transform hover:-translate-y-0.5">
+            <button id="btn-add" 
+                data-route-store="{{ route('curriculum.store') }}"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow flex items-center gap-2 transition transform hover:-translate-y-0.5">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
                 </svg>
                 เพิ่มหลักสูตรใหม่
             </button>
+            @if(session('success') || session('error'))
+            <div id="toast-notification" class="fixed bottom-5 right-5 z-50 ...">
+                </div>
+            @endif
         </div>
 
         <div class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
@@ -61,13 +67,12 @@
                             <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium space-x-2">
                                 @if($isTrashed)
                                     <span class="text-red-400 italic font-normal text-xs uppercase tracking-wider">ยกเลิกการใช้งาน</span>
-                                    {{-- (Optional) คุณอาจจะเพิ่มปุ่ม Restore ตรงนี้ในอนาคต --}}
                                 @else
                                     <button class="btn-edit text-amber-500 hover:text-amber-700 bg-amber-50 hover:bg-amber-100 px-3 py-1 rounded-md transition">
-                                        แก้ไข
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                                     </button>
                                     <button class="btn-delete text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 px-3 py-1 rounded-md transition">
-                                        ลบ
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                     </button>
                                 @endif
                             </td>
@@ -171,102 +176,42 @@
     </div>
 
     @if(session('success') || session('error'))
-    <div id="toast-notification" class="fixed bottom-5 right-5 z-50 transform transition-all duration-300 translate-y-0 opacity-100">
-        <div class="flex items-center w-full max-w-xs p-4 text-gray-500 bg-white rounded-lg shadow-lg border-l-4 {{ session('error') ? 'border-red-500' : 'border-green-500' }}" role="alert">
-            <div class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 {{ session('error') ? 'text-red-500 bg-red-100' : 'text-green-500 bg-green-100' }} rounded-lg">
-                @if(session('error'))
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-                @else
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
-                @endif
+        <div id="popup-notification" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity duration-300">
+            
+            <div class="relative w-full max-w-sm p-6 mx-4 bg-white shadow-2xl rounded-2xl transform transition-all scale-100">
+                
+                <button type="button" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition focus:outline-none" onclick="document.getElementById('popup-notification').remove()">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+
+                <div class="text-center">
+                    <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full mb-4 {{ session('error') ? 'bg-red-100' : 'bg-green-100' }}">
+                        @if(session('error'))
+                            <svg class="h-8 w-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                            </svg>
+                        @else
+                            <svg class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                            </svg>
+                        @endif
+                    </div>
+
+                    <h3 class="text-lg font-bold text-gray-900 mb-1">
+                        {{ session('error') ? 'เกิดข้อผิดพลาด' : 'ทำรายการสำเร็จ' }}
+                    </h3>
+                    <p class="text-sm text-gray-500 mb-6">
+                        {{ session('success') ?? session('error') }}
+                    </p>
+
+                    <button onclick="document.getElementById('popup-notification').remove()" 
+                        class="w-full inline-flex justify-center rounded-xl px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2
+                        {{ session('error') ? 'bg-red-600 hover:bg-red-500 focus-visible:outline-red-600' : 'bg-green-600 hover:bg-green-500 focus-visible:outline-green-600' }}">
+                        ตกลง
+                    </button>
+                </div>
             </div>
-            <div class="ml-3 text-sm font-normal text-gray-800">{{ session('success') ?? session('error') }}</div>
-            <button type="button" class="ml-auto -mx-1.5 -my-1.5 bg-white text-gray-400 hover:text-gray-900 rounded-lg focus:ring-2 focus:ring-gray-300 p-1.5 hover:bg-gray-100 inline-flex h-8 w-8" onclick="this.parentElement.remove()">
-                <span class="sr-only">Close</span>
-                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
-            </button>
         </div>
-    </div>
-    <script>setTimeout(() => { document.getElementById('toast-notification')?.remove(); }, 4000);</script>
     @endif
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const modal = document.getElementById('curriculum-modal');
-            const form = document.getElementById('curriculum-form');
-            const modalTitle = document.getElementById('modal-title');
-            const methodField = document.getElementById('method-field');
-            
-            const toggleModal = (id, show) => {
-                const el = document.getElementById(id);
-                if(show) {
-                    el.classList.remove('hidden');
-                    setTimeout(() => el.children[0].classList.replace('scale-95', 'scale-100'), 10);
-                } else {
-                    el.children[0].classList.replace('scale-100', 'scale-95');
-                    setTimeout(() => el.classList.add('hidden'), 200);
-                }
-            };
-
-            // 1. ปุ่มเพิ่มหลักสูตร
-            document.getElementById('btn-add').onclick = () => {
-                form.action = "{{ route('curriculum.store') }}";
-                methodField.value = "POST";
-                modalTitle.textContent = "เพิ่มหลักสูตรใหม่";
-                form.reset();
-                toggleModal('curriculum-modal', true);
-            };
-
-            // 2. Event Delegation สำหรับปุ่มแก้ไขและลบ
-            document.addEventListener('click', (e) => {
-                // Edit
-                if(e.target.closest('.btn-edit')) {
-                    const tr = e.target.closest('tr');
-                    const data = tr.dataset;
-
-                    form.action = `/management/curriculum/${data.id}`;
-                    methodField.value = "PUT";
-                    modalTitle.textContent = `แก้ไขหลักสูตร: ${data.name}`;
-                    
-                    document.getElementById('input-year').value = data.year;
-                    document.getElementById('input-name').value = data.name;
-                    document.getElementById('input-faculty').value = data.faculty;
-                    document.getElementById('input-major').value = data.major;
-
-                    toggleModal('curriculum-modal', true);
-                }
-
-                // Delete
-                if(e.target.closest('.btn-delete')) {
-                    const tr = e.target.closest('tr');
-                    const deleteForm = document.getElementById('delete-form');
-                    deleteForm.action = `/management/curriculum/${tr.dataset.id}`;
-                    toggleModal('delete-modal', true);
-                }
-            });
-
-            // Close Buttons
-            const closeActions = [
-                document.getElementById('btn-close-modal'),
-                document.getElementById('btn-close-x'),
-                document.getElementById('btn-close-delete')
-            ];
-            
-            closeActions.forEach(btn => {
-                if(btn) {
-                    btn.onclick = () => {
-                        toggleModal('curriculum-modal', false);
-                        toggleModal('delete-modal', false);
-                    };
-                }
-            });
-
-            // ปิด Modal เมื่อคลิกพื้นหลัง
-            window.onclick = (e) => {
-                if (e.target == modal) toggleModal('curriculum-modal', false);
-                if (e.target == document.getElementById('delete-modal')) toggleModal('delete-modal', false);
-            };
-        });
-    </script>
 </body>
 </html>

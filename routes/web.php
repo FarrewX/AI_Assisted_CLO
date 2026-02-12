@@ -38,14 +38,6 @@ Route::middleware('web')->group(function () {
         // Route::get('/generate/show', [GenerateController::class, 'showGenerated'])->name('show.generated');
         Route::post('/generate/save', [GenerateController::class, 'saveGeneratedText'])->name('save.generate');
 
-        Route::get('/about', function () {
-            return view('about');
-        })->name('about');
-
-        Route::get('/guide', function () {
-            return view('guide');
-        })->name('guide');
-
         Route::get('/message', function () {
             return view('message');
         })->name('message');

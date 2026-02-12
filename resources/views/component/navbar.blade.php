@@ -6,136 +6,145 @@
 </head>
 <body>
     <!-- resources/views/layouts/navbar.blade.php -->
-    <nav class="w-full bg-white shadow-sm" x-data="{ open: false }">
-        <div class="max-w-7xl mx-auto px-4 py-2 flex items-center justify-between">
-            
-            <!-- Desktop Menu -->
-            <div class="flex items-center space-x-8">
-                <a href="{{ url('/') }}" class="text-lg font-bold">ELO Generator</a>
-                @if(Auth::check() && Auth::user()->role_id == 1)
-                    <a href="{{ url('/management') }}" class="hidden md:flex space-x-8 mt-1.5 text-sm font-medium hover:text-blue-600">
-                        management
-                    </a>
-                    <a href="{{ url('/notification') }}" class="hidden md:flex space-x-8 mt-1.5 text-sm font-medium hover:text-blue-600">
-                        notification
-                    </a>
-                @endif
+    <nav x-data="{ mobileOpen: false, userOpen: false }" 
+        class="fixed top-0 left-0 w-full z-50 bg-white/90 backdrop-blur-md border-b border-gray-200 shadow-sm transition-all duration-300">
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                
+                <!-- Desktop Menu -->
+                <div class="flex">
+                    <div class="flex-shrink-0 flex items-center gap-2 cursor-pointer" onclick="window.location='{{ url('/') }}'">
+                        <span class="font-bold text-xl tracking-tight text-gray-800">ELO Generator</span>
+                    </div>
+
+                    <div class="hidden sm:ml-8 sm:flex">
+                        <a href="{{ url('/') }}" 
+                        class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200
+                        {{ Request::is('/') ? 'border-blue-500 text-gray-900' : 'border-transparent text-gray-500 hover:text-blue-600 hover:border-gray-300' }}">
+                            หน้าหลัก
+                        </a>
+                    </div>
+                    @if(Auth::check() && Auth::user()->role_id == 1)
+                        <div class="hidden sm:flex">
+                            <div class="hidden sm:ml-8 sm:flex">
+                                <a href="{{ url('/management') }}" 
+                                class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200
+                                {{ Request::is('management*') ? 'border-blue-500 text-gray-900' : 'border-transparent text-gray-500 hover:text-blue-600 hover:border-gray-300' }}">
+                                    การจัดการ
+                                </a>
+                            </div>
+                            <div class="hidden sm:ml-8 sm:flex">
+                                <a href="{{ url('/notification') }}"
+                                class="inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition-colors duration-200
+                                {{ Request::is('notification*') ? 'border-blue-500 text-gray-900' : 'border-transparent text-gray-500 hover:text-blue-600 hover:border-gray-300' }}">
+                                    แจ้งเตือน
+                                </a>
+                            </div>
+                        </div>
+                    @endif
+                </div>
+
+                <div class="hidden sm:ml-6 sm:flex sm:items-center">
+                    @auth
+                        <div class="ml-3 relative">
+                            <div>
+                                <button @click="userOpen = !userOpen" 
+                                        @click.away="userOpen = false"
+                                        class="bg-white flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 items-center gap-2 px-3 py-1 border border-gray-200 hover:bg-gray-50 transition">
+                                    <span class="sr-only">Open user menu</span>
+                                    <div class="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
+                                        {{ substr(Auth::user()->name ?? 'U', 0, 1) }}
+                                    </div>
+                                    <span class="text-gray-700 font-medium hidden md:block">{{ Auth::user()->name }}</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <div x-show="userOpen"
+                                x-transition:enter="transition ease-out duration-200"
+                                x-transition:enter-start="transform opacity-0 scale-95"
+                                x-transition:enter-end="transform opacity-100 scale-100"
+                                x-transition:leave="transition ease-in duration-75"
+                                x-transition:leave-start="transform opacity-100 scale-100"
+                                x-transition:leave-end="transform opacity-0 scale-95"
+                                class="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50"
+                                style="display: none;">
+                                
+                                <div class="px-4 py-2 border-b border-gray-100">
+                                    <p class="text-xs text-gray-500">Signed in as</p>
+                                    <p class="text-sm font-semibold text-gray-900 truncate">{{ Auth::user()->email }}</p>
+                                </div>
+
+                                <!-- <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">ตั้งค่าโปรไฟล์</a> -->
+                                
+                                <form method="POST" action="{{ route('logout') }}">
+                                    @csrf
+                                    <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                                        ออกจากระบบ
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    @else
+                        <a href="{{ route('login') }}" class="text-gray-500 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium">เข้าสู่ระบบ</a>
+                    @endauth
+                </div>
+
+                <!-- Hamburger button (mobile only) -->
+                <div class="-mr-2 flex items-center sm:hidden">
+                    <button @click="mobileOpen = !mobileOpen" type="button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500" aria-controls="mobile-menu" aria-expanded="false">
+                        <span class="sr-only">Open main menu</span>
+                        <svg x-show="!mobileOpen" class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                        <svg x-show="mobileOpen" class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true" style="display: none;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div x-show="mobileOpen" class="sm:hidden bg-white border-t border-gray-100" id="mobile-menu" style="display: none;">
+            <div class="pt-2 pb-3 space-y-1">
+                <a href="{{ url('/') }}" class="block pl-3 pr-4 py-2 border-l-4 text-base font-medium {{ Request::is('/') ? 'bg-blue-50 border-blue-500 text-blue-700' : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700' }}">
+                    หน้าหลัก
+                </a>
+                <a href="{{ url('/management') }}" class="block pl-3 pr-4 py-2 border-l-4 text-base font-medium {{ Request::is('management*') ? 'bg-blue-50 border-blue-500 text-blue-700' : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700' }}">
+                    การจัดการ
+                </a>
+                <a href="{{ url('/notification') }}" class="block pl-3 pr-4 py-2 border-l-4 text-base font-medium {{ Request::is('notification*') ? 'bg-blue-50 border-blue-500 text-blue-700' : 'border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700' }}">
+                    แจ้งเตือน
+                </a>
             </div>
             
-            <div class="flex items-center space-x-4">
-                <a href="{{ url('/') }}" class="hidden md:inline-block bg-blue-600 text-white px-4 py-2 rounded-md shadow hover:bg-blue-700">
-                    Get start
-                </a>
-                <div class="hidden md:inline-block relative inline-block text-left">
-                <!-- ไอคอนผู้ใช้ -->
-                <button id="userMenuButton" type="button"
-                    class="w-8 h-8 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center"
-                    aria-expanded="true" aria-haspopup="true">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor"
-                        viewBox="0 0 16 16" class="w-5 h-5 text-gray-700">
-                        <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm4-3a4 4 0 1 
-                                1-8 0 4 4 0 0 1 8 0zM14 14s-1-1.5-6-1.5S2 14 2 
-                                14s1-4 6-4 6 4 6 4z"/>
-                    </svg>
-                </button>
-
-                <!-- Dropdown ออกจากระบบ -->
-                <div id="userDropdown"
-                    class="hidden absolute right-0 mt-2 w-36 bg-white rounded-md shadow-lg py-1 z-50">
-                    <form action="{{ route('logout') }}" method="POST">
+            @auth
+            <div class="pt-4 pb-4 border-t border-gray-200">
+                <div class="flex items-center px-4">
+                    <div class="flex-shrink-0">
+                        <div class="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
+                            {{ substr(Auth::user()->name ?? 'U', 0, 1) }}
+                        </div>
+                    </div>
+                    <div class="ml-3">
+                        <div class="text-base font-medium text-gray-800">{{ Auth::user()->name }}</div>
+                        <div class="text-sm font-medium text-gray-500">{{ Auth::user()->email }}</div>
+                    </div>
+                </div>
+                <div class="mt-3 space-y-1">
+                    <form method="POST" action="{{ route('logout') }}">
                         @csrf
-                        <button type="submit"
-                            class="block w-full text-left px-4 py-2 text-sm text-red-500 hover:bg-gray-100 hover:text-red-700">
+                        <button type="submit" class="block w-full text-left px-4 py-2 text-base font-medium text-red-600 hover:text-red-800 hover:bg-gray-50">
                             ออกจากระบบ
                         </button>
                     </form>
                 </div>
             </div>
-
-                <!-- Hamburger button (mobile only) -->
-                <button @click="open = !open" class="md:hidden p-2 rounded-md hover:bg-gray-100">
-                    <svg x-show="!open" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" 
-                         viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                              d="M4 6h16M4 12h16M4 18h16" />
-                    </svg>
-                    <svg x-show="open" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" 
-                         viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                              d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-        </div>
-
-        <!-- Mobile Menu -->
-        <div 
-            class="fixed inset-y-0 right-0 w-64 z-50 flex"
-            x-show="open"
-            x-transition:enter="transition ease-out duration-300"
-            x-transition:enter-start="opacity-0"
-            x-transition:enter-end="opacity-100"
-            x-transition:leave="transition ease-in duration-200"
-            x-transition:leave-start="opacity-100"
-            x-transition:leave-end="opacity-0"
-        >
-            <!-- Overlay (พื้นหลังดำโปร่งคลิกปิดได้) -->
-            <div class="fixed inset-0 bg-black bg-opacity-50" @click="open = false"></div>
-
-            <!-- Sidebar -->
-            <div 
-                class="relative w-64 bg-white shadow-lg h-full z-50 p-6"
-                x-transition:enter="transition ease-out duration-300"
-                x-transition:enter-start="translate-x-full"
-                x-transition:enter-end="translate-x-0"
-                x-transition:leave="transition ease-in duration-200"
-                x-transition:leave-start="translate-x-0"
-                x-transition:leave-end="translate-x-full"
-            >
-                <!-- Close button -->
-                <button @click="open = false" class="absolute top-4 right-7.5 text-gray-600 hover:text-gray-900">
-                    ✕
-                </button>
-
-                <nav class="space-y-4 mt-8">
-                    @if(Auth::check() && Auth::user()->role_id == 1)
-                        <a href="{{ url('/management') }}" class="block text-base font-medium hover:text-blue-600">management</a>
-                        <a href="{{ url('/notification') }}" class="block text-base font-medium hover:text-blue-600">notification</a>
-                    @endif
-                    
-                    <a href="{{ url('/') }}" class="block bg-blue-600 text-white px-4 py-2 rounded-md shadow hover:bg-blue-700">
-                        Get start
-                    </a>
-                    <a class="flex w-10 h-10 items-center justify-center rounded-full bg-gray-200 hover:bg-gray-300">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" 
-                            viewBox="0 0 16 16" class="w-6 h-6 text-gray-700">
-                            <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm4-3a4 4 0 1 
-                                    1-8 0 4 4 0 0 1 8 0zM14 14s-1-1.5-6-1.5S2 14 2 
-                                    14s1-4 6-4 6 4 6 4z"/>
-                        </svg>
-                    </a>
-                    <form class="block text-base font-medium text-red-500 hover:text-red-700" action="{{ route('logout') }}" method="POST" style="display:inline">
-                        @csrf
-                        <button type="submit" class="btn">ออกจากระบบ</button>
-                    </form>
-                </nav>
-            </div>
+            @endauth
         </div>
     </nav>
 </body>
-<script>
-    const userButton = document.getElementById('userMenuButton');
-    const userDropdown = document.getElementById('userDropdown');
-
-    userButton.addEventListener('click', () => {
-        userDropdown.classList.toggle('hidden');
-    });
-
-    // ปิด dropdown ถ้าคลิกนอก
-    window.addEventListener('click', (e) => {
-        if (!userButton.contains(e.target) && !userDropdown.contains(e.target)) {
-            userDropdown.classList.add('hidden');
-        }
-    });
-</script>
 </html>

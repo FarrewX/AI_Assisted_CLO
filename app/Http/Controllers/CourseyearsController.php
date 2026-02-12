@@ -49,7 +49,7 @@ class CourseyearsController extends Controller
         }
 
         // ส่งตัวแปรกลับไปที่ View
-        return view('management.course', compact('curriculum', 'courses', 'users', 'professor', 'courseId', 'curriculumId'));
+        return view('management.professor_course', compact('curriculum', 'courses', 'users', 'professor', 'courseId', 'curriculumId'));
     }
 
     public function store(Request $request, $courseId)
