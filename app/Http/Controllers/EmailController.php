@@ -49,6 +49,18 @@ class EmailController extends Controller
         $subject = $request->input('subject');
         $message = $request->input('message');
 
+        // 1. ดึง Config ล่าสุดจาก DB เพื่อตั้งค่า SMTP
+        $emailConfig = EmailForSend::latest()->first();
+        if ($emailConfig) {
+            config([
+                'mail.mailers.smtp.username' => $emailConfig->mail_username,
+                'mail.mailers.smtp.password' => Crypt::decryptString($emailConfig->mail_password),
+                'mail.from.address' => $emailConfig->mail_username,
+                'mail.from.name' => 'ระบบ AI ELO',
+            ]);
+        }
+
+        // 2. Query ข้อมูลอาจารย์และสถานะ
         $courses = DB::table('courseyears as cy')
             ->join('users as u', 'cy.user_id', '=', 'u.user_id')
             ->leftJoin('statuses as s', 'cy.id', '=', 's.ref_id')
@@ -57,32 +69,35 @@ class EmailController extends Controller
                 'u.name',
                 's.startprompt',
                 's.generated',
-                's.downloaded',
                 's.success'
             )
             ->whereNotNull('u.email')
             ->get();
 
-        // เอาเฉพาะที่ยังไม่ครบ 100%
+        // 3. กรองเอาเฉพาะคนที่ยังไม่เสร็จ และ "เอาเฉพาะอีเมลที่ไม่ซ้ำกัน"
         $filtered = $courses->filter(function ($item) {
-            $stepCount = collect([
+            $steps = [
                 $item->startprompt,
                 $item->generated,
-                $item->downloaded,
                 $item->success
-            ])->filter()->count();
+            ];
+            
+            // นับว่าทำไปแล้วกี่ step
+            $completedSteps = collect($steps)->filter()->count();
 
-            $progress = ($stepCount / 4) * 100;
+            // ถ้าทำไม่ครบ 3 steps ให้ส่งเมลหา
+            return $completedSteps < 3;
+        })->unique('email'); // <--- เพิ่มตรงนี้เพื่อให้ 1 อีเมล ได้รับแค่ 1 ฉบับ
 
-            return $progress < 100;
-        });
-
-        // ส่งอีเมลให้แต่ละคน
-        foreach ($filtered as $user) {
-            Mail::to($user->email)->send(new NotificationMail($message, $subject));
+        // 4. ส่งอีเมลให้แต่ละคน (Unique Email)
+        try {
+            foreach ($filtered as $user) {
+                Mail::to($user->email)->send(new NotificationMail($request->message, $request->subject));
+            }
+            return back()->with('success', '📧 ส่งอีเมลแจ้งเตือนอาจารย์จำนวน ' . $filtered->count() . ' ท่านสำเร็จแล้ว! (ท่านละ 1 ฉบับ)');
+        } catch (\Exception $e) {
+            return back()->with('error', 'เกิดข้อผิดพลาดในการส่ง: ' . $e->getMessage());
         }
-
-        return back()->with('success', '📧 ส่งอีเมลสำเร็จแล้ว!');
     }
 
 

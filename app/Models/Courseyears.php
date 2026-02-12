@@ -28,7 +28,7 @@ class Courseyears extends Model
 
     public function status()
     {
-        return $this->hasOne(Status::class, 'id', 'ref_id');
+        return $this->hasOne(Status::class, 'ref_id', 'id');
     }
 
     public function curriculum_course()
