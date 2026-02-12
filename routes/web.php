@@ -73,7 +73,7 @@ Route::middleware('web')->group(function () {
 
         Route::get('/notification', [NotificationController::class, 'index'])->name('notification');
 
-        Route::get('/send-email', [EmailController::class, 'showForm']);
+        Route::get('/send-email', [EmailController::class, 'showForm'])->name('email.form');
         Route::post('/send-email', [EmailController::class, 'send'])->name('send.email');
         Route::get('/management/email', [EmailController::class, 'index'])->name('management.gmail');
         Route::post('/management/email', [EmailController::class, 'save'])->name('email.save');
