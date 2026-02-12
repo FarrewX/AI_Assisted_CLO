@@ -130,23 +130,27 @@
       </div>
     </div>
 
-    <form id="loginForm" action="{{ route('login.post') }}" method="POST" novalidate>
+    <form id="loginForm" action="{{ route('login.post') }}" method="POST">
     @csrf
     <div class="field">
       <label for="email">อีเมลหรือชื่อผู้ใช้</label>
       <input id="email" name="email" type="text" placeholder="you@example.com" autocomplete="username" value="{{ old('email') }}" required />
       @error('email')
-        <div class="error" style="display:block;">{{ $message }}</div>
+        <div class="error" style="display:block; color: red; margin-top: 5px; font-size: 0.9em;">{{ $message }}</div>
       @enderror
+      <div id="emailErr" class="error" style="display:none; color:red; font-size: 0.9em; margin-top: 5px;">กรุณากรอกอีเมล</div>
     </div>
 
     <div class="field">
       <label for="password">รหัสผ่าน</label>
-      <input id="password" name="password" type="password" placeholder="••••••••" autocomplete="current-password" required minlength="6" />
-      <button type="button" class="toggle-pass" onclick="togglePass()">แสดง</button>
+      <div style="position: relative;">
+          <input id="password" name="password" type="password" placeholder="••••••••" autocomplete="current-password" required minlength="6" style="width: 100%; padding-right: 50px;" />
+          <button type="button" class="toggle-pass" onclick="togglePass()" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #666;">แสดง</button>
+      </div>
       @error('password')
-        <div class="error" style="display:block;">{{ $message }}</div>
+        <div class="error" style="display:block; color: red; margin-top: 5px; font-size: 0.9em;">{{ $message }}</div>
       @enderror
+      <div id="passErr" class="error" style="display:none; color:red; font-size: 0.9em; margin-top: 5px;">รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร</div>
     </div>
 
     <div class="row">
@@ -166,23 +170,6 @@
       inp.type = isPwd ? 'text' : 'password';
       btn.textContent = isPwd ? 'ซ่อน' : 'แสดง';
     }
-
-    // Minimal client-side validation & demo submit
-    document.getElementById('loginForm').addEventListener('submit', function (e) {
-      const email = document.getElementById('email');
-      const pass = document.getElementById('password');
-      const emailErr = document.getElementById('emailErr');
-      const passErr = document.getElementById('passErr');
-
-      let valid = true;
-      emailErr.style.display = 'none';
-      passErr.style.display = 'none';
-
-      if (!email.value.trim()) { emailErr.style.display = 'block'; valid = false; }
-      if (!pass.value || pass.value.length < 6) { passErr.style.display = 'block'; valid = false; }
-
-      if (!valid) { e.preventDefault(); return; }
-    });
   </script>
 </body>
 </html>
