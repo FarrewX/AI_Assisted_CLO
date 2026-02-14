@@ -75,9 +75,9 @@
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0 h-10 w-10 {{ $user->trashed() ? 'grayscale opacity-50' : '' }}">
-                                            @if($user->avatar)
+                                            @if($user->profile)
                                                 <img class="h-10 w-10 rounded-full object-cover shadow-sm border border-slate-200" 
-                                                    src="{{ asset('storage/' . $user->avatar) }}" 
+                                                    src="{{ asset('storage/' . $user->profile) }}" 
                                                     alt="{{ $user->name }}">
                                             @else
                                                 <div class="h-10 w-10 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-500 flex items-center justify-center text-blue-500 font-bold text-lg shadow-sm">
@@ -140,7 +140,7 @@
                                             title="เปลี่ยนบทบาท"
                                             data-id="{{ $user->user_id }}" data-name="{{ $user->name }}"
                                             data-email="{{ $user->email }}" data-role-id="{{ $user->role_id }}"
-                                            data-avatar="{{ $user->avatar ? asset('storage/' . $user->avatar) : '' }}">
+                                            data-profile="{{ $user->profile ? asset('storage/' . $user->profile) : '' }}">
                                             <i class="fa-solid fa-user-tag"></i>
                                         </button>
                                         
@@ -187,7 +187,7 @@
                     <div class="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-100 mb-4">
                         <div class="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold overflow-hidden border border-slate-200 relative">
                             <img id="modal-user-img" src="" class="hidden h-full w-full object-cover">
-                            <span id="modal-user-avatar" class="text-lg">U</span>
+                            <span id="modal-user-profile" class="text-lg">U</span>
                         </div>
                         <div>
                             <p id="modal-user-name" class="text-sm font-bold text-slate-800">User Name</p>

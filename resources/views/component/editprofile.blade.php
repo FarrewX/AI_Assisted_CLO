@@ -67,8 +67,8 @@
                                 @click="$refs.photo.click()">
                                 
                                 <div x-show="!photoPreview" class="w-full h-full flex items-center justify-center bg-blue-100 text-blue-600 text-4xl font-bold">
-                                    @if(Auth::user()->avatar)
-                                        <img src="{{ asset('storage/' . Auth::user()->avatar) }}" class="h-full w-full object-cover">
+                                    @if(Auth::user()->profile)
+                                        <img src="{{ asset('storage/' . Auth::user()->profile) }}" class="h-full w-full object-cover">
                                     @else
                                         {{ substr(Auth::user()->name, 0, 1) }}
                                     @endif
@@ -81,7 +81,7 @@
                                 </div>
                             </div>
 
-                            <input type="file" id="photo" name="avatar" class="hidden" accept="image/*"
+                            <input type="file" id="photo" name="profile" class="hidden" accept="image/*"
                                 x-ref="photo"
                                 @change="
                                     const file = $refs.photo.files[0];

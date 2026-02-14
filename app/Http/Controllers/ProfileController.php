@@ -27,20 +27,20 @@ class ProfileController extends Controller
                 'max:255', 
                 Rule::unique('users', 'email')->ignore($user->user_id, 'user_id')
             ],
-            'avatar' => ['nullable', 'image', 'max:2048'],
+            'profile' => ['nullable', 'image', 'max:2048'],
         ]);
 
         $user->name = $request->name;
         $user->email = $request->email;
 
-        if ($request->hasFile('avatar')) {
+        if ($request->hasFile('profile')) {
             // ลบรูปเก่า
-            if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
-                Storage::disk('public')->delete($user->avatar);
+            if ($user->profile && Storage::disk('public')->exists($user->profile)) {
+                Storage::disk('public')->delete($user->profile);
             }
             // อัปรูปใหม่
-            $path = $request->file('avatar')->store('avatars', 'public');
-            $user->avatar = $path;
+            $path = $request->file('profile')->store('profiles', 'public');
+            $user->profile = $path;
         }
 
         $user->save();

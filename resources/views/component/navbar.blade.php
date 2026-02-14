@@ -54,9 +54,9 @@
                                         class="bg-white flex text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 items-center gap-2 px-3 py-1 border border-gray-200 hover:bg-gray-50 transition">
                                     <span class="sr-only">Open user menu</span>
                                     
-                                    <div class="h-8 w-8 rounded-full overflow-hidden flex items-center justify-center border border-gray-200 {{ !Auth::user()->avatar ? 'bg-blue-100' : '' }}">
-                                        @if(Auth::user()->avatar)
-                                            <img src="{{ asset('storage/' . Auth::user()->avatar) }}" alt="{{ Auth::user()->name }}" class="h-full w-full object-cover">
+                                    <div class="h-8 w-8 rounded-full overflow-hidden flex items-center justify-center border border-gray-200 {{ !Auth::user()->profile ? 'bg-blue-100' : '' }}">
+                                        @if(Auth::user()->profile)
+                                            <img src="{{ asset('storage/' . Auth::user()->profile) }}" alt="{{ Auth::user()->name }}" class="h-full w-full object-cover">
                                         @else
                                             <span class="text-blue-600 font-bold text-sm">{{ substr(Auth::user()->name ?? 'U', 0, 1) }}</span>
                                         @endif
@@ -131,9 +131,9 @@
             <div class="pt-4 pb-4 border-t border-gray-200">
                 <div class="flex items-center px-4">
                     <div class="flex-shrink-0">
-                        <div class="h-10 w-10 rounded-full overflow-hidden flex items-center justify-center border border-gray-200 {{ !Auth::user()->avatar ? 'bg-blue-100' : '' }}">
-                            @if(Auth::user()->avatar)
-                                <img src="{{ asset('storage/' . Auth::user()->avatar) }}" alt="{{ Auth::user()->name }}" class="h-full w-full object-cover">
+                        <div class="h-10 w-10 rounded-full overflow-hidden flex items-center justify-center border border-gray-200 {{ !Auth::user()->profile ? 'bg-blue-100' : '' }}">
+                            @if(Auth::user()->profile)
+                                <img src="{{ asset('storage/' . Auth::user()->profile) }}" alt="{{ Auth::user()->name }}" class="h-full w-full object-cover">
                             @else
                                 <span class="text-blue-600 font-bold text-lg">{{ substr(Auth::user()->name ?? 'U', 0, 1) }}</span>
                             @endif

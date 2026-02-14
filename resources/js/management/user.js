@@ -48,11 +48,11 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // 1.2 🔥 แก้ไขส่วนแสดงรูปภาพ (Avatar Logic)
             const imgEl = document.getElementById('modal-user-img');
-            const textEl = document.getElementById('modal-user-avatar');
+            const textEl = document.getElementById('modal-user-profile');
             
-            if (data.avatar) {
-                // ถ้ามีรูป (URL ส่งมาจาก data-avatar)
-                imgEl.src = data.avatar;
+            if (data.profile) {
+                // ถ้ามีรูป (URL ส่งมาจาก data-profile)
+                imgEl.src = data.profile;
                 imgEl.classList.remove('hidden'); // แสดงรูป
                 textEl.classList.add('hidden');   // ซ่อนตัวอักษร
             } else {

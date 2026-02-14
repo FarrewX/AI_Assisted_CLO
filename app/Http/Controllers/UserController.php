@@ -44,7 +44,7 @@ class UserController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6|confirmed',
             'role_id' => 'required',
-            'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'profile' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         // 2. สร้าง User (ใช้ Transaction เพื่อความปลอดภัย)
@@ -69,9 +69,9 @@ class UserController extends Controller
             $user->is_active = false;
 
             // จัดการรูปภาพ
-            if ($request->hasFile('avatar')) {
-                $path = $request->file('avatar')->store('avatars', 'public');
-                $user->avatar = $path;
+            if ($request->hasFile('profile')) {
+                $path = $request->file('profile')->store('profiles', 'public');
+                $user->profile = $path;
             }
 
             $user->save();
