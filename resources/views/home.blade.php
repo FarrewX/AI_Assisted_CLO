@@ -85,8 +85,8 @@
                                                 
                                                 $statusConfig = match($stepCount) {
                                                     0 => ['text' => 'ยังไม่เริ่ม', 'color' => 'text-gray-500', 'bg' => 'bg-gray-200', 'btn' => 'เริ่มต้น', 'url' => '/form'],
-                                                    1 => ['text' => 'Prompt แล้ว', 'color' => 'text-orange-500', 'bg' => 'bg-orange-500', 'btn' => 'สร้างต่อ', 'url' => '/form'],
-                                                    2 => ['text' => 'Generated แล้ว', 'color' => 'text-blue-500', 'bg' => 'bg-blue-500', 'btn' => 'แก้ไข', 'url' => '/editdoc'],
+                                                    1 => ['text' => 'เริ่มทำแล้ว', 'color' => 'text-orange-500', 'bg' => 'bg-orange-500', 'btn' => 'สร้างต่อ', 'url' => '/form'],
+                                                    2 => ['text' => 'อยู่ระหว่างการสร้าง', 'color' => 'text-blue-500', 'bg' => 'bg-blue-500', 'btn' => 'แก้ไข', 'url' => '/editdoc'],
                                                     3 => ['text' => 'เสร็จสมบูรณ์', 'color' => 'text-green-600', 'bg' => 'bg-green-500', 'btn' => 'ตรวจสอบ', 'url' => '/editdoc'],
                                                     default => ['text' => '-', 'color' => 'text-gray-400', 'bg' => 'bg-gray-200', 'btn' => '', 'url' => '#']
                                                 };

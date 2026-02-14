@@ -198,48 +198,58 @@ class CourseController extends Controller
 
     public function savePrompt(Request $request)
     {
-        $data = $request->validate([
-            'CC_id'  => 'required|integer',
-            'year'   => 'required|integer',
-            'term'   => 'required|string',
-            'TQF'    => 'required|string',
+        // Validate ข้อมูล
+        $request->validate([
+            'CC_id'  => 'required',
+            'year'   => 'required',
+            'term'   => 'required',
+            'TQF'    => 'required',
             'prompt' => 'required|string',
         ]);
 
         $user = Auth::user();
 
-        // ค้นหา record โดยใช้ CC_id
-        $query = Courseyears::where('user_id', Auth::id())
+        // หา ID ของ Courseyears
+        $cy = Courseyears::where('CC_id', $request->CC_id)
             ->where('year', $request->year)
             ->where('term', $request->term)
-            ->where('TQF', $request->TQF);
-
-        if ($request->has('CC_id')) {
-            $query->where('CC_id', $request->CC_id);
-        }
-        
-        $cy = $query->first();
+            ->where('TQF', $request->TQF)
+            ->first();
 
         if (!$cy) {
-            return response()->json(['message' => 'ไม่พบข้อมูลรายวิชาสำหรับบันทึก'], 404);
+            return response()->json([
+                'message' => 'ไม่พบข้อมูลรายวิชาในฐานข้อมูล (Course Data Mismatch)',
+                'debug_received' => $request->only(['CC_id', 'year', 'term', 'TQF']),
+            ], 404);
         }
 
-        // บันทึก Prompt
-        DB::table('prompts')->updateOrInsert(
-            ['ref_id' => $cy->id],
-            [
-                'course_code' => $cy->curriculum_course->course->course_code ?? '', 
-                'course_text' => $data['prompt'],
-                'updated_at'  => now()
-            ]
-        );
+        if ($cy->user_id != $user->user_id) { 
+            return response()->json([
+                'message' => 'รายวิชานี้ไม่ใช่ของคุณ (User Ownership Mismatch)',
+                'db_owner' => $cy->user_id,
+                'current_user' => $user->user_id,
+            ], 403);
+        }
 
-        // อัปเดตสถานะ generated
-        DB::table('statuses')->updateOrInsert(
-            ['ref_id' => $cy->id],
-            ['generated' => now(), 'updated_at' => now()]
-        );
+        try {
+            DB::beginTransaction();
 
-        return response()->json(['message' => 'บันทึกข้อมูลเรียบร้อยแล้ว']);
+            // บันทึก Prompt
+            DB::table('prompts')->updateOrInsert(
+                ['ref_id' => $cy->id],
+                [
+                    'course_text' => $request->prompt,
+                    'updated_at'  => now(),
+                ]
+            );
+
+            DB::commit();
+
+            return response()->json(['message' => 'บันทึกข้อมูลเรียบร้อยแล้ว']);
+
+        } catch (\Exception $e) {
+            DB::rollBack(); // ยกเลิกถ้ามี error
+            return response()->json(['message' => 'Database Error: ' . $e->getMessage()], 500);
+        }
     }
 }

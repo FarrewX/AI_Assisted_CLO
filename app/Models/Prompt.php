@@ -9,7 +9,11 @@ class Prompt extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['ref_id','course_text'];
+    protected $table = 'prompts';
+    protected $primaryKey = 'ref_id';
+    public $incrementing = false;
+
+    protected $fillable = ['ref_id', 'course_text'];
 
     public function courseYear()
     {

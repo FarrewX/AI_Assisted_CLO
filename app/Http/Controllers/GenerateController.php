@@ -13,50 +13,71 @@ class GenerateController extends Controller
 {
     public function saveGeneratedText(Request $request)
     {
+        // validate incoming data
         $request->validate([
-            'course_id' => 'required|string',
-            'year' => 'required|integer',
-            'term' => 'required|string',
-            'TQF' => 'required|string',
+            'course_id' => 'required', 
+            'year' => 'required',
+            'term' => 'required',
+            'TQF' => 'required',
             'ai_response' => 'required|string',
         ]);
 
         $user = Auth::user();
 
+        // หา ID ของ Courseyears
         $cy = DB::table('courseyears')
-            ->where('course_id', $request->course_id)
+            ->where('CC_id', $request->course_id) 
             ->where('user_id', $user->user_id)
             ->where('year', $request->year)
             ->where('term', $request->term)
             ->where('TQF', $request->TQF)
             ->first();
 
-        if (!$cy) return response()->json(['message' => 'ไม่พบ courseyear'], 404);
+        // เช็คว่าเจอหรือไม่
+        if (!$cy) {
+            return response()->json([
+                'message' => 'ไม่พบข้อมูลรายวิชา (Courseyear not found)',
+                'debug' => $request->all()
+            ], 404);
+        }
 
-        $promptRow = DB::table('prompts')
-            ->where('ref_id', $cy->id)
-            ->first();
+        try {
+            DB::beginTransaction();
 
-        if (!$promptRow) return response()->json(['message' => 'ไม่พบ prompt'], 404);
+            // บันทึก/อัปเดต table Generates
+            DB::table('generates')->updateOrInsert(
+                ['ref_id' => $cy->id],
+                [
+                    'ai_text'    => $request->ai_response,
+                    'updated_at' => now(),
+                ]
+            );
 
-        // Insert ลง database
-        DB::table('generates')->insert([
-            'ref_id' => $promptRow->ref_id,
-            'ai_text' => $request->input('ai_response'),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+            // อัปเดต Status
+            DB::table('statuses')->updateOrInsert(
+                ['ref_id' => $cy->id],
+                [
+                    'generated'  => now(),
+                ]
+            );
 
-        // return response()->json(['message' => 'บันทึก generated เรียบร้อยแล้ว']);
+            DB::commit();
 
-        return response()->json([
-            'redirect' => route('editdoc', [
-                'course_id' => $request->course_id,
-                'year' => $request->year,
-                'term' => $request->term,
-                'TQF' => $request->TQF
-            ]),
-            'message' => 'บันทึก generated เรียบร้อยแล้ว'
-        ]);
+            // ส่ง Redirect
+            return response()->json([
+                'message'  => 'บันทึกเรียบร้อยแล้ว',
+                'redirect' => route('editdoc', [
+                    'course_id' => $request->course_id,
+                    'year'      => $request->year,
+                    'term'      => $request->term,
+                    'TQF'       => $request->TQF
+                ]),
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            // ส่ง Error Message กลับไปให้ JS เห็น
+            return response()->json(['message' => 'Database Error: ' . $e->getMessage()], 500);
+        }
     }
 }

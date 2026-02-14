@@ -9,8 +9,12 @@ class Status extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['course_id','startprompt','generated','downloaded','success'];
+    protected $table = 'statuses';
+    protected $primaryKey = 'ref_id';
+    public $incrementing = false;
 
+    protected $fillable = ['ref_id', 'startprompt', 'generated', 'success'];
+    
     public function course() {
         return $this->belongsTo(Course::class, 'course_id', 'course_id');
     }

@@ -67,13 +67,16 @@ window.fetchPrompt = function(CCid, year, term, TQF) {
         },
         body: JSON.stringify({ CC_id: CCid, year, term, TQF })
     })
-    .then(res => res.json())
+    .then(res => {
+        if (!res.ok) throw new Error('Network response was not ok');
+        return res.json();
+    })
     .then(data => {
-        if(data.prompt) {
+        if(data && data.prompt) {
             document.getElementById('prompt').value = data.prompt;
         }
     })
-    .catch(err => console.error(err));
+    .catch(err => console.error("Error fetching prompt:", err));
 }
 
 window.showPopup = function(message) {
@@ -100,10 +103,23 @@ window.openPreview = function() {
     let selectedOption = courseSelect.options[courseSelect.selectedIndex];
     let selectedText = selectedOption.text.trim();
 
+    const escapeHtml = (text) => {
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+    };
+
     let content = `
         <div class="grid grid-cols-1 gap-2">
             <p><span class="font-semibold">รายวิชา:</span> ${selectedText}</p>
-            <p><span class="font-semibold">รายละเอียด:</span> <br><span class="text-gray-600 bg-gray-50 p-2 block rounded mt-1 border">${prompt}</span></p>
+            <p><span class="font-semibold">รายละเอียด:</span> <br>
+               <span class="text-gray-600 bg-gray-50 p-2 block rounded mt-1 border whitespace-pre-wrap">${escapeHtml(prompt)}</span>
+            </p>
             <div class="flex gap-4">
                 <p><span class="font-semibold">จำนวน CLO:</span> ${numClo}</p>
                 <p><span class="font-semibold">PLO ที่เลือก:</span> ${ploLabels.join(', ')}</p>
@@ -163,9 +179,20 @@ window.submitForm = function() {
             year, term, TQF, prompt 
         })
     })
-    .then(res => {
-        if (!res.ok) throw new Error('Failed to save prompt');
-        return res.json();
+    .then(async res => {
+        const responseData = await res.text(); 
+        
+        if (!res.ok) {
+            console.error("Server Error Detail:", responseData);
+            try {
+                const jsonError = JSON.parse(responseData);
+                if (jsonError.message) throw new Error(jsonError.message);
+            } catch (e) {
+            }
+            throw new Error(`Save Failed (${res.status}): ${responseData.substring(0, 100)}...`);
+        }
+
+        return JSON.parse(responseData);
     })
     .then(data => {
         // Generate AI
@@ -194,67 +221,7 @@ window.submitForm = function() {
         let generatedText = data.response?.choices?.[0]?.text || '';
         console.log("AI generated text:", generatedText);
 
-        // Regex Logic (Keep exact logic from original)
-        const jsonMatch = generatedText.match(/```json([\s\S]*?)```/i) || generatedText.match(/\{[\s\S]*\}/);
-        let jsonData = null;
-
-        if (jsonMatch) {
-            let jsonString = jsonMatch[1] ? jsonMatch[1].trim() : jsonMatch[0].trim();
-            let cloCounter = 0;
-            jsonString = jsonString.replace(/^```json/i, '').replace(/```$/, '').trim();
-
-            // Extensive regex cleanup (Same as original)
-            jsonString = jsonString
-                .replace(/["“”]/g, '"')
-                .replace(/['‘’]/g, "'")
-                .replace(/\n\s*/g, ' ')
-                .replace(/\s{2,}/g, ' ')
-                .replace(/[“”]/g, '"')
-                .replace(/[‘’]/g, "'")
-                .replace(/\r?\n/g, ' ')
-                .replace(/:\s*([A-Za-zก-๙0-9_]+)\s*([,}\]])/g, ': "$1"$2')
-                .replace(/,\s*(?=[}\]])/g, '')
-                .replace(/"([^"]*?)'([^"]*?)"/g, (m, g1, g2) => `"${g1}\\'"${g2}"`)
-                .replace(/:\s*"([^"]*?)'([^"]*?)"/g, (m, g1, g2) => `: "${g1}\\'${g2}"`)
-                .replace(/\\'"+s/g, "'s")
-                .replace(/\\'"/g, "'")
-                .replace(/"\\'s/g, "'s")
-                .replace(/}\s*,\s*{\s*"/g, (match) => {
-                    cloCounter++;
-                    if (cloCounter <= numClo) {
-                        return `}, "CLO ${cloCounter}": { "`;
-                    }
-                    return match;
-                })
-                .replace(/"Assessment Method"\s*:\s*([^,\]}]+)/g, (m, g1) => `"Assessment Method": "${g1.trim().replace(/[)\s]+$/g, '')}"`)
-                .replace(/\)\s*,/g, ',')
-                .replace(/\)\s*}/g, '}')
-                .replace(/""([^"]+?)""/g, '"$1"')
-                .replace(/"(\s*)"เหตุผล":/g, '", "เหตุผล":')
-                .replace(/,\s*}/g, '}')
-                .trim();
-
-            if (!jsonString.startsWith('{')) jsonString = '{' + jsonString;
-            if (!jsonString.endsWith('}')) jsonString = jsonString + '}';
-            
-            // Clean specific keys
-            try {
-                // Pre-parsing cleanup loop (simulation of logic, easier after parse usually but followed structure)
-                // Note: Logic here is slightly tricky without object, doing parse first
-                jsonData = JSON5.parse(jsonString);
-                
-                for (const key in jsonData) {
-                    if (jsonData[key]["Learning’s Level"]) {
-                        jsonData[key]["Learning's Level"] = jsonData[key]["Learning’s Level"];
-                        delete jsonData[key]["Learning’s Level"];
-                    }
-                }
-                console.log("Parsed JSON5:", jsonData);
-            } catch (e) {
-                console.error("JSON5 parse error:", e.message);
-                jsonData = null;
-            }
-        }
+        let jsonData = cleanAndParseAIResponse(generatedText, numClo);
 
         let aiResponseToSave = '';
         if (jsonData) {
@@ -309,6 +276,70 @@ window.submitForm = function() {
         alert("เกิดข้อผิดพลาด: " + err.message);
         hideLoadingPopup();
     });
+}
+
+function cleanAndParseAIResponse(generatedText, numClo) {
+    // Regex Logic เดิมของคุณ (ย้ายมาไว้ที่นี่)
+    const jsonMatch = generatedText.match(/```json([\s\S]*?)```/i) || generatedText.match(/\{[\s\S]*\}/);
+    let jsonData = null;
+
+        if (jsonMatch) {
+            let jsonString = jsonMatch[1] ? jsonMatch[1].trim() : jsonMatch[0].trim();
+            let cloCounter = 0;
+            jsonString = jsonString.replace(/^```json/i, '').replace(/```$/, '').trim();
+
+            // Extensive regex cleanup (Same as original)
+            jsonString = jsonString
+                .replace(/["“”]/g, '"')
+                .replace(/['‘’]/g, "'")
+                .replace(/\n\s*/g, ' ')
+                .replace(/\s{2,}/g, ' ')
+                .replace(/[“”]/g, '"')
+                .replace(/[‘’]/g, "'")
+                .replace(/\r?\n/g, ' ')
+                .replace(/:\s*([A-Za-zก-๙0-9_]+)\s*([,}\]])/g, ': "$1"$2')
+                .replace(/,\s*(?=[}\]])/g, '')
+                .replace(/"([^"]*?)'([^"]*?)"/g, (m, g1, g2) => `"${g1}\\'"${g2}"`)
+                .replace(/:\s*"([^"]*?)'([^"]*?)"/g, (m, g1, g2) => `: "${g1}\\'${g2}"`)
+                .replace(/\\'"+s/g, "'s")
+                .replace(/\\'"/g, "'")
+                .replace(/"\\'s/g, "'s")
+                .replace(/}\s*,\s*{\s*"/g, (match) => {
+                    cloCounter++;
+                    if (cloCounter <= numClo) {
+                        return `}, "CLO ${cloCounter}": { "`;
+                    }
+                    return match;
+                })
+                .replace(/"Assessment Method"\s*:\s*([^,\]}]+)/g, (m, g1) => `"Assessment Method": "${g1.trim().replace(/[)\s]+$/g, '')}"`)
+                .replace(/\)\s*,/g, ',')
+                .replace(/\)\s*}/g, '}')
+                .replace(/""([^"]+?)""/g, '"$1"')
+                .replace(/"(\s*)"เหตุผล":/g, '", "เหตุผล":')
+                .replace(/,\s*}/g, '}')
+                .trim();
+
+            if (!jsonString.startsWith('{')) jsonString = '{' + jsonString;
+            if (!jsonString.endsWith('}')) jsonString = jsonString + '}';
+            
+            // Clean specific keys
+            try {
+                jsonData = JSON5.parse(jsonString);
+                
+                for (const key in jsonData) {
+                    if (jsonData[key]["Learning’s Level"]) {
+                        jsonData[key]["Learning's Level"] = jsonData[key]["Learning’s Level"];
+                        delete jsonData[key]["Learning’s Level"];
+                    }
+                }
+                console.log("Parsed JSON5:", jsonData);
+            } catch (e) {
+                console.error("JSON5 parse error:", e.message);
+                jsonData = null;
+            }
+        }
+
+    return jsonData;
 }
 
 window.showLoadingPopup = function() { document.getElementById('loadingPopup').classList.remove('hidden'); }
