@@ -78,6 +78,9 @@ ollama create elo_generator -f Modelfile
 - Run the model
 ollama run elo_generator
 
+- maybe run
+php artisan storage:link
+
 (https://github.com/ollama/ollama/blob/main/README.md)
 
 ## phpWord

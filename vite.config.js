@@ -15,6 +15,7 @@ export default defineConfig({
                 'resources/js/management/professor_course.js',
                 'resources/js/form.js',
                 'resources/js/register.js',
+                'resources/js/management/users.js',
             ],
             refresh: true,
         }),

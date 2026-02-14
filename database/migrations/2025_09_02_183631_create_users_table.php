@@ -19,6 +19,9 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('password');
             $table->string('remember_token')->nullable();
+            $table->boolean('is_active')->default(false);
+            $table->timestamp('last_login_at')->nullable();
+            $table->string('avatar')->nullable();
             $table->timestamps();
             $table->softDeletes();
 

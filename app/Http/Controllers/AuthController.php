@@ -18,6 +18,9 @@ class AuthController extends Controller
 
     public function login()
     {
+        if (Auth::check()) {
+            return redirect()->route('home');
+        }
         return view('auth.login');
     }
 
@@ -35,6 +38,12 @@ class AuthController extends Controller
 
         if ($user && Hash::check($request->password, $user->password)) {
             Auth::login($user, $request->has('remember'));
+
+            // อัปเดตสถานะ Active และเวลา Login ล่าสุด
+            $user->is_active = true;
+            $user->last_login_at = now();
+            $user->save();
+
             return redirect()->intended('/')->with('success', 'เข้าสู่ระบบสำเร็จ');
         }
 
@@ -73,6 +82,10 @@ class AuthController extends Controller
             $user->password = Hash::make($request->password);
             $user->role_id = '2';
             
+            // กำหนดสถานะ Active ทันทีที่สมัคร
+            $user->is_active = true;
+            $user->last_login_at = now();
+            
             $user->save();
 
             Auth::login($user); 
@@ -85,60 +98,18 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
+        // อัปเดตสถานะเป็น Inactive ก่อน Logout
+        if (Auth::check()) {
+            $user = Auth::user();
+            $user->is_active = false;
+            $user->save();
+        }
+
         Auth::logout(); // ลบ session ของ user
 
         $request->session()->invalidate(); // ยกเลิก session ทั้งหมด
         $request->session()->regenerateToken(); // สร้าง CSRF token ใหม่
 
         return redirect()->route('login')->with('success', 'ออกจากระบบเรียบร้อย');
-    }
-
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StoreAuthRequest $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Auth $auth)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Auth $auth)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateAuthRequest $request, Auth $auth)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Auth $auth)
-    {
-        //
     }
 }
