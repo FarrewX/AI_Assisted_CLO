@@ -170,34 +170,94 @@ class CourseManagementController extends Controller
 
         $file = $request->file('csv_file');
         $handle = fopen($file->path(), 'r');
-        fgetcsv($handle); // ข้าม Header
 
-        $importedData = []; // เก็บเฉพาะวิชาที่ "สร้างใหม่" เท่านั้น
+        // อ่าน Header จากไฟล์
+        $fileHeader = fgetcsv($handle);
 
+        // กำหนดรูปแบบ Header ที่ยอมรับได้
+        $allowedSchemas = [
+            // รูปแบบที่ 1: แบบไม่มี Timestamp (6 คอลัมน์)
+            [
+                'course_code', 
+                'course_name_th', 
+                'course_name_en', 
+                'course_detail_th', 
+                'course_detail_en', 
+                'credit'
+            ],
+            // รูปแบบที่ 2: แบบมี Timestamp (9 คอลัมน์)
+            [
+                'course_code', 
+                'course_name_th', 
+                'course_name_en', 
+                'course_detail_th', 
+                'course_detail_en', 
+                'credit',
+                'created_at',
+                'updated_at',
+                'deleted_at'
+            ]
+        ];
+
+        // ทำความสะอาด Header จากไฟล์
+        if ($fileHeader) {
+            $fileHeader = array_map(function($text) {
+                // ลบ BOM และช่องว่างหัวท้าย
+                $text = preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $text);
+                return strtolower(trim($text)); // แปลงเป็นตัวพิมพ์เล็กเพื่อเทียบง่ายขึ้น
+            }, $fileHeader);
+        } else {
+            fclose($handle);
+            return back()->with('error', 'ไฟล์ CSV ว่างเปล่า');
+        }
+
+        // ตรวจสอบว่าตรงกับรูปแบบใดรูปแบบหนึ่งหรือไม่
+        $isValidHeader = false;
+
+        foreach ($allowedSchemas as $schema) {
+            // แปลง Schema เป็นตัวพิมพ์เล็กเพื่อให้ตรงกัน
+            $normalizedSchema = array_map('strtolower', $schema);
+
+            // เช็คจำนวนคอลัมน์ และ เนื้อหาคอลัมน์ (ต้องเรียงลำดับตรงกัน)
+            if ($fileHeader === $normalizedSchema) {
+                $isValidHeader = true;
+                break; // เจอรูปแบบที่ตรงแล้ว หยุดเช็ค
+            }
+        }
+
+        if (!$isValidHeader) {
+            fclose($handle);
+            return back()->with('error', 'รูปแบบหัวตาราง (Header) ไม่ถูกต้อง กรุณาตรวจสอบไฟล์ CSV');
+        }
+
+        // เริ่มต้นกระบวนการ Import ข้อมูล
+        $importedData = [];
+        
         DB::beginTransaction();
         try {
             while (($row = fgetcsv($handle)) !== false) {
-                if (count($row) < 2) continue;
+                // ข้ามแถวที่ข้อมูลไม่ครบ (อย่างน้อยต้องมีถึง credit คือ index 5)
+                if (count($row) < 6) continue;
 
-                // แปลง Encoding
+                // แปลง Encoding ของข้อมูลในแถว
                 $row = array_map(function($text) {
                     return !mb_check_encoding($text, 'UTF-8') ? mb_convert_encoding($text, 'UTF-8', 'Windows-874') : trim($text);
                 }, $row);
 
+                // Map ข้อมูลตาม Index
                 $csvCode = $row[0];
                 $csvNameTh = $row[1] ?? '';
                 $csvNameEn = $row[2] ?? '';
                 $csvDetailTh = $row[3] ?? '';
                 $csvDetailEn = $row[4] ?? '';
                 $csvCredit = $row[5] ?? '';
-
-                // สร้าง Fingerprint ของ Detail จาก CSV (ตามสูตร 1 เว้น 5)
+                
+                // สร้าง Fingerprint
                 $fpDetailTh = $this->sampleText($csvDetailTh);
                 $fpDetailEn = $this->sampleText($csvDetailEn);
 
                 // ดึงวิชาที่มีรหัสนี้ทั้งหมดในระบบ (รวมที่ถูกลบไปแล้ว) มาเช็ค
                 $existingCourses = Course::withTrashed()->where('course_code', $csvCode)->get();
-
                 $foundExactMatch = false;
                 $targetCourseId = null;
 
@@ -215,13 +275,13 @@ class CourseManagementController extends Controller
                     if ($matchNameTh && $matchNameEn && $matchCredit && $matchDetailTh && $matchDetailEn) {
                         $foundExactMatch = true;
                         
-                        // ถ้าอันที่เหมือนกันถูกลบอยู่ ให้กู้คืน (แต่ไม่แก้อะไรเพิ่ม เพราะเหมือนกันแล้ว)
+                        // ถ้าอันที่เหมือนกันถูกลบอยู่ ให้กู้คืน
                         if ($existing->trashed()) {
                             $existing->restore();
                         }
                         
                         $targetCourseId = $existing->id;
-                        break; // เจอตัวเหมือนแล้ว หยุดหา
+                        break; // เจอตัวเหมือนกัน หยุดหา
                     }
                 }
 
@@ -237,9 +297,7 @@ class CourseManagementController extends Controller
                     ]);
                     
                     $targetCourseId = $newCourse->id;
-                    
-                    // เก็บลง Array เพื่อแจ้งเตือนเฉพาะอันใหม่
-                    $importedData[] = $newCourse; 
+                    $importedData[] = $newCourse;
                 }
 
                 // เชื่อมโยงเข้าหลักสูตร
@@ -254,10 +312,11 @@ class CourseManagementController extends Controller
 
             return redirect()->back()
                 ->with('success', 'นำเข้าข้อมูลเรียบร้อยแล้ว')
-                ->with('imported_courses', $importedData); // ส่งเฉพาะวิชาที่สร้างใหม่ไปแสดง Popup
+                ->with('imported_courses', $importedData);
 
         } catch (\Exception $e) {
             DB::rollBack();
+            fclose($handle); // ปิดไฟล์ถ้า error
             return back()->with('error', 'เกิดข้อผิดพลาด: ' . $e->getMessage());
         }
     }
