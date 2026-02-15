@@ -58,6 +58,9 @@ Route::middleware('web')->group(function () {
 
         Route::patch('/savedataedit', [DocumentController::class, 'savedataedit']);
         Route::get('/getdataedit', [DocumentController::class, 'getInitialData']);
+
+        Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+        Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     });
 
     Route::middleware(['auth', 'admin'])->group(function () {
@@ -98,9 +101,6 @@ Route::middleware('web')->group(function () {
         Route::put('/management/users/{id}/update-role', [UserController::class, 'updateRole'])->name('management.users.updateRole');
         Route::delete('/management/users/{id}', [UserController::class, 'destroy'])->name('management.users.destroy');
         Route::post('/management/users/{id}/restore', [UserController::class, 'restore'])->name('management.users.restore');
-
-        Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-        Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 
     });
 
