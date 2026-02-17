@@ -11,9 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('prompts', function (Blueprint $table) {
+        Schema::create('course_evaluations', function (Blueprint $table) {
             $table->unsignedBigInteger('courseyear_id_ref');
-            $table->text('course_text');
+            $table->text('feedback')->nullable()->comment('ข้อเสนอแนะ (s3)'); 
+            $table->text('improvement')->nullable()->comment('การปรับปรุง (s3)');
+            $table->text('agreement')->nullable()->comment('ข้อตกลงร่วม (s4)');
+            $table->json('curriculum_map_data')->nullable()->comment('ข้อมูล Curriculum Map (s5_2)');
             $table->timestamps();
 
             $table->foreign('courseyear_id_ref')->references('id')->on('courseyears')->onDelete('cascade');
@@ -25,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('prompts');
+        Schema::dropIfExists('course_evaluations');
     }
 };

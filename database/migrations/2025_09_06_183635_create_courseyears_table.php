@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('term')->nullable();
             $table->string('TQF')->nullable();
             $table->timestamps();
+            $table->softDeletes()->nullable();
 
             $table->foreign('user_id')->references('user_id')->on('users')->onDelete('cascade');
             $table->foreign('CC_id')->references('id')->on('curriculum_courses')->onDelete('cascade');

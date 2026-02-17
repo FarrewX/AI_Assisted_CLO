@@ -15,7 +15,7 @@ class GenerateController extends Controller
     {
         // validate incoming data
         $request->validate([
-            'course_id' => 'required', 
+            'CC_id' => 'required', 
             'year' => 'required',
             'term' => 'required',
             'TQF' => 'required',
@@ -26,7 +26,7 @@ class GenerateController extends Controller
 
         // หา ID ของ Courseyears
         $cy = DB::table('courseyears')
-            ->where('CC_id', $request->course_id) 
+            ->where('CC_id', $request->CC_id) 
             ->where('user_id', $user->user_id)
             ->where('year', $request->year)
             ->where('term', $request->term)
@@ -46,7 +46,7 @@ class GenerateController extends Controller
 
             // บันทึก/อัปเดต table Generates
             DB::table('generates')->updateOrInsert(
-                ['ref_id' => $cy->id],
+                ['courseyear_id_ref' => $cy->id],
                 [
                     'ai_text'    => $request->ai_response,
                     'updated_at' => now(),
@@ -55,7 +55,7 @@ class GenerateController extends Controller
 
             // อัปเดต Status
             DB::table('statuses')->updateOrInsert(
-                ['ref_id' => $cy->id],
+                ['courseyear_id_ref' => $cy->id],
                 [
                     'generated'  => now(),
                 ]
@@ -67,7 +67,7 @@ class GenerateController extends Controller
             return response()->json([
                 'message'  => 'บันทึกเรียบร้อยแล้ว',
                 'redirect' => route('editdoc', [
-                    'course_id' => $request->course_id,
+                    'CC_id' => $request->CC_id,
                     'year'      => $request->year,
                     'term'      => $request->term,
                     'TQF'       => $request->TQF

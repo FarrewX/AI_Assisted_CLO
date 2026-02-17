@@ -17,15 +17,19 @@ class Curriculum extends Model
     public $incrementing = true;
     protected $keyType = 'int';
 
-    protected $fillable = ['curriculum_year', 'curriculum_name', 'faculty', 'major'];
+    protected $fillable = ['curriculum_year', 'curriculum_name', 'faculty', 'major', 'campus'];
 
     public function curriculum_courses()
     {
-        return $this->hasMany(Curriculum_course::class, 'id', 'curriculum_id');
+        return $this->hasMany(Curriculum_course::class, 'curriculum_id', 'id');
     }
 
     public function plos()
     {
         return $this->hasMany(Plos::class, 'curriculum_year_ref', 'curriculum_year');
+    }
+
+    public function llls() {
+        return $this->hasMany(curriculum_llls::class, 'curriculum_id_ref', 'id');
     }
 }

@@ -10,11 +10,11 @@ class Plan extends Model
    use HasFactory;
 
     protected $table = 'plans';
-    protected $primaryKey = 'ref_id';
+    protected $primaryKey = 'courseyear_id_ref';
     public $incrementing = false;
 
     protected $fillable = [
-        'ref_id',
+        'courseyear_id_ref',
         'teaching_methods',
         'lesson_plan',
         'assessment_strategies',
@@ -31,8 +31,8 @@ class Plan extends Model
         'grading_criteria' => 'array',
     ];
 
-    public function curriculum()
+    public function courseYear()
     {
-        return $this->belongsTo(Curriculum::class, 'ref_id', 'ref_id');
+        return $this->belongsTo(Courseyears::class, 'courseyear_id_ref', 'id');
     }
 }

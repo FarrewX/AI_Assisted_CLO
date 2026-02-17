@@ -219,6 +219,8 @@ window.submitForm = function() {
     .then(res => res.json())
     .then(data => { 
         let generatedText = data.response?.choices?.[0]?.text || '';
+        let prompt_string = data.prompt_string || '';
+        console.log("Debug prompt_string:", prompt_string);
         console.log("AI generated text:", generatedText);
 
         let jsonData = cleanAndParseAIResponse(generatedText, numClo);
@@ -244,7 +246,7 @@ window.submitForm = function() {
             },
             body: JSON.stringify({
                 CC_id: CCid,
-                course_id: coursePk,
+                course_code: coursePk,
                 year, term, TQF,
                 ai_response: aiResponseToSave
             })
@@ -265,7 +267,7 @@ window.submitForm = function() {
     })
     .then(saveData => {
         if (saveData.redirect) {
-            window.location.href = saveData.redirect;
+            // window.location.href = saveData.redirect;
         } else {
             alert('บันทึกสำเร็จ แต่ไม่มี Redirect URL');
             hideLoadingPopup();

@@ -27,7 +27,7 @@ class CourseyearsController extends Controller
         $professor = null;
         
         $curriculumId = $request->curriculum_id;
-        $courseId = $request->course_id;
+        $courseId = $request->course_code;
 
         // 2. ถ้าเลือกหลักสูตร -> ดึงรายวิชาที่ผูกกับหลักสูตรนั้น (ผ่านตารางกลาง curriculum_courses)
         if ($curriculumId) {
@@ -39,9 +39,9 @@ class CourseyearsController extends Controller
         // 3. ถ้าเลือกทั้งหลักสูตรและวิชา -> ดึงข้อมูลการเปิดสอน (Courseyears)
         if ($curriculumId && $courseId) {
             $professor = Courseyears::with('user')
-                // Query วิ่งผ่าน CC_id ไปหาตารางกลาง เพื่อเช็ค course_id และ curriculum_id
+                // Query วิ่งผ่าน CC_id ไปหาตารางกลาง เพื่อเช็ค course_code และ curriculum_id
                 ->whereHas('curriculum_course', function ($query) use ($courseId, $curriculumId) {
-                    $query->where('course_id', $courseId)
+                    $query->where('course_code', $courseId)
                           ->where('curriculum_id', $curriculumId);
                 })
                 ->orderBy('year', 'desc')
@@ -73,9 +73,9 @@ class CourseyearsController extends Controller
             $yearBE += 543;
         }
 
-        // 3. ค้นหา CC_id จาก course_id และ curriculum_id (Logic ที่ถูกต้อง)
+        // 3. ค้นหา CC_id จาก course_code และ curriculum_id (Logic ที่ถูกต้อง)
         // เปลี่ยนจาก latest() เป็นการระบุ curriculum_id เพื่อให้ได้คู่ที่ถูกต้องแน่นอน
-        $curriculumCourse = Curriculum_course::where('course_id', $courseId)
+        $curriculumCourse = Curriculum_course::where('course_code', $courseId)
             ->where('curriculum_id', $request->curriculum_id)
             ->first();
 
@@ -125,7 +125,7 @@ class CourseyearsController extends Controller
         $relation = Curriculum_course::find($record->CC_id);
         
         if (!$relation || 
-            $relation->course_id != $courseId || 
+            $relation->course_code != $courseId || 
             $relation->curriculum_id != $request->curriculum_id) {
             return back()->with('error', 'ผิดพลาด: ข้อมูลที่แก้ไขไม่ตรงกับหลักสูตรหรือวิชาปัจจุบัน');
         }
@@ -164,7 +164,7 @@ class CourseyearsController extends Controller
 
         // ตรวจสอบก่อนลบว่าข้อมูลตรงกับวิชาที่ส่งมาไหม (กันการลบผิดตัว)
         $relation = Curriculum_course::find($record->CC_id);
-        if ($relation && $relation->course_id != $courseId) {
+        if ($relation && $relation->course_code != $courseId) {
              return back()->with('error', 'เกิดข้อผิดพลาด: ไม่สามารถลบข้อมูลข้ามรายวิชาได้');
         }
 

@@ -63,7 +63,7 @@ class EmailController extends Controller
         // 2. Query ข้อมูลอาจารย์และสถานะ
         $courses = DB::table('courseyears as cy')
             ->join('users as u', 'cy.user_id', '=', 'u.user_id')
-            ->leftJoin('statuses as s', 'cy.id', '=', 's.ref_id')
+            ->leftJoin('statuses as s', 'cy.id', '=', 's.courseyear_id_ref')
             ->select(
                 'u.email',
                 'u.name',

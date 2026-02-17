@@ -8,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const urlParams = new URLSearchParams(window.location.search);
         
         // ใช้ค่าจาก URL หรือถ้าไม่มีให้ใช้ค่าเริ่มต้น (ป้องกัน Error)
-        const courseId = urlParams.get('course_id');
+        const courseId = urlParams.get('course_code');
         const year = urlParams.get('year');
         const term = urlParams.get('term');
         const tqf = urlParams.get('TQF');
@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!element && fieldName === 'section9_1_data') element = document.getElementById('referenceList');
         if (!element && fieldName.startsWith('plo')) element = document.getElementById('plosTableBody');
         
-        console.log('Saving:', { field: fieldName, value: value, course_id: courseId });
+        console.log('Saving:', { field: fieldName, value: value, course_code: courseId });
         
         // Feedback Logic
         let originalColor = '';
@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     'Accept': 'application/json'
                 },
                 body: JSON.stringify({
-                    course_id: courseId, year: year, term: term, TQF: tqf,
+                    course_code: courseId, year: year, term: term, TQF: tqf,
                     field: fieldName,
                     value: typeof value === 'object' ? JSON.stringify(value) : value
                 })

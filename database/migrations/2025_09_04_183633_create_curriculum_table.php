@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('curriculum_name');
             $table->string('faculty');
             $table->string('major');
+            $table->string('campus');
             $table->timestamps();
             $table->softDeletes()->nullable();
         });

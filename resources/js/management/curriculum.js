@@ -57,6 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('input-name').value = data.name;
             document.getElementById('input-faculty').value = data.faculty;
             document.getElementById('input-major').value = data.major;
+            document.getElementById('input-campus').value = data.campus;
 
             toggleModal('curriculum-modal', true);
         }

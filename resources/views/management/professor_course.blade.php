@@ -46,10 +46,10 @@
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-2">เลือกรายวิชา</label>
                             @if(count($courses) > 0)
-                                <select id="course" name="course_id" class="w-full">
+                                <select id="course" name="course_code" class="w-full">
                                     <option value="">-- เลือกรายวิชา --</option>
                                     @foreach($courses as $course)
-                                        <option value="{{ $course->id }}" {{ request('course_id') == $course->id ? 'selected' : '' }}>
+                                        <option value="{{ $course->id }}" {{ request('course_code') == $course->id ? 'selected' : '' }}>
                                             {{ $course->course_code }} {{ $course->course_name_th }}
                                         </option>
                                     @endforeach

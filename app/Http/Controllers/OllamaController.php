@@ -58,7 +58,7 @@ json ที่ประกอบด้วย:
         return response()->json([
             'response' => $response->json(),
             'course_text' => $prompt,
-            'course_id' => $course,
+            'course_name_th' => $course,
             'num_clo' => $num_clo,
             'select_plo' => $select_plo,
             'prompt_string' => $promptString,

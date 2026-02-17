@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Courseyears extends Model
 {
     use HasFactory;
+    use SoftDeletes;
     
     protected $primaryKey = 'id';
     public $incrementing = true;
@@ -18,7 +20,7 @@ class Courseyears extends Model
 
     public function prompts()
     {
-        return $this->hasOne(Prompt::class, 'id', 'ref_id');
+        return $this->hasOne(Prompt::class, 'id', 'courseyear_id_ref');
     }
 
     public function user()
@@ -28,11 +30,16 @@ class Courseyears extends Model
 
     public function status()
     {
-        return $this->hasOne(Status::class, 'ref_id', 'id');
+        return $this->hasOne(Status::class, 'courseyear_id_ref', 'id');
     }
 
     public function curriculum_course()
     {
         return $this->belongsTo(Curriculum_course::class, 'CC_id', 'id');
+    }
+
+    public function course_learning_maps()
+    {
+        return $this->hasOne(course_learning_maps::class, 'courseyear_id_ref', 'id');
     }
 }

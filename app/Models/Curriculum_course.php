@@ -12,7 +12,7 @@ class Curriculum_course extends Model
     use SoftDeletes;
     
     protected $table = 'curriculum_courses';
-    protected $fillable = ['curriculum_id', 'course_id'];
+    protected $fillable = ['curriculum_id', 'course_code'];
 
     public function curriculum()
     {
@@ -21,6 +21,11 @@ class Curriculum_course extends Model
 
     public function course()
     {
-        return $this->belongsTo(Course::class, 'course_id', 'id');
+        return $this->belongsTo(Course::class, 'course_code', 'id');
+    }
+
+    public function course_type()
+    {
+        return $this->belongsTo(Course_types::class, 'course_code', 'CC_id_ref');
     }
 }

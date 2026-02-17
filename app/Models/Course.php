@@ -30,6 +30,6 @@ class Course extends Model
 
     public function curriculum_courses()
     {   
-        return $this->hasMany(Curriculum_course::class, 'course_id', 'id');
+        return $this->hasMany(Curriculum_course::class, 'course_code', 'id');
     }
 }

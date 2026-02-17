@@ -18,34 +18,36 @@ class DocumentController extends Controller
     public function editdoc(Request $request)
     {
         $user = Auth::user();
-        $course_id = $request->query('course_id');
+        $CC_id = $request->query('CC_id');
         $year = (int) $request->query('year');
         $term = $request->query('term');
         $TQF = $request->query('TQF');
 
-        if (!$course_id || !$year || $term === null || $TQF === null || !$user) {
+        if (!$CC_id || !$year || $term === null || $TQF === null || !$user) {
             abort(400, 'Missing required parameters or not authenticated');
         }
 
         $context = DB::table('courseyears as cy')
             ->leftJoin('users as u', 'cy.user_id', '=', 'u.user_id')
-            ->leftJoin('courses as c', 'cy.course_id', '=', 'c.course_id')
-            ->where('cy.user_id', $user->user_id)
-            ->where('cy.course_id', $course_id)
-            ->where('cy.year', $year)
-            ->where('cy.term', $term)
-            ->where('cy.TQF', $TQF)
+            ->leftJoin('curriculum_courses as cc', 'cy.CC_id', '=', 'cc.id')
+            ->leftJoin('courses as c', 'cc.id', '=', 'c.id') 
+            
             ->select(
                 'cy.id as courseYearId',
                 'u.name as instructorName',
-                'c.course_id',
+                'c.course_code',
                 'c.course_name_th',
                 'c.course_name_en',
                 'c.course_detail_th',
                 'c.course_detail_en',
                 'cy.year',
-                'cy.term',
+                'cy.term'
             )
+            ->where('cy.user_id', Auth::user()->user_id)
+            ->where('cy.CC_id', $request->CC_id)
+            ->where('cy.year', $request->year)
+            ->where('cy.term', $request->term)
+            ->where('cy.TQF', $request->TQF)
             ->first();
             
         if (!$context) {
@@ -84,7 +86,7 @@ class DocumentController extends Controller
         $plans = null;
         $generates = null;
 
-        $curriculum = DB::table('curriculum')->where('ref_id', $context->courseYearId)->first();
+        $curriculum = DB::table('curriculum')->where('courseyear_id_ref', $context->courseYearId)->first();
 
         $savedOutcomeData = ($curriculum && $curriculum->outcome_statement) 
                             ? json_decode($curriculum->outcome_statement, true) 
@@ -152,17 +154,17 @@ class DocumentController extends Controller
         }
 
         if ($curriculum) {
-            $curriculaRefId = $curriculum->ref_id;
-            $feedback = DB::table('feedback')->where('ref_id', $curriculaRefId)->first();
-            $plans = DB::table('plans')->where('ref_id', $curriculaRefId)->first();
+            $curriculaRefId = $curriculum->courseyear_id_ref;
+            $feedback = DB::table('feedback')->where('courseyear_id_ref', $curriculaRefId)->first();
+            $plans = DB::table('plans')->where('courseyear_id_ref', $curriculaRefId)->first();
 
             $promptIds = DB::table('prompts')
-                            ->where('ref_id', $context->courseYearId)
-                            ->pluck('ref_id'); // Get an array of IDs [1, 2, 5]
+                            ->where('courseyear_id_ref', $context->courseYearId)
+                            ->pluck('courseyear_id_ref'); // Get an array of IDs [1, 2, 5]
 
             if ($promptIds->isNotEmpty()) {
                 $generates = DB::table('generates')
-                                ->whereIn('ref_id', $promptIds)
+                                ->whereIn('courseyear_id_ref', $promptIds)
                                 ->orderBy('created_at', 'desc')
                                 ->first();
             }
@@ -212,7 +214,7 @@ class DocumentController extends Controller
     public function savedataedit(Request $request)
     {
         $validated = $request->validate([
-            'course_id' => 'required',
+            'CC_id' => 'required',
             'year'      => 'required',
             'term'      => 'required',
             'TQF'       => 'required',
@@ -227,7 +229,7 @@ class DocumentController extends Controller
 
         try {
             $courseYear = DB::table('courseyears')
-                ->where('course_id', $validated['course_id'])
+                ->where('CC_id', $validated['CC_id'])
                 ->where('user_id', $user->user_id)
                 ->where('year', $validated['year'])
                 ->where('term', $validated['term'])
@@ -253,8 +255,8 @@ class DocumentController extends Controller
         $targetTable = '';
 
         try {
-            $curriculaConditions = ['ref_id' => $courseYearId];
-            $courseInfo = DB::table('courses')->where('course_id', $validated['course_id'])->first();
+            $curriculaConditions = ['courseyear_id_ref' => $courseYearId];
+            $courseInfo = DB::table('courses')->where('CC_id', $validated['CC_id'])->first();
             $courseName = $courseInfo ? $courseInfo->course_name_en : 'Unknown Course';
             $curriculaDefaults = [
                 'curriculum_name' => 'วิทยาศาสตรบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์',
@@ -273,7 +275,7 @@ class DocumentController extends Controller
             ]))
             {
                 $targetTable = 'feedback';
-                $conditions = ['ref_id' => $curriculaId];
+                $conditions = ['courseyear_id_ref' => $curriculaId];
                 $dbField = ($field === 'agreement') ? 'agreement' : $field;
                 $dataToUpdate = [$dbField => $value];
                 $this->updateOrCreateWithDB($targetTable, $conditions, $dataToUpdate);
@@ -281,7 +283,7 @@ class DocumentController extends Controller
 
             } else if (Str::startsWith($field, 'plan_') || in_array($field, ['grade_correction', 'art_culture'])) {
                 $targetTable = 'plans';
-                $conditions = ['ref_id' => $curriculaId];
+                $conditions = ['courseyear_id_ref' => $curriculaId];
                 // Use the field name directly (e.g., 'grade_correction')
                 $dataToUpdate = [$field => $value];
                 $this->updateOrCreateWithDB($targetTable, $conditions, $dataToUpdate);
@@ -289,17 +291,17 @@ class DocumentController extends Controller
 
             } else if (Str::startsWith($field, 'rubric_')) {
                 $targetTable = 'rubrics';
-                $conditions = ['ref_id' => $curriculaId];
+                $conditions = ['courseyear_id_ref' => $curriculaId];
                 $dataToUpdate = [$field => $value];
                 $this->updateOrCreateWithDB($targetTable, $conditions, $dataToUpdate);
                 return response()->json(['success' => true, 'message' => "Field '{$field}' updated in '{$targetTable}'."]);
 
             } else if ($field === 'ai_text') {
                 $targetTable = 'generates';
-                 $latestPrompt = DB::table('prompts')->where('ref_id', $courseYearId)->orderBy('updated_at', 'desc')->first();
+                 $latestPrompt = DB::table('prompts')->where('courseyear_id_ref', $courseYearId)->orderBy('updated_at', 'desc')->first();
                 if ($latestPrompt && property_exists($latestPrompt, 'id')) {
                     $promptId = $latestPrompt->id;
-                    $latestGenerate = DB::table('generates')->where('ref_id', $promptId)->orderBy('updated_at', 'desc')->first();
+                    $latestGenerate = DB::table('generates')->where('courseyear_id_ref', $promptId)->orderBy('updated_at', 'desc')->first();
                     if ($latestGenerate && property_exists($latestGenerate, 'id')) {
                         $generateId = $latestGenerate->id;
                         DB::table('generates')->where('id', $generateId)->update(['ai_text' => $value, 'updated_at' => now()]);
@@ -310,7 +312,7 @@ class DocumentController extends Controller
 
             } else if ($field === 'section6_data') {
                 $targetTable = 'plans';
-                $conditions = ['ref_id' => $curriculaId];
+                $conditions = ['courseyear_id_ref' => $curriculaId];
 
                 $decodedValue = null;
                 $jsonValue = '{}'; 
@@ -389,7 +391,7 @@ class DocumentController extends Controller
 
             } else if ($field === 'section7_data') {
                 $targetTable = 'plans';
-                $conditions = ['ref_id' => $curriculaId];
+                $conditions = ['courseyear_id_ref' => $curriculaId];
                 $decodedValue = $this->prepareJsonValue($value);
                 $jsonToSave = json_encode($decodedValue, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
                 $dataToUpdate = ['lesson_plan' => $jsonToSave];
@@ -398,7 +400,7 @@ class DocumentController extends Controller
 
             } else if ($field === 'section8_1_data') {
                 $targetTable = 'plans';
-                $conditions = ['ref_id' => $curriculaId];
+                $conditions = ['courseyear_id_ref' => $curriculaId];
                 $decodedValue = $this->prepareJsonValue($value);
                 $jsonToSave = json_encode($decodedValue, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
                 $dataToUpdate = ['assessment_strategies' => $jsonToSave];
@@ -407,7 +409,7 @@ class DocumentController extends Controller
 
             } else if ($field === 'section8_2_data') {
                 $targetTable = 'plans';
-                $conditions = ['ref_id' => $curriculaId];
+                $conditions = ['courseyear_id_ref' => $curriculaId];
                 $decodedValue = $this->prepareJsonValue($value);
                 $jsonToSave = json_encode($decodedValue, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
                 $dataToUpdate = ['rubrics' => $jsonToSave];
@@ -416,7 +418,7 @@ class DocumentController extends Controller
 
             } else if ($field === 'section9_1_data') {
                 $targetTable = 'feedback';
-                $conditions = ['ref_id' => $curriculaId];
+                $conditions = ['courseyear_id_ref' => $curriculaId];
                 $decodedValue = $this->prepareJsonValue($value);
                 $jsonToSave = json_encode($decodedValue, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
                 $dataToUpdate = ['research' => $jsonToSave];
@@ -426,7 +428,7 @@ class DocumentController extends Controller
             } // section 10
             else if (Str::startsWith($field, 'grade_')) {
                 $targetTable = 'plans';
-                $conditions = ['ref_id' => $curriculaId];
+                $conditions = ['courseyear_id_ref' => $curriculaId];
                 $jsonColumn = 'grading_criteria';
 
                 $defaultGradingData = [
@@ -468,7 +470,7 @@ class DocumentController extends Controller
             } // Section 5
             else if (Str::startsWith($field, 'plo') || Str::startsWith($field, 'curriculum_map_') || Str::startsWith($field, 'cloLll_desc_')) {
                 $targetTable = 'curriculum';
-                $conditions = ['ref_id' => $curriculaId];
+                $conditions = ['courseyear_id_ref' => $curriculaId];
                 $currentData = DB::table('curriculum')->where($conditions)->first();
                 
                 $dbPlos = [];
@@ -589,7 +591,7 @@ class DocumentController extends Controller
             } else {
                 // ค่า Default: บันทึกลงตาราง 'curriculum'
                 $targetTable = 'curriculum';
-                $conditions = ['ref_id' => $curriculaId];
+                $conditions = ['courseyear_id_ref' => $curriculaId];
                 $dataToUpdate = [$field => $value];
                 $this->updateOrCreateWithDB($targetTable, $conditions, $dataToUpdate, $curriculaDefaults);
                 return response()->json(['success' => true, 'message' => "Field '{$field}' updated in '{$targetTable}'."]);
@@ -649,14 +651,14 @@ class DocumentController extends Controller
                     DB::table($tableName)->where($conditions)->update($filteredDataToUpdate);
                  }
             }
-            return $existingRecord->id ?? $existingRecord->ref_id;
+            return $existingRecord->id ?? $existingRecord->courseyear_id_ref;
         } else {
              $defaultsToMerge = array_diff_key($defaults, $conditions, $dataToUpdate);
              $dataToInsert = array_merge($defaultsToMerge, $conditions, $dataToUpdate);
              $dataToInsert['created_at'] = now();
             $dataToInsert['updated_at'] = now();
              DB::table($tableName)->insert($dataToInsert);
-            return $conditions['id'] ?? $conditions['ref_id'];
+            return $conditions['id'] ?? $conditions['courseyear_id_ref'];
         }
     }
 
@@ -681,36 +683,37 @@ class DocumentController extends Controller
     {
         // DATA FETCHING
         $user = Auth::user();
-        $course_id = $request->query('course_id');
+        $CC_id = $request->query('CC_id');
         $year = (int) $request->query('year');
         $term = $request->query('term');
         $TQF = $request->query('TQF');
 
-        if (!$course_id || !$year || $term === null || $TQF === null || !$user) {
+        if (!$CC_id || !$year || $term === null || $TQF === null || !$user) {
             abort(400, 'Missing required parameters or not authenticated');
         }
 
         // 1. Fetch main context (Fixed: Removed faulty joins)
         $context = DB::table('courseyears as cy')
             ->leftJoin('users as u', 'cy.user_id', '=', 'u.user_id')
-            ->leftJoin('courses as c', 'cy.course_id', '=', 'c.course_id')
-            ->where('cy.user_id', $user->user_id)
-            ->where('cy.course_id', $course_id)
-            ->where('cy.year', $year)
-            ->where('cy.term', $term)
-            ->where('cy.TQF', $TQF)
+            ->leftJoin('curriculum_courses as cc', 'cy.CC_id', '=', 'cc.id')
+            ->leftJoin('courses as c', 'cc.id', '=', 'c.id') 
+            
             ->select(
                 'cy.id as courseYearId',
                 'u.name as instructorName',
-                'c.course_id',
+                'c.course_code',
                 'c.course_name_th',
                 'c.course_name_en',
                 'c.course_detail_th',
                 'c.course_detail_en',
                 'cy.year',
-                'cy.term',
-                'cy.TQF',
+                'cy.term'
             )
+            ->where('cy.user_id', Auth::user()->user_id)
+            ->where('cy.CC_id', $request->CC_id)
+            ->where('cy.year', $request->year)
+            ->where('cy.term', $request->term)
+            ->where('cy.TQF', $request->TQF)
             ->first();
             
         if (!$context) {
@@ -746,7 +749,7 @@ class DocumentController extends Controller
         
         $data = $curriculaDefaults + (array) $context; // Start with defaults
 
-        $curriculum = DB::table('curriculum')->where('ref_id', $context->courseYearId)->first();
+        $curriculum = DB::table('curriculum')->where('courseyear_id_ref', $context->courseYearId)->first();
         $feedback = null; $plans = null; $generates = null;
         $savedOutcomeData = ($curriculum && $curriculum->outcome_statement) 
                             ? json_decode($curriculum->outcome_statement, true) 
@@ -811,17 +814,17 @@ class DocumentController extends Controller
         }
 
         if ($curriculum) {
-            $curriculaRefId = $curriculum->ref_id;
-            $feedback = DB::table('feedback')->where('ref_id', $curriculaRefId)->first();
-            $plans = DB::table('plans')->where('ref_id', $curriculaRefId)->first();
+            $curriculaRefId = $curriculum->courseyear_id_ref;
+            $feedback = DB::table('feedback')->where('courseyear_id_ref', $curriculaRefId)->first();
+            $plans = DB::table('plans')->where('courseyear_id_ref', $curriculaRefId)->first();
             
             $promptIds = DB::table('prompts')
-                            ->where('ref_id', $context->courseYearId)
-                            ->pluck('ref_id'); // Get an array of IDs [1, 2, 5]
+                            ->where('courseyear_id_ref', $context->courseYearId)
+                            ->pluck('courseyear_id_ref'); // Get an array of IDs [1, 2, 5]
 
             if ($promptIds->isNotEmpty()) {
                 $generates = DB::table('generates')
-                                ->whereIn('ref_id', $promptIds)
+                                ->whereIn('courseyear_id_ref', $promptIds)
                                 ->orderBy('created_at', 'desc')
                                 ->first();
             }
@@ -906,7 +909,7 @@ class DocumentController extends Controller
             'logo_path' => public_path('image/mjulogo.jpg'),
             'title' => 'มหาวิทยาลัยแม่โจ้',
             'subtitle' => 'มคอ. 3 รายละเอียดรายวิชา',
-            'fileName' => 'มคอ-3-' . $get('course_id', 'unknown'),
+            'fileName' => 'มคอ-3-' . $get('CC_id', 'unknown'),
 
             'philosophy' => 'มุ่งมั่นพัฒนาบัณฑิตสู่ความเป็นผู้อุดมด้วยปัญญา อดทน สู้งาน เป็นผู้มีคุณธรรมและจริยธรรม เพื่อความเจริญรุ่งเรืองวัฒนาของสังคมไทยที่มีการเกษตรเป็นรากฐาน',
             'philosophy_education' => 'จัดการศึกษาเพื่อเสริมสร้างปัญญา ในรูปแบบการเรียนรู ้จากการปฏิบัติที ่บูรณาการกับการทำงานตามอมตะโอวาท งานหนักไม่เคยฆ่าคน มุ่งให้ผู้เรียน มีทักษะการเรียนรู้ตลอดชีวิต',
@@ -922,7 +925,7 @@ class DocumentController extends Controller
 
             // -- หมวด 1 --
             's1_course_name' => $get('course_name_th', $get('course_name_en')),
-            's1_course_id' => $get('course_id'),
+            's1_CC_id' => $get('CC_id'),
             's1_credits' => $get('credits'),
             's1_curriculum_name' => $get('curriculum_name'),
             'course_types' => [
@@ -1235,7 +1238,7 @@ class DocumentController extends Controller
             $table1->addCell(7500, ['gridSpan' => 3])->addText(htmlspecialchars($docxData['s1_course_name']));
             $table1->addRow();
             $table1->addCell(2500, $thStyle)->addText('2. รหัสวิชา', $boldFont, $cellCenter);
-            $table1->addCell(7500, ['gridSpan' => 3])->addText($docxData['s1_course_id']);
+            $table1->addCell(7500, ['gridSpan' => 3])->addText($docxData['s1_CC_id']);
             $table1->addRow();
             $table1->addCell(2500, $thStyle)->addText('3. จำนวนหน่วยกิต', $boldFont, $cellCenter);
             $table1->addCell(7500, ['gridSpan' => 3])->addText(htmlspecialchars($docxData['s1_credits']));
@@ -1381,7 +1384,7 @@ class DocumentController extends Controller
             $mapSymbols = ['0' => '', '1' => '●', '2' => '○'];
             foreach ($docxData['s5_2_mapping_data'] as $mapRow) {
                 $table5_2->addRow();
-                $table5_2->addCell(2000)->addText($docxData['s1_course_id'] . "\n" . $docxData['s1_course_name']);
+                $table5_2->addCell(2000)->addText($docxData['s1_CC_id'] . "\n" . $docxData['s1_course_name']);
                 foreach ($mapRow as $state) {
                     $table5_2->addCell(300)->addText($mapSymbols[$state] ?? '', $boldFont, $cellCenter);
                 }

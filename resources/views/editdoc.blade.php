@@ -26,7 +26,7 @@
         <div class="fixed top-4 right-4 flex gap-3 z-50">
             <button type="button" onclick="window.history.back()"
                 class="px-4 py-2 bg-blue-300 hover:bg-blue-400 text-gray-900 rounded-md shadow">
-                <a href="/export-docx?course_id={{ $data->course_id ?? '' }}&year={{ $data->year ?? '' }}&term={{ $data->term ?? '' }}&TQF={{ $data->TQF ?? 3 }}" class="download-button">
+                <a href="/export-docx?course_code={{ $data->course_code ?? '' }}&year={{ $data->year ?? '' }}&term={{ $data->term ?? '' }}&TQF={{ $data->TQF ?? 3 }}" class="download-button">
                     ดาวน์โหลดไฟล์ .docx 
                 </a>
             </button>
@@ -102,7 +102,7 @@
                             </tr>
                         <tr>
                             <th class="border border-black p-2.5 align-top bg-blue-100 text-center">2. รหัสวิชา</th>
-                            <td colspan="3" class="border border-black p-2.5 align-top" id="course_id">{{ $data->course_id }}</td>
+                            <td colspan="3" class="border border-black p-2.5 align-top" id="course_code">{{ $data->course_code }}</td>
                             </tr>
                         <tr>
                             <th class="border border-black p-2.5 align-top bg-blue-100 text-center">3. จำนวนหน่วยกิต</th>
@@ -382,7 +382,7 @@
                             <tbody class="bg-white">
                                 <tr>
                                     <td class="border border-gray-400 p-2 text-left align-top">
-                                        {{ $data->course_id ?? '' }}<br>{{ $data->course_name_th ?? ($data->course_name_en ?? '') }}
+                                        {{ $data->course_code ?? '' }}<br>{{ $data->course_name_th ?? ($data->course_name_en ?? '') }}
                                     </td>
                                     {{-- สร้าง Cells ว่างๆ ไว้ก่อน รอ JS มาใส่ข้อมูล --}}
                                     @php $totalCols = array_sum($cols); @endphp

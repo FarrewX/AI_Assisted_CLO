@@ -38,6 +38,7 @@
                         <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">ชื่อหลักสูตร</th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">คณะ</th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">สาขาวิชา</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">วิทยาเขต</th>
                         <th class="px-6 py-4 text-center text-xs font-semibold text-gray-600 uppercase tracking-wider">จัดการ</th>
                     </tr>
                 </thead>
@@ -50,7 +51,9 @@
                             data-year="{{ $cur->curriculum_year }}"
                             data-name="{{ $cur->curriculum_name }}"
                             data-faculty="{{ $cur->faculty }}"
-                            data-major="{{ $cur->major }}">
+                            data-major="{{ $cur->major }}"
+                            data-campus="{{ $cur->campus }}">
+                            
                             
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium {{ $isTrashed ? 'text-gray-400 line-through' : 'text-gray-900' }}">
                                 {{ $cur->curriculum_year }}
@@ -63,6 +66,9 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm {{ $isTrashed ? 'text-gray-400 line-through' : 'text-gray-600' }}">
                                 {{ $cur->major }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm {{ $isTrashed ? 'text-gray-400 line-through' : 'text-gray-600' }}">
+                                {{ $cur->campus }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium space-x-2">
                                 @if($isTrashed)
@@ -136,6 +142,12 @@
                             <input type="text" name="major" id="input-major" 
                                    class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2 border transition" 
                                    placeholder="เช่น วิทยาการคอมพิวเตอร์" required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-1">วิทยาเขต <span class="text-red-500">*</span></label>
+                            <input type="text" name="campus" id="input-campus" 
+                                   class="w-full border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 px-4 py-2 border transition" 
+                                   placeholder="เช่น เชียงใหม่" required>
                         </div>
                     </div>
                 </div>

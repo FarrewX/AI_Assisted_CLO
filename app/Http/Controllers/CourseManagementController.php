@@ -83,7 +83,7 @@ class CourseManagementController extends Controller
                 // จับคู่เข้ากับหลักสูตร
                 Curriculum_course::create([
                     'curriculum_id' => $request->curriculum_id,
-                    'course_id'     => $course->id
+                    'course_code'     => $course->id
                 ]);
 
                 $message = 'เพิ่มรายวิชาใหม่ในหลักสูตรนี้เรียบร้อยแล้ว (ข้อมูลแยกอิสระ)';
@@ -303,7 +303,7 @@ class CourseManagementController extends Controller
                 // เชื่อมโยงเข้าหลักสูตร
                 Curriculum_course::firstOrCreate([
                     'curriculum_id' => $request->curriculum_id,
-                    'course_id'     => $targetCourseId
+                    'course_code'     => $targetCourseId
                 ]);
             }
             

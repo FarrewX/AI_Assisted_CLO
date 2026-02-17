@@ -11,13 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('plos', function (Blueprint $table) {
+        Schema::create('philosophy', function (Blueprint $table) {
             $table->id();
             $table->string('curriculum_year_ref');
-            $table->tinyInteger('plo');
-            $table->string('description');
-            $table->string('domain')->nullable();
-            $table->string('learning_level')->nullable();
+            $table->text('mju_philosophy')->comment('ปรัชญาแม่โจ้')->nullable();
+            $table->text('education_philosophy')->comment('ปรัชญาการศึกษา')->nullable();
+            $table->text('curriculum_philosophy')->comment('ปรัชญาหลักสูตร')->nullable();
             $table->timestamps();
 
             $table->foreign('curriculum_year_ref')->references('curriculum_year')->on('curriculum')->onDelete('cascade');
@@ -29,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('plos');
+        Schema::dropIfExists('philosophy');
     }
 };

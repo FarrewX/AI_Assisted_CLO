@@ -11,12 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('prompts', function (Blueprint $table) {
-            $table->unsignedBigInteger('courseyear_id_ref');
-            $table->text('course_text');
+        Schema::create('curriculum_llls', function (Blueprint $table) {
+            $table->unsignedBigInteger('curriculum_id_ref');
+            $table->integer('num_LLL')->nullable();
+            $table->string('name_LLL')->nullable();
             $table->timestamps();
 
-            $table->foreign('courseyear_id_ref')->references('id')->on('courseyears')->onDelete('cascade');
+            $table->foreign('curriculum_id_ref')->references('id')->on('curriculum')->onDelete('cascade');
         });
     }
 
@@ -25,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('prompts');
+        Schema::dropIfExists('curriculum_llls');
     }
 };

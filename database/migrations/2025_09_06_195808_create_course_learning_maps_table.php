@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('prompts', function (Blueprint $table) {
+        Schema::create('course_learning_maps', function (Blueprint $table) {
             $table->unsignedBigInteger('courseyear_id_ref');
-            $table->text('course_text');
+            $table->json('course_accord')->nullable()->comment('CLO + LLL mapping data')->nullable();
             $table->timestamps();
 
             $table->foreign('courseyear_id_ref')->references('id')->on('courseyears')->onDelete('cascade');
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('prompts');
+        Schema::dropIfExists('course_learning_maps');
     }
 };

@@ -11,10 +11,10 @@ class Generate extends Model
     use HasFactory;
 
     protected $table = 'generates';
-    protected $fillable = ['ref_id', 'ai_text'];
+    protected $fillable = ['courseyear_id_ref', 'ai_text'];
 
     public function prompts()
     {
-        return $this->belongsToMany(Prompt::class, 'ref_id', 'ref_id');
+        return $this->belongsToMany(Prompt::class, 'courseyear_id_ref', 'courseyear_id_ref');
     }
 }

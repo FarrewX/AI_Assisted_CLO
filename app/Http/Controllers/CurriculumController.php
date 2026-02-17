@@ -24,11 +24,13 @@ class CurriculumController extends Controller
             'curriculum_name' => 'required|string|max:255',
             'faculty'         => 'required|string|max:255',
             'major'           => 'required|string|max:255',
+            'campus'          => 'required|string|max:255',
         ], [
             'curriculum_year.required' => 'กรุณากรอกปีหลักสูตร',
             'curriculum_name.required' => 'กรุณากรอกชื่อหลักสูตร',
             'faculty.required'         => 'กรุณากรอกชื่อคณะ',
             'major.required'           => 'กรุณากรอกสาขาวิชา',
+            'campus.required'          => 'กรุณากรอกวิทยาเขต',
         ]);
 
         // 1. ค้นหาข้อมูลที่มีอยู่แล้ว (รวมถึงรายการที่ถูก Soft Delete ไปแล้วด้วย)
@@ -65,6 +67,7 @@ class CurriculumController extends Controller
             'curriculum_name' => 'required|string',
             'faculty'         => 'required|string',
             'major'           => 'required|string',
+            'campus'          => 'required|string',
         ]);
 
         try {
@@ -85,6 +88,7 @@ class CurriculumController extends Controller
                 'curriculum_name' => $request->curriculum_name,
                 'faculty'         => $request->faculty,
                 'major'           => $request->major,
+                'campus'          => $request->campus,
             ]);
 
             return back()->with('success', 'แก้ไขหลักสูตรเรียบร้อยแล้ว');

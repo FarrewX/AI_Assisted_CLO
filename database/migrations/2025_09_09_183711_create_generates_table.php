@@ -9,11 +9,11 @@ return new class extends Migration
    public function up(): void
     {
         Schema::create('generates', function (Blueprint $table) {
-            $table->unsignedBigInteger('ref_id');
+            $table->unsignedBigInteger('courseyear_id_ref');
             $table->longText('ai_text');
             $table->timestamps();
 
-            $table->foreign('ref_id')->references('ref_id')->on('prompts')->onDelete('cascade');
+            $table->foreign('courseyear_id_ref')->references('courseyear_id_ref')->on('prompts')->onDelete('cascade');
         });
     }
 

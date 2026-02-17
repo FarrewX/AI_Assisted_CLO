@@ -27,8 +27,8 @@ class CourseController extends Controller
 
         $courses = DB::table('courseyears as cy')
             ->join('curriculum_courses as cc', 'cy.CC_id', '=', 'cc.id')
-            ->join('courses as c', 'cc.course_id', '=', 'c.id') 
-            ->leftJoin('statuses as s', 'cy.id', '=', 's.ref_id')
+            ->join('courses as c', 'cc.course_code', '=', 'c.id') 
+            ->leftJoin('statuses as s', 'cy.id', '=', 's.courseyear_id_ref')
             ->where('cy.user_id', $user->user_id) 
             ->where('cy.year', $selectedYear)
             ->select(
@@ -80,18 +80,18 @@ class CourseController extends Controller
         // ดึงรายวิชา (Courses) พร้อมรายละเอียดและหลักสูตร
         // เอา Prompt ล่าสุดที่เคยเจนไว้ (ถ้ามี)
         $latestPrompts = DB::table('prompts as p1')
-            ->select('p1.ref_id', 'p1.course_text')
-            ->whereRaw('p1.updated_at = (select max(p2.updated_at) from prompts as p2 where p2.ref_id = p1.ref_id)')
-            ->groupBy('p1.ref_id', 'p1.course_text');
+            ->select('p1.courseyear_id_ref', 'p1.course_text')
+            ->whereRaw('p1.updated_at = (select max(p2.updated_at) from prompts as p2 where p2.courseyear_id_ref = p1.courseyear_id_ref)')
+            ->groupBy('p1.courseyear_id_ref', 'p1.course_text');
 
         $courseOptions = DB::table('courseyears as cy')
             ->join('curriculum_courses as cc', 'cy.CC_id', '=', 'cc.id')
-            ->join('courses as c', 'cc.course_id', '=', 'c.id') 
+            ->join('courses as c', 'cc.course_code', '=', 'c.id') 
             ->join('curriculum as cur', 'cc.curriculum_id', '=', 'cur.id')
             ->join('users as u', 'u.user_id', '=', 'cy.user_id')
-            ->leftJoin('statuses as s', 'cy.id', '=', 's.ref_id')
+            ->leftJoin('statuses as s', 'cy.id', '=', 's.courseyear_id_ref')
             ->leftJoinSub($latestPrompts, 'lp', function($join) {
-                $join->on('cy.id', '=', 'lp.ref_id');
+                $join->on('cy.id', '=', 'lp.courseyear_id_ref');
             })
             ->where('cy.user_id', $user->user_id)
             ->whereIn('cy.year', $targetYears)
@@ -108,7 +108,7 @@ class CourseController extends Controller
                 'cy.TQF',
                 'cur.curriculum_year',
                 'lp.course_text',
-                'lp.ref_id'
+                'lp.courseyear_id_ref'
             )
             ->orderBy('cy.year', 'desc')
             ->orderBy('cy.term', 'asc')
@@ -142,7 +142,7 @@ class CourseController extends Controller
         if ($cy) {
             DB::table('statuses')
                 ->updateOrInsert(
-                    ['ref_id' => $cy->id],
+                    ['courseyear_id_ref' => $cy->id],
                     ['startprompt' => now(), 'updated_at' => now()]
                 );
         }
@@ -175,12 +175,12 @@ class CourseController extends Controller
 
         // อัปเดตสถานะ startprompt
         DB::table('statuses')->updateOrInsert(
-            ['ref_id' => $cy->id],
+            ['courseyear_id_ref' => $cy->id],
             ['startprompt' => now(), 'updated_at' => now()]
         );
 
         // Prompt ที่เคย Save (ถ้ามี)
-        $savedPrompt = DB::table('prompts')->where('ref_id', $cy->id)->value('course_text');
+        $savedPrompt = DB::table('prompts')->where('courseyear_id_ref', $cy->id)->value('course_text');
         
         if ($savedPrompt) {
             return response()->json(['prompt' => $savedPrompt]);
@@ -236,7 +236,7 @@ class CourseController extends Controller
 
             // บันทึก Prompt
             DB::table('prompts')->updateOrInsert(
-                ['ref_id' => $cy->id],
+                ['courseyear_id_ref' => $cy->id],
                 [
                     'course_text' => $request->prompt,
                     'updated_at'  => now(),
