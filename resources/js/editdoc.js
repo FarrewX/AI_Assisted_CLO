@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const response = await fetch(saveUrl, {
-                method: 'PATCH',
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': csrfToken,
@@ -470,13 +470,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (typeof section6Data !== 'object' || section6Data === null) section6Data = {};
                 console.log("Loaded Section 6 Data:", section6Data);
             } catch (parseError) {
-                console.error("Error parsing section 6 JSON data:", parseError, @json($data->teaching_methods ?? null));
+                console.error("Error parsing section 6 JSON data:", parseError, PAGE_DATA.teachingMethods);
                 section6Data = {};
             }
 
             let cloKeysFromAI = [];
             try {
-                const aiTextJson = @json($data->ai_text ?? '{}');
+                const aiTextJson = PAGE_DATA.aiText || '{}';
                 let aiTextData = {};
                 
                 if (typeof aiTextJson === 'string' && aiTextJson.trim() !== '') {
@@ -503,7 +503,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 console.log("Loaded CLO Keys from ai_text for S6:", cloKeysFromAI);
             } catch (e) {
-                console.error("Error parsing ai_text for S6:", e, @json($data->ai_text ?? '{}'));
+                console.error("Error parsing ai_text for S6:", e, PAGE_DATA.aiText);
             }
 
             // rowData (e.g., [ {"วิธีการสอน":...}, {"การประเมินผล":...} ])
