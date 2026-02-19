@@ -3,12 +3,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const PAGE_DATA = window.pageData || {};
 
     async function saveData(fieldName, value, targetElement = null) {
-        const saveUrl = '/savedataedit';
+        const saveUrl = '/savedataedit'; // ระบุ URL ให้ตรงกับ Route ของคุณ
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         const urlParams = new URLSearchParams(window.location.search);
         
-        // ใช้ค่าจาก URL หรือถ้าไม่มีให้ใช้ค่าเริ่มต้น (ป้องกัน Error)
-        const courseId = urlParams.get('course_code');
+        // 🔥 1. แก้ไขให้ดึงค่า CC_id (ให้ตรงกับ URL parameter ที่คุณใช้)
+        const CC_id = urlParams.get('CC_id'); 
         const year = urlParams.get('year');
         const term = urlParams.get('term');
         const tqf = urlParams.get('TQF');
@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!element && fieldName === 'section9_1_data') element = document.getElementById('referenceList');
         if (!element && fieldName.startsWith('plo')) element = document.getElementById('plosTableBody');
         
-        console.log('Saving:', { field: fieldName, value: value, course_code: courseId });
+        console.log('Saving:', { field: fieldName, value: value, CC_id: CC_id });
         
         // Feedback Logic
         let originalColor = '';
@@ -65,7 +65,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     'Accept': 'application/json'
                 },
                 body: JSON.stringify({
-                    course_code: courseId, year: year, term: term, TQF: tqf,
+                    CC_id: CC_id,
+                    year: year, 
+                    term: term, 
+                    TQF: tqf,
                     field: fieldName,
                     value: typeof value === 'object' ? JSON.stringify(value) : value
                 })
@@ -81,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Save successful:', result);
 
             if (feedbackElement) {
-                feedbackElement.style.backgroundColor = '#d4edda';
+                feedbackElement.style.backgroundColor = '#d4edda'; 
                 setTimeout(() => {
                      if(feedbackElement) {
                         feedbackElement.style.backgroundColor = originalColor;

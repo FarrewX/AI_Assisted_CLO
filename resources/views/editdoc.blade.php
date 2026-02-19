@@ -19,7 +19,9 @@
             }
         }
     </script>
-    @vite(['resources/js/editdoc.js'])
+    @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
+        @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/editdoc.js'])
+    @endif
 </head>
 <body>
     <div id="tqf-form-container" class="flex justify-center py-6 bg-gray-100 font-sans text-bases">
@@ -45,28 +47,27 @@
                 <div class="flex flex-wrap items-baseline">
                     <div class="flex items-baseline mr-6 mb-2">
                         <label class="whitespace-nowrap font-semibold">คณะ</label>
-                        <input name="faculty" class="px-2 min-w-[150px] border-b border-dotted border-gray-500 text-center" value="{{ $data->faculty ?? 'ระบุคณะ' }}"></input>
+                        <input name="faculty" class="px-2 min-w-[150px] border-b border-dotted border-gray-500 text-center" value="{{ $data->faculty }}" disabled></input>
                         <label class="ml-2 whitespace-nowrap font-semibold">สาขาวิชา</label>
-                        <input name="major" class="px-2 min-w-[200px] border-b border-dotted border-gray-500 text-center" value="{{ $data->major ?? 'ระบุสาขา' }}"></input>
+                        <input name="major" class="px-2 min-w-[200px] border-b border-dotted border-gray-500 text-center" value="{{ $data->major }}" disabled></input>
                         <label class="ml-2 whitespace-nowrap font-semibold">หลักสูตรปรับปรุง พ.ศ.</label>
-                        <input name="curriculum_year" id="curriculum_year" class="w-[70px] border-b border-dotted border-gray-500 text-center" 
-                            value="{{ ($data->curriculum_year ?? null) ? $data->curriculum_year : '' }}"
-                            placeholder="ระบุปี พ.ศ."></input>
+                        <input name="curriculum_year" class="w-[70px] border-b border-dotted border-gray-500 text-center" 
+                            value="{{ $data->curriculum_year }}" disabled></input>
                         </div>
                 </div>
 
                 <div class="flex flex-wrap items-baseline">
                     <div class="flex items-baseline mr-6 mb-2">
                         <label class="whitespace-nowrap font-semibold">วิทยาเขต</label>
-                        <input name="campus" class="ml-2 px-2 min-w-[200px] border-b border-dotted border-gray-500 text-center" value="{{ $data->campus ?? 'ระบุวิทยาเขต' }}"></input>
+                        <input name="campus" class="ml-2 px-2 min-w-[200px] border-b border-dotted border-gray-500 text-center" value="{{ $data->campus }}" disabled></input>
                         <div class="flex items-baseline mb-2">
                             <label class="whitespace-nowrap font-semibold">ภาคการศึกษา/ปีการศึกษา</label>
                             <div name="term" id="term" class="ml-2 w-[100px] bg-transparent border-b border-dotted border-gray-500 appearance-none text-center">
-                                <span>{{ $data->term ?? '' }}</span>
+                                <span>{{ $data->term }}</span>
                             </div> /
                             <div name="academic_year" id="academic_year" 
                                 class="ml-2 w-[115px] bg-transparent border-b border-dotted border-gray-500 appearance-none text-center">
-                                <span>{{ $data->year ? $data->year + 543 : '' }}</span>
+                                <span>{{ $data->year }}</span>
                             </div>
                         </div>
                     </div>
@@ -75,21 +76,15 @@
                 <div class="flex flex-col">
                     <h3 class="text-[20px] font-semibold">ปรัชญามหาวิทยาลัยแม่โจ้</h3>
                     <span class="leading-relaxed" id="philosophy">
-                        {{-- {{ philosophy ?? '' }} --}}
-                        มุ่งมั่นพัฒนาบัณฑิตสู่ความเป็นผู้อุดมด้วยปัญญา อดทน สู้งาน เป็นผู้มีคุณธรรมและจริยธรรม เพื่อ
-                        ความเจริญรุ่งเรืองวัฒนาของสังคมไทยที่มีการเกษตรเป็นรากฐาน 
+                        {{ $data->philosophy ?? 'ไม่พบข้อมูลปรัชญา' }}
                     </span>
                     <h3 class="text-[20px] font-semibold">ปรัชญาการศึกษา มหาวิทยาลัยแม่โจ้</h3>
                     <span class="leading-relaxed" id="philosophy_education">
-                        {{-- {{ philosophy_education ?? '' }} --}}
-                        จัดการศึกษาเพื่อเสริมสร้างปัญญา ในรูปแบบการเรียนรู ้จากการปฏิบัติที ่บูรณาการกับการทำงานตาม
-                        อมตะโอวาท งานหนักไม่เคยฆ่าคน มุ่งให้ผู้เรียน มีทักษะการเรียนรู้ตลอดชีวิต
+                        {{ $data->philosophy_education ?? 'ไม่พบข้อมูลปรัชญาการศึกษา' }}
                     </span>
                     <h3 class="text-[20px] font-semibold">ปรัชญาหลักสูตร</h3>
                     <span class="leading-relaxed" id="philosophy_curriculum">
-                        {{-- {{ philosophy_curriculum ?? '' }} --}}
-                        จัดการศึกษาเพื่อการพัฒนาเทคโนโลยี และส่งเสริมการสร้างนวัตกรรม เรียนรู้จากการปฏิบัติที่บูรณาการ
-                        กับการทำงาน
+                        {{ $data->philosophy_curriculum ?? 'ไม่พบข้อมูลปรัชญาหลักสูตร' }}
                     </span>
                 </div>
                 {{-- =========================================================================================================================================================================================================================== --}}
@@ -168,7 +163,7 @@
                                     <input type="checkbox" class="mr-1.5 scale-125" id="revision_term_2" disabled
                                         @if($data->term == 2) checked @endif>2
                                 </label>
-                                <label class="inline-flex items-center">ปีการศึกษา <span id="revision_year_display" class="font-semibold ml-1.5">{{ $data->year ? $data->year + 543 : '' }}</span></label>
+                                <label class="inline-flex items-center">ปีการศึกษา <span id="revision_year_display" class="font-semibold ml-1.5">{{ $data->year }}</span></label>
                             </td>
                         </tr>
                         <tr class="text-center font-semibold bg-gray-100"> 
