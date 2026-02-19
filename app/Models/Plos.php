@@ -13,7 +13,7 @@ class Plos extends Model
     protected $primaryKey = 'id';
     public $incrementing = true;
 
-    protected $fillable = ['id', 'curriculum_year_ref', 'plo', 'description', 'domain', 'learning_level'];
+    protected $fillable = ['id', 'curriculum_year_ref', 'plo', 'description', 'domain', 'learning_level', 'specific_lo'];
 
     public function Curriculum()
     {

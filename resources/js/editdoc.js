@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const PAGE_DATA = window.pageData || {};
 
     async function saveData(fieldName, value, targetElement = null) {
-        const saveUrl = '/savedataedit'; // ระบุ URL ให้ตรงกับ Route ของคุณ
+        const saveUrl = '/savedataedit';
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         const urlParams = new URLSearchParams(window.location.search);
         
@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             const response = await fetch(saveUrl, {
-                method: 'POST',
+                method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': csrfToken,
@@ -108,6 +108,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getFieldName(element) {
+
+        // ดักจับช่องแก้ไขเนื้อหา CLO (หมวด 2.2)
+        if (element.classList.contains('clo-description')) {
+            const row = element.closest('.clo-item-row');
+            if (row) {
+                const keyInput = row.querySelector('.clo-key');
+                if (keyInput) {
+                    return `cloLll_desc_${keyInput.value.trim()}`;
+                }
+            }
+        }
+
         const section6Container = element.closest('#section-6-container');
         if (section6Container) return 'section6_data_trigger';
 
@@ -324,13 +336,79 @@ document.addEventListener('DOMContentLoaded', () => {
         let aiTextData = {};
         let cloData = [];
 
+        // ฟังก์ชันตัวช่วย: ดึงข้อมูลข้าม Error JSON
+        function extractCloDataFromBadJson(rawText) {
+            let finalData = {};
+            if (typeof rawText !== 'string') return finalData;
+
+            // ค้นหา Block ที่มีคำว่า "CLO" อยู่ข้างใน
+            const blocks = rawText.match(/\{\s*"CLO"[\s\S]*?\}/g) || rawText.match(/\{\s*CLO[\s\S]*?\}/g);
+            if (!blocks) return finalData;
+
+            blocks.forEach((block, index) => {
+                const cloKey = `CLO ${index + 1}`;
+                
+                // ฟังก์ชันดึงค่าด้วย Regex (หยุดดึงเมื่อเจอการขึ้นบรรทัดใหม่)
+                const extractValue = (keyword) => {
+                    const regex = new RegExp(`"?${keyword}"?\\s*:\\s*"?([^\\n\\}]+)"?`, 'i');
+                    const match = block.match(regex);
+                    if (match) {
+                        let val = match[1].trim();
+                        if (val.endsWith(',')) val = val.slice(0, -1).trim();
+                        if (val.endsWith('"')) val = val.slice(0, -1).trim();
+                        return val;
+                    }
+                    return '';
+                };
+
+                const cloMatch = block.match(/"?CLO"?\s*:\s*"([^"]+)"/i) || block.match(/"?CLO"?\s*:\s*([^,\n}]+)/i);
+                const cloText = cloMatch ? cloMatch[1].trim() : '';
+                
+                // รองรับชื่อ Key หลายๆ แบบที่ AI ชอบสุ่มมา
+                const ploRaw = extractValue('PLO ที่รองรับ') || extractValue('PLO ต่อ ร้องรับ') || extractValue('PLO'); 
+                const domainRaw = extractValue('Domain');
+                const levelRaw = extractValue('Learning[’\']s Level') || extractValue('Learning');
+
+                finalData[cloKey] = {
+                    "CLO": cloText,
+                    "PLO ต่อ ร้องรับ": ploRaw,
+                    "Domain": domainRaw,
+                    "Learning's Level": levelRaw
+                };
+            });
+            console.log("🛠️ สกัดข้อมูลจาก JSON ที่พังสำเร็จ:", finalData);
+            return finalData;
+        }
+
+        // พยายาม Parse JSON ตามปกติก่อน ถ้าพังให้สลับไปใช้ตัวสกัดข้อมูล
         try {
             if (typeof aiTextJson === 'string' && aiTextJson.trim() !== '') {
                 aiTextData = JSON.parse(aiTextJson);
             } else if (typeof aiTextJson === 'object' && aiTextJson !== null) {
                 aiTextData = aiTextJson;
             }
-        } catch (err) {}
+        } catch (err) {
+            console.warn("⚠️ JSON Parse พัง! ระบบกำลังเปลี่ยนไปใช้วิธีสกัดข้อมูลแทน...");
+            aiTextData = extractCloDataFromBadJson(aiTextJson);
+        }
+
+        // ฟังก์ชันแปลง Domain เป็นคำย่อ (K, S, AR)
+        function getDomainAbbr(domainText) {
+            if (!domainText) return '';
+            const lower = String(domainText).toLowerCase();
+            let types = [];
+            if (lower.includes('knowledge')) types.push('K');
+            if (lower.includes('skill')) types.push('S');
+            if (lower.includes('application') || lower.includes('responsibility')) types.push('AR');
+            return types.join(', ');
+        }
+
+        // ฟังก์ชันดึงเฉพาะตัวเลขออกจากข้อความ PLO
+        function getPloNumbers(ploText) {
+            if (!ploText) return [];
+            const matches = String(ploText).match(/\d+/g);
+            return matches ? matches.map(Number) : [];
+        }
 
         if (Object.keys(aiTextData).length > 0) {
             Object.keys(aiTextData).forEach(key => {
@@ -342,23 +420,12 @@ document.addEventListener('DOMContentLoaded', () => {
             cloData.sort((a, b) => (parseInt(a.code.replace('CLO', '')) || 0) - (parseInt(b.code.replace('CLO', '')) || 0));
         }
 
-        const lllData = [
-            { code: "LLL1", description: "Creativity ความคิดสร้างสรรค์" },
-            { code: "LLL2", description: "Problem Solving การแก้ปัญหา" },
-            { code: "LLL3", description: "Critical Thinking การคิดเชิงวิพากษ์" },
-            { code: "LLL4", description: "Leadership การเป็นผู้นำ" },
-            { code: "LLL5", description: "Communication การสื่อสาร" },
-            { code: "LLL6", description: "Collaboration การประสานงาน" },
-            { code: "LLL7", description: "Information Management การจัดการข้อมูล " },
-            { code: "LLL8", description: "Adaptability การปรับตัว" },
-            { code: "LLL9", description: "Curiosity ความอยากรู้อยากเห็น" },
-            { code: "LLL10", description: "Reflection การสะท้อนทักษะความรู้" }
-        ];
-        
+        const lllData = PAGE_DATA.lllData || [];
         const cloLllData = [...cloData, ...lllData];
         const ploCount = PAGE_DATA.ploCount || 0;
-        const levelOptions = ["", "R", "U", "AP", "AN", "E", "C"];
-        const courseAccordData = PAGE_DATA.courseAccord || [];
+        const dynamicLevels = PAGE_DATA.levelOptions || [];
+        const levelOptions = ["", ...dynamicLevels];
+        const courseAccordData = PAGE_DATA.courseAccord || {};
         const tbody = document.querySelector("#ploTable tbody");
 
         if (tbody) {
@@ -366,45 +433,105 @@ document.addEventListener('DOMContentLoaded', () => {
             cloLllData.forEach((item, rowIndex) => {
                 const tr = document.createElement("tr");
                 const itemCode = item.code ?? `Item ${rowIndex+1}`;
+                const isLLL = itemCode.startsWith('LLL');
+
+                // ดึงข้อมูล AI ประจำแถว
+                let aiMappedPlos = [];
+                let aiDomainAbbr = '';
+
+                if (!isLLL) {
+                    const originalKey = itemCode.replace('CLO', 'CLO ');
+                    const aiDetails = aiTextData[originalKey] || aiTextData[itemCode] || {};
+                    
+                    let ploRaw = '';
+                    let domainRaw = '';
+                    
+                    for (const k in aiDetails) {
+                        const lowerK = k.toLowerCase();
+                        if (lowerK.includes('plo')) ploRaw = aiDetails[k];
+                        if (lowerK.includes('domain')) domainRaw = aiDetails[k];
+                    }
+                    
+                    aiMappedPlos = getPloNumbers(ploRaw);
+                    aiDomainAbbr = getDomainAbbr(domainRaw);
+                }
+
                 tr.innerHTML = `
-                    <td class="border border-gray-400 p-2 text-center font-bold">${itemCode}</td>
+                    <td class="border border-gray-400 p-2 text-center font-bold" readonly>${itemCode}</td>
                     <td class="border border-gray-400 p-2 text-left">
-                       <span class="inline-block w-full hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500 p-1 rounded"
-                            contenteditable="true" data-field="cloLll_desc_${itemCode}">${item.description ?? ''}</span>
+                       <span class="inline-block w-full ${isLLL ? 'text-gray-500' : 'hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500'} p-1 rounded"
+                            contenteditable="${!isLLL}" data-field="cloLll_desc_${itemCode}">${item.description ?? ''}</span>
                     </td>`;
 
                 for (let colIndex = 0; colIndex < ploCount; colIndex++) {
                     const td = document.createElement("td");
                     td.className = "border border-gray-400 p-2 text-center";
                     const ploDbIndex = colIndex + 1;
+                    
                     let savedCellData = { check: false, level: '' };
+                    let hasSavedData = false;
 
                     if (courseAccordData && courseAccordData[itemCode] !== undefined) {
                         const rowData = courseAccordData[itemCode];
-                        if (rowData && rowData[ploDbIndex]) {
-                             savedCellData = { check: rowData[ploDbIndex].check ?? false, level: rowData[ploDbIndex].level ?? '' };
+                        if (rowData && rowData[ploDbIndex] !== undefined) {
+                            savedCellData = { 
+                                check: rowData[ploDbIndex].check ?? false, 
+                                level: rowData[ploDbIndex].level ?? '' 
+                            };
+                            hasSavedData = true; 
                         }
                     }
 
-                    const checkbox = document.createElement("input");
-                    checkbox.type = "checkbox";
-                    checkbox.className = "mr-1.5 scale-125 plo-map-checkbox";
-                    checkbox.name = `plo_map_${itemCode}_c${colIndex}_check`; 
-                    checkbox.checked = savedCellData.check;
+                    // ติ๊กถูกและใส่ Level อัตโนมัติ (ถ้ายังไม่เคยบันทึกค่า)
+                    if (!hasSavedData && !isLLL && aiMappedPlos.includes(ploDbIndex)) {
+                        savedCellData.check = true;
+                        savedCellData.level = aiDomainAbbr;
+                    }
 
-                    const select = document.createElement("select");
-                    select.className = "w-[70px] p-1 border rounded plo-map-level";
-                    select.name = `plo_map_${itemCode}_c${colIndex}_level`;
-                    levelOptions.forEach(opt => {
-                        const op = document.createElement("option");
-                        op.value = opt;
-                        op.textContent = opt;
-                        if (savedCellData.level === opt) op.selected = true;
-                        select.appendChild(op);
-                    });
+                    if (isLLL) {
+                        if (savedCellData.check) {
+                            td.innerHTML = `<span class="font-bold text-lg">✔</span>`;
+                            if (savedCellData.level) {
+                                td.innerHTML += `<div class="text-xs text-gray-500 mt-1">${savedCellData.level}</div>`;
+                            }
+                        } else {
+                            td.innerHTML = `<span class="text-gray-200">-</span>`;
+                        }
+                    } else {
+                        const checkbox = document.createElement("input");
+                        checkbox.type = "checkbox";
+                        checkbox.className = `mr-1.5 scale-125 plo-map-checkbox`;
+                        checkbox.name = `plo_map_${itemCode}_c${colIndex}_check`; 
+                        checkbox.checked = savedCellData.check;
+                        
+                        const select = document.createElement("select");
+                        select.className = `w-[70px] p-1 border rounded plo-map-level text-xs`;
+                        select.name = `plo_map_${itemCode}_c${colIndex}_level`;
+                        
+                        let isLevelMatched = false;
+                        levelOptions.forEach(opt => {
+                            const op = document.createElement("option");
+                            op.value = opt;
+                            op.textContent = opt;
+                            if (savedCellData.level === opt) {
+                                op.selected = true;
+                                isLevelMatched = true;
+                            }
+                            select.appendChild(op);
+                        });
 
-                    td.appendChild(checkbox);
-                    td.appendChild(select);
+                        if (!isLevelMatched && savedCellData.level) {
+                            const op = document.createElement("option");
+                            op.value = savedCellData.level;
+                            op.textContent = savedCellData.level;
+                            op.selected = true;
+                            select.appendChild(op);
+                        }
+
+                        td.appendChild(checkbox);
+                        td.appendChild(select);
+                    }
+                    
                     tr.appendChild(td);
                 }
                 tbody.appendChild(tr);

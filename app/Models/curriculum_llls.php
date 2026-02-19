@@ -9,13 +9,13 @@ class curriculum_llls extends Model
 {
    use HasFactory;
 
-    protected $primaryKey = 'curriculum_id_ref';
-    public $incrementing = false;
+    protected $primaryKey = 'id';
+    public $incrementing = true;
 
-    protected $fillable = ['curriculum_id_ref', 'num_LLL', 'name_LLL'];
+    protected $fillable = ['curriculum_year_ref', 'num_LLL', 'name_LLL', 'check_LLL'];
 
     public function Curriculum()
     {
-        return $this->belongsTo(Curriculum::class, 'curriculum_id_ref', 'id');
+        return $this->belongsTo(Curriculum::class, 'curriculum_year_ref', 'curriculum_year');
     }
 }

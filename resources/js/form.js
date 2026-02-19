@@ -281,67 +281,78 @@ window.submitForm = function() {
 }
 
 function cleanAndParseAIResponse(generatedText, numClo) {
-    // Regex Logic เดิมของคุณ (ย้ายมาไว้ที่นี่)
-    const jsonMatch = generatedText.match(/```json([\s\S]*?)```/i) || generatedText.match(/\{[\s\S]*\}/);
+    let jsonString = generatedText;
     let jsonData = null;
 
-        if (jsonMatch) {
-            let jsonString = jsonMatch[1] ? jsonMatch[1].trim() : jsonMatch[0].trim();
-            let cloCounter = 0;
-            jsonString = jsonString.replace(/^```json/i, '').replace(/```$/, '').trim();
+    try {
+        // 1. ตัด Markdown โค้ดบล็อกออกก่อน (เผื่อ AI ใส่ ```json มาให้)
+        jsonString = jsonString.replace(/```json/ig, '').replace(/```/g, '').trim();
 
-            // Extensive regex cleanup (Same as original)
-            jsonString = jsonString
-                .replace(/["“”]/g, '"')
-                .replace(/['‘’]/g, "'")
-                .replace(/\n\s*/g, ' ')
-                .replace(/\s{2,}/g, ' ')
-                .replace(/[“”]/g, '"')
-                .replace(/[‘’]/g, "'")
-                .replace(/\r?\n/g, ' ')
-                .replace(/:\s*([A-Za-zก-๙0-9_]+)\s*([,}\]])/g, ': "$1"$2')
-                .replace(/,\s*(?=[}\]])/g, '')
-                .replace(/"([^"]*?)'([^"]*?)"/g, (m, g1, g2) => `"${g1}\\'"${g2}"`)
-                .replace(/:\s*"([^"]*?)'([^"]*?)"/g, (m, g1, g2) => `: "${g1}\\'${g2}"`)
-                .replace(/\\'"+s/g, "'s")
-                .replace(/\\'"/g, "'")
-                .replace(/"\\'s/g, "'s")
-                .replace(/}\s*,\s*{\s*"/g, (match) => {
-                    cloCounter++;
-                    if (cloCounter <= numClo) {
-                        return `}, "CLO ${cloCounter}": { "`;
-                    }
-                    return match;
-                })
-                .replace(/"Assessment Method"\s*:\s*([^,\]}]+)/g, (m, g1) => `"Assessment Method": "${g1.trim().replace(/[)\s]+$/g, '')}"`)
-                .replace(/\)\s*,/g, ',')
-                .replace(/\)\s*}/g, '}')
-                .replace(/""([^"]+?)""/g, '"$1"')
-                .replace(/"(\s*)"เหตุผล":/g, '", "เหตุผล":')
-                .replace(/,\s*}/g, '}')
-                .trim();
+        // 2. ค้นหาตำแหน่งเริ่มต้นและสิ้นสุดของ JSON ({...} หรือ [...])
+        const firstCurly = jsonString.indexOf('{');
+        const firstSquare = jsonString.indexOf('[');
+        const lastCurly = jsonString.lastIndexOf('}');
+        const lastSquare = jsonString.lastIndexOf(']');
 
-            if (!jsonString.startsWith('{')) jsonString = '{' + jsonString;
-            if (!jsonString.endsWith('}')) jsonString = jsonString + '}';
-            
-            // Clean specific keys
-            try {
-                jsonData = JSON5.parse(jsonString);
-                
-                for (const key in jsonData) {
-                    if (jsonData[key]["Learning’s Level"]) {
-                        jsonData[key]["Learning's Level"] = jsonData[key]["Learning’s Level"];
-                        delete jsonData[key]["Learning’s Level"];
-                    }
-                }
-                console.log("Parsed JSON5:", jsonData);
-            } catch (e) {
-                console.error("JSON5 parse error:", e.message);
-                jsonData = null;
-            }
+        let firstIndex = -1;
+        let lastIndex = -1;
+
+        // หาจุดเริ่มต้นที่แท้จริง (เจอปีกกาแบบไหนก่อน)
+        if (firstCurly !== -1 && firstSquare !== -1) {
+            firstIndex = Math.min(firstCurly, firstSquare);
+        } else {
+            firstIndex = Math.max(firstCurly, firstSquare);
         }
 
-    return jsonData;
+        // หาจุดสิ้นสุดที่แท้จริง
+        if (lastCurly !== -1 && lastSquare !== -1) {
+            lastIndex = Math.max(lastCurly, lastSquare);
+        } else {
+            lastIndex = Math.max(lastCurly, lastSquare);
+        }
+
+        // 3. ตัดเอาเฉพาะเนื้อหาข้างในปีกกามา
+        if (firstIndex !== -1 && lastIndex !== -1 && lastIndex > firstIndex) {
+            jsonString = jsonString.substring(firstIndex, lastIndex + 1);
+        }
+
+        // ทำความสะอาด Quote เล็กน้อย (เปลี่ยน Quote โค้ง เป็น Quote ตรง)
+        jsonString = jsonString
+            .replace(/["“”]/g, '"')
+            .replace(/['‘’]/g, "'")
+            .trim();
+
+        // 4. แปลงเป็น JSON
+        jsonData = JSON5.parse(jsonString);
+
+        // 5. จัดระเบียบข้อมูลหลังแปลงเป็น Object/Array สำเร็จแล้ว
+        if (jsonData) {
+            // ถ้าระบบส่งมาเป็น Array [{...}, {...}] ให้แปลงเป็นรูปแบบ {"CLO 1": {...}}
+            if (Array.isArray(jsonData)) {
+                let formattedData = {};
+                jsonData.forEach((item, index) => {
+                    formattedData[`CLO ${index + 1}`] = item;
+                });
+                jsonData = formattedData;
+            }
+
+            // จัดการเปลี่ยนชื่อ Key Learning's Level ตามที่คุณเขียนไว้
+            for (const key in jsonData) {
+                if (jsonData[key] && jsonData[key]["Learning’s Level"]) {
+                    jsonData[key]["Learning's Level"] = jsonData[key]["Learning’s Level"];
+                    delete jsonData[key]["Learning’s Level"];
+                }
+            }
+            console.log("Parsed JSON Successfully:", jsonData);
+        }
+
+        return jsonData;
+
+    } catch (e) {
+        console.error("JSON5 parse error:", e.message);
+        console.error("Raw string that failed:", jsonString);
+        return null; // ส่งกลับเป็น null เพื่อให้ระบบดักจับและแสดง Error ที่หน้าจอได้
+    }
 }
 
 window.showLoadingPopup = function() { document.getElementById('loadingPopup').classList.remove('hidden'); }

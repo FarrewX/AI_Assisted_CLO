@@ -12,12 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('curriculum_llls', function (Blueprint $table) {
-            $table->unsignedBigInteger('curriculum_id_ref');
+            $table->id();
+            $table->string('curriculum_year_ref');
             $table->integer('num_LLL')->nullable();
             $table->string('name_LLL')->nullable();
+            $table->string('check_LLL')->nullable();
             $table->timestamps();
 
-            $table->foreign('curriculum_id_ref')->references('id')->on('curriculum')->onDelete('cascade');
+            $table->foreign('curriculum_year_ref')->references('curriculum_year')->on('curriculum')->onDelete('cascade');
         });
     }
 

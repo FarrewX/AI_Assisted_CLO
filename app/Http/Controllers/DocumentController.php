@@ -121,6 +121,7 @@ class DocumentController extends Controller
             ->join('curriculum', 'curriculum_courses.curriculum_id', '=', 'curriculum.id')
             ->join('courses', 'curriculum_courses.course_code', '=', 'courses.id')
             ->leftJoin('philosophy', 'philosophy.curriculum_year_ref', '=', 'curriculum.curriculum_year')
+            ->leftJoin('course_types', 'course_types.CC_id_ref', '=', 'curriculum_courses.id')
             ->where('curriculum_courses.id', $CC_id)
             ->first();
         $evaluations = DB::table('course_evaluations')->where('courseyear_id_ref', $cyId)->first();
@@ -129,20 +130,129 @@ class DocumentController extends Controller
         $plans = DB::table('plans')->where('courseyear_id_ref', $cyId)->first();
         $generates = DB::table('generates')->where('courseyear_id_ref', $cyId)->orderBy('created_at', 'desc')->first();
 
+        $curriculumYear = DB::table('curriculum_courses')
+            ->join('curriculum', 'curriculum_courses.curriculum_id', '=', 'curriculum.id')
+            ->where('curriculum_courses.id', $CC_id)
+            ->value('curriculum.curriculum_year');
+        
+        // 2. ดึงข้อมูล check_LLL มาด้วย โดยใช้ curriculum_year_ref เป็นตัวกรอง
+        $dbLlls = DB::table('curriculum_llls')
+            ->where('curriculum_year_ref', $curriculumYear)
+            ->orderBy('num_LLL')
+            ->get(['num_LLL', 'name_LLL', 'check_LLL']);
+
+        $lllDataArray = [];
+        
+        // 3. ดึง course_accord ของเดิมมาก่อน (เพื่อไม่ให้ข้อมูล CLO ที่เซฟไว้หาย)
+        $courseAccordArray = $this->safeJsonDecode($learningMaps->course_accord ?? '{}', true);
+        $hasLllUpdates = false;
+
+        foreach ($dbLlls as $lll) {
+            $lllKey = 'LLL' . $lll->num_LLL; // เช่น "LLL1"
+            
+            // เตรียม Array สำหรับส่งให้ JS โชว์ชื่อ LLL
+            $lllDataArray[] = [
+                'code' => $lllKey,
+                'description' => $lll->name_LLL
+            ];
+
+            // แปลง check_LLL เป็น JSON Format ตามที่ต้องการ
+            if (!isset($courseAccordArray[$lllKey])) {
+                $courseAccordArray[$lllKey] = [];
+            }
+
+            if (!empty($lll->check_LLL)) {
+                // หั่นด้วยลูกน้ำ เช่น "2,3,5,6" -> ["2", "3", "5", "6"]
+                $checkedPlos = array_map('trim', explode(',', $lll->check_LLL));
+
+                foreach ($checkedPlos as $ploNum) {
+                    if (empty($ploNum)) continue;
+
+                    // ถ้าใน course_accord ยังไม่มีค่านี้ ให้เพิ่มเข้าไปเป็น true
+                    if (!isset($courseAccordArray[$lllKey][$ploNum])) {
+                        $courseAccordArray[$lllKey][$ploNum] = [
+                            'check' => true,
+                            'level' => ''
+                        ];
+                        $hasLllUpdates = true; // ตั้งสถานะว่ามีการอัปเดตใหม่
+                    }
+                }
+            }
+        }
+
+        // 4. ถ้าพบว่ามีการดึง LLL ใหม่เข้ามา ให้ Auto-save กลับลงไปใน Database เลย
+        if ($hasLllUpdates) {
+            $updatedCourseAccordJson = json_encode($courseAccordArray, JSON_UNESCAPED_UNICODE);
+            if ($learningMaps) {
+                DB::table('course_learning_maps')
+                    ->where('courseyear_id_ref', $cyId)
+                    ->update(['course_accord' => $updatedCourseAccordJson, 'updated_at' => now()]);
+            } else {
+                DB::table('course_learning_maps')->insert([
+                    'courseyear_id_ref' => $cyId,
+                    'course_accord' => $updatedCourseAccordJson,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+            }
+            // อัปเดตตัวแปรเพื่อให้ส่งไปหน้าเว็บได้ถูกต้อง
+            $learningMaps = (object)['course_accord' => $updatedCourseAccordJson];
+        }
+
+        $dbPlos = DB::table('plos')->get(['learning_level']);
+        $extractedLevels = [];
+        
+        foreach ($dbPlos as $plo) {
+            $word = $plo->learning_level ?? '';
+            if (empty($word)) continue;
+            
+            $lowerWord = strtolower(trim($word));
+            $lvl = '';
+
+            if (str_contains($lowerWord, 'remember')) $lvl = 'R';
+            elseif (str_contains($lowerWord, 'understand')) $lvl = 'U';
+            elseif (str_contains($lowerWord, 'apply')) $lvl = 'AP';
+            elseif (str_contains($lowerWord, 'analyze')) $lvl = 'AN';
+            elseif (str_contains($lowerWord, 'evaluate')) $lvl = 'E';
+            elseif (str_contains($lowerWord, 'create')) $lvl = 'C';
+            else $lvl = strtoupper(substr(trim($word), 0, 1)); // ถ้าไม่ตรงเงื่อนไขเลย ให้ดึงตัวอักษรแรกมาตัวใหญ่
+
+            // เก็บเฉพาะค่าที่ไม่ซ้ำลงในกล่อง
+            if ($lvl && !in_array($lvl, $extractedLevels)) {
+                $extractedLevels[] = $lvl;
+            }
+        }
+
         // ค่า Default
         $defaults = [
             'curriculum_name' => $curriculum->curriculum_name ?? '',
             'faculty'         => $curriculum->faculty ?? '',
             'major'           => $curriculum->major ?? '',
             'campus'          => $curriculum->campus ?? '',
-            'credits'         => $curriculum->credit ?? '',
+            'credit'         => $curriculum->credit ?? '',
             'curriculum_year' => $context->year,
+            'instructor_name'   => $context->instructor_name ?? $context->instructorName ?? '',
 
             // ข้อมูลปรัชญาต่างๆ
             'philosophy' => $curriculum->mju_philosophy ?? '',
             'philosophy_education' => $curriculum->education_philosophy ?? '',
             'philosophy_curriculum' => $curriculum->curriculum_philosophy ?? '',
             
+
+            'prerequisites'     => $curriculum->prerequisites ?? '',
+            'hours_theory'      => $curriculum->hours_theory ?? '',
+            'hours_practice'    => $curriculum->hours_practice ?? '',
+            'hours_self_study'  => $curriculum->hours_self_study ?? '',
+            'hours_field_trip'  => $curriculum->hours_field_trip ?? '',
+
+            'is_specific'       => $curriculum->specific ?? 0,
+            'is_core'           => $curriculum->core ?? 0,
+            'is_major_required' => $curriculum->major_required ?? 0,
+            'is_major_elective' => $curriculum->major_elective ?? 0,
+            'is_free_elective'  => $curriculum->free_elective ?? 0,
+
+            'instructor_name'   => $context->instructor_name ?? $context->instructorName ?? '',
+
             // ข้อมูลตารางต่างๆ
             'feedback' => $evaluations->feedback ?? '',
             'improvement' => $evaluations->improvement ?? '',
@@ -155,6 +265,9 @@ class DocumentController extends Controller
             'research_subjects' => $resources->research_subjects ?? '',
             'academic_service' => $resources->academic_service ?? '',
             'art_culture' => $resources->art_culture ?? '',
+
+            'lll_data' => json_encode($lllDataArray, JSON_UNESCAPED_UNICODE),
+            'level_options' => $extractedLevels,
             
             'plan_data' => $this->safeJsonDecode($plans->lesson_plan ?? '[]'),
             'teaching_methods' => $this->safeJsonDecode($plans->teaching_methods ?? '{}'),
@@ -170,7 +283,7 @@ class DocumentController extends Controller
         $data = (array) $context + $defaults;
 
         // สร้าง Outcome Statements
-        $data['outcome_statement'] = $this->buildOutcomeStatements($data['course_accord']);
+        $data['outcome_statement'] = $this->buildOutcomeStatements();
 
         return (object) $data;
     }
@@ -181,6 +294,51 @@ class DocumentController extends Controller
         $targetTable = '';
         $dataToUpdate = [];
 
+        // หมวด 1: ข้อมูลรายวิชา (บันทึกลงตาราง courses)
+        $courseTypeFields = [
+            'prerequisites', 
+            'hours_theory', 'hours_practice', 'hours_self_study', 'hours_field_trip',
+            'is_specific', 'is_core', 'is_major_required', 'is_major_elective', 'is_free_elective'
+        ];
+
+        if (in_array($field, $courseTypeFields)) {
+            // ดึง CC_id เพื่อเอาไปเชื่อมกับ CC_id_ref
+            $cy = DB::table('courseyears')->where('id', $courseYearId)->first();
+            $cc_id = $cy->CC_id;
+            
+            $dbField = $field; // ตัวแปรสำหรับชื่อคอลัมน์ที่จะเซฟลง DB
+
+            // ถ้าเป็น Checkbox ที่มีคำว่า is_ ให้แปลงเป็น 1/0 และตัดคำว่า is_ ออกให้ตรงกับ Database
+            if (Str::startsWith($field, 'is_')) {
+                $value = filter_var($value, FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
+                $dbField = str_replace('is_', '', $field); // จาก 'is_specific' จะเหลือแค่ 'specific'
+            }
+            
+            // ✅ บันทึกลงตาราง course_types โดยใช้ CC_id_ref ตามรูปที่คุณส่งมา
+            $this->updateOrCreateWithDB('course_types', ['CC_id_ref' => $cc_id], [$dbField => $value]);
+            
+            return ['success' => true, 'message' => "Field '{$field}' updated in 'course_types'."];
+        }
+
+        // หมวด 1: ผู้สอน (บันทึกลงตาราง courseyears)
+        if ($field === 'instructor_name') {
+            DB::table('courseyears')->where('id', $courseYearId)->update([
+                'instructor_name' => $value,
+                'updated_at' => now()
+            ]);
+            return ['success' => true, 'message' => "Field '{$field}' updated in 'courseyears'."];
+        }
+
+        if ($field === 'credit') {
+            $cy = DB::table('courseyears')->where('id', $courseYearId)->first();
+            $cc = DB::table('curriculum_courses')->where('id', $cy->CC_id)->first();
+            DB::table('courses')->where('id', $cc->course_code)->update([
+                'credit' => $value,
+                'updated_at' => now()
+            ]);
+            return ['success' => true, 'message' => "Field '{$field}' updated in 'courses'."];
+        }
+
         // 1. หมวด Course Evaluations
         if (in_array($field, ['feedback', 'improvement', 'agreement'])) {
             $targetTable = 'course_evaluations';
@@ -188,23 +346,37 @@ class DocumentController extends Controller
         } 
         else if (Str::startsWith($field, 'curriculum_map_')) {
             $targetTable = 'course_evaluations';
-            // Logic อัปเดต JSON ของ curriculum_map_data
             $currentData = DB::table($targetTable)->where($conditions)->first();
-            $jsonData = $this->safeJsonDecode($currentData->curriculum_map_data ?? '[]');
+            
+            // แปลงข้อมูลเดิมมาเป็น Array
+            $jsonData = $this->safeJsonDecode($currentData ? $currentData->curriculum_map_data : '[]');
             
             if (preg_match('/curriculum_map_r(\d+)_c(\d+)/', $field, $matches)) {
                 $colIndex = (int)$matches[2];
-                if (empty($jsonData)) $jsonData = [(object)[]];
-                $jsonData[0]->{strval($colIndex)} = filter_var($value, FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
+                
+                // ✅ แก้ไข 1: ถ้าเป็น Array ว่าง ให้สร้าง Array มิติที่ 2 เตรียมไว้
+                if (empty($jsonData) || !isset($jsonData[0])) {
+                    $jsonData[0] = [];
+                } else if (!is_array($jsonData[0])) {
+                    // เผื่อกรณีมันอ่านมาเป็น Object ให้แปลงเป็น Array
+                    $jsonData[0] = (array) $jsonData[0]; 
+                }
+
+                // ✅ แก้ไข 2: ใช้ไวยากรณ์แบบ Array ([...]) แทน Object (->) 
+                // และรับค่าตัวเลขตรงๆ เพื่อให้เซฟค่า 0, 1 (จุดดำ), 2 (จุดขาว) ได้
+                $jsonData[0][strval($colIndex)] = (int) $value; 
             }
+            
             $dataToUpdate = ['curriculum_map_data' => json_encode($jsonData, JSON_UNESCAPED_UNICODE)];
         }
         
-        // 2. หมวด Course Learning Maps (PLO/CLO Mappings)
+        // หมวด Course Learning Maps (PLO/CLO Mappings)
         else if (Str::startsWith($field, 'plo_map_')) {
             $targetTable = 'course_learning_maps';
             $currentData = DB::table($targetTable)->where($conditions)->first();
-            $jsonData = $this->safeJsonDecode($currentData->course_accord ?? '{}');
+            
+            // ✅ แก้ไข: ป้องกัน Error
+            $jsonData = $this->safeJsonDecode($currentData ? $currentData->course_accord : '{}');
 
             if (preg_match('/plo_map_([a-zA-Z0-9]+)_c(\d+)_(\w+)/', $field, $matches)) {
                 $cloCode = $matches[1]; $colIndex = (int)$matches[2]; $attribute = $matches[3];
@@ -237,7 +409,6 @@ class DocumentController extends Controller
         else if ($field === 'section6_data') {
             $targetTable = 'plans';
             $decodedValue = $this->prepareJsonValue($value);
-            // ... (Logic กรองข้อมูลว่างๆ แบบเดิมของคุณ) ...
             $dataToUpdate = ['teaching_methods' => json_encode($decodedValue, JSON_UNESCAPED_UNICODE)];
         }
         else if ($field === 'section7_data') {
@@ -255,7 +426,9 @@ class DocumentController extends Controller
         else if (Str::startsWith($field, 'grade_')) {
             $targetTable = 'plans';
             $currentData = DB::table($targetTable)->where($conditions)->first();
-            $jsonData = $this->safeJsonDecode($currentData->grading_criteria ?? '{}');
+            
+            // ✅ แก้ไข: ป้องกัน Error
+            $jsonData = $this->safeJsonDecode($currentData ? $currentData->grading_criteria : '{}');
             $jsonData[$field] = $value;
             $dataToUpdate = ['grading_criteria' => json_encode($jsonData, JSON_UNESCAPED_UNICODE)];
         }
@@ -264,6 +437,29 @@ class DocumentController extends Controller
         else if ($field === 'ai_text') {
             $targetTable = 'generates';
             $dataToUpdate = ['ai_text' => $value];
+        }
+
+        // สำหรับบันทึกคำอธิบาย CLO ที่แก้ไขรายบรรทัด หมวด2.2
+        else if (Str::startsWith($field, 'cloLll_desc_')) {
+            $targetTable = 'generates';
+            
+            // 1. ดึง Code ออกมา (เช่น CLO1) และจัด Format ให้มีช่องว่าง (เช่น CLO 1) เพื่อให้ตรงกับ JSON เดิม
+            $rawCode = str_replace('cloLll_desc_', '', $field); 
+            $cloKey = preg_replace('/([a-zA-Z]+)(\d+)/', '$1 $2', $rawCode); // "CLO1" -> "CLO 1"
+
+            // 2. ดึงข้อมูลเดิมจาก DB มาก่อน
+            $currentData = DB::table($targetTable)->where($conditions)->first();
+            $aiTextArray = $this->safeJsonDecode($currentData->ai_text ?? '{}');
+
+            // 3. อัปเดตเฉพาะเนื้อหาของ CLO นั้นๆ
+            if (!isset($aiTextArray[$cloKey])) {
+                $aiTextArray[$cloKey] = ['CLO' => $value];
+            } else {
+                $aiTextArray[$cloKey]['CLO'] = $value;
+            }
+
+            // 4. เตรียมบันทึกกลับเป็น JSON String
+            $dataToUpdate = ['ai_text' => json_encode($aiTextArray, JSON_UNESCAPED_UNICODE)];
         }
 
         // บันทึกลงฐานข้อมูล
@@ -275,28 +471,70 @@ class DocumentController extends Controller
         return ['success' => false, 'message' => "Unknown field '{$field}'."];
     }
 
-    private function buildOutcomeStatements($savedOutcomeData)
+    private function buildOutcomeStatements()
     {
-        $dbPlos = DB::table('plos')->get()->keyBy('plo');
+        // ดึงข้อมูลทั้งหมดจากตาราง plos เรียงตามตัวเลข
+        $dbPlos = DB::table('plos')->orderBy('plo')->get();
         $finalOutcomeStatement = [];
-        $loopLimit = max(5, $dbPlos->keys()->max() ?? 0); // บังคับขั้นต่ำ 5 ข้อ
 
-        for ($i = 1; $i <= $loopLimit; $i++) {
-            $masterPlo = $dbPlos->get($i);
-            $savedData = $savedOutcomeData[$i] ?? []; 
+        // 1. ฟังก์ชันเช็คและแปลงคำสำหรับ Level (รองรับกรณีมีหลายคำ)
+        $formatLevel = function($word) {
+            if (empty($word)) return '';
+            $lowerWord = strtolower(trim($word)); 
             
-            // Logic: 1-4 เป็น Specific, 5 เป็น Generic
-            $isSpecific = $i < 5;
-            $isGeneric = $i == 5;
+            $levels = [];
+            $levels_full = [];
 
-            $finalOutcomeStatement[$i] = [
-                'outcome' => $savedData['outcome'] ?? ($masterPlo->description ?? ''),
-                'specific' => $savedData['specific'] ?? $isSpecific,
-                'generic' => $savedData['generic'] ?? $isGeneric,
-                'level' => $savedData['level'] ?? 'U',
-                'type' => $savedData['type'] ?? 'K'
+            if (str_contains($lowerWord, 'remember'))   { $levels[] = 'R'; $levels_full[] = 'Remember'; }
+            if (str_contains($lowerWord, 'understand')) { $levels[] = 'U'; $levels_full[] = 'Understand'; }
+            if (str_contains($lowerWord, 'apply'))      { $levels[] = 'AP'; $levels_full[] = 'Apply'; }
+            if (str_contains($lowerWord, 'analyze'))    { $levels[] = 'AN'; $levels_full[] = 'Analyze'; }
+            if (str_contains($lowerWord, 'evaluate'))   { $levels[] = 'E'; $levels_full[] = 'Evaluate'; }
+            if (str_contains($lowerWord, 'create'))     { $levels[] = 'C'; $levels_full[] = 'Create'; }
+            
+            // ถ้าเจอตัั้งแต่ 1 คำขึ้นไป ให้นำมาต่อกันด้วยลูกน้ำ (, )
+            if (!empty($levels)) return implode(', ', $levels);
+            
+            return ucfirst(trim($word)); 
+        };
+
+        // 2. ฟังก์ชันเช็คและแปลงคำสำหรับ Type (รองรับกรณีมีหลายคำ)
+        $formatType = function($word) {
+            if (empty($word)) return '';
+            $lowerWord = strtolower(trim($word));
+            
+            $types = [];
+            $types_full = [];
+
+            if (str_contains($lowerWord, 'knowledge')) {
+                $types[] = 'K'; $types_full[] = 'Knowledge';
+            }
+            if (str_contains($lowerWord, 'skill')) {
+                $types[] = 'S'; $types_full[] = 'Skill';
+            }
+            if (str_contains($lowerWord, 'application') || str_contains($lowerWord, 'responsibility')) {
+                $types[] = 'AR'; $types_full[] = 'Application and Responsibility';
+            }
+            
+            // ถ้าเจอตัั้งแต่ 1 คำขึ้นไป ให้นำมาต่อกันด้วยลูกน้ำ (, )
+            if (!empty($types)) return implode(', ', $types);
+            
+            return ucfirst(trim($word)); 
+        };
+
+        // 3. จัดเตรียมข้อมูลสำหรับแสดงผลลงตาราง
+        foreach ($dbPlos as $masterPlo) {
+            $isSpecific = property_exists($masterPlo, 'specific_lo') ? $masterPlo->specific_lo : ($masterPlo->plo < 5 ? 1 : 0);
+
+            $finalOutcomeStatement[$masterPlo->plo] = [
+                'plo'      => $masterPlo->plo,
+                'outcome'  => $masterPlo->description ?? '',
+                'specific' => $isSpecific,
+                'level'    => $formatLevel($masterPlo->learning_level ?? ''),
+                'type'     => $formatType($masterPlo->domain ?? '')
             ];
         }
+
         return $finalOutcomeStatement;
     }
 

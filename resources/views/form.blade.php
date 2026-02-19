@@ -81,7 +81,7 @@
         @csrf
         <div>
           <label for="course" class="block font-semibold text-gray-700 mb-1">เลือกรายวิชา :</label>
-          <select id="course" name="course" class="w-full p-2 border border-gray-300 rounded-md text-sm">
+          <select id="course" name="course" class="w-full p-2 border border-gray-300 rounded-md text-sm" disabled>
             @if(isset($course_options))
                 @foreach ($course_options as $course)
                     <option value="{{ $course->course_pk }}"

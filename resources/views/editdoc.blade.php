@@ -101,10 +101,10 @@
                             </tr>
                         <tr>
                             <th class="border border-black p-2.5 align-top bg-blue-100 text-center">3. จำนวนหน่วยกิต</th>
-                            <td colspan="3" class="border border-black align-top"> 
-                                <input type="text" name="credits" id="credits" 
+                            <td colspan="3" class="border border-black align-top">
+                                <input type="text" name="credit" id="credit" 
                                     class="w-full p-2.5 border-none focus:outline-none focus:ring-0" 
-                                    value="{{ $data->credits ?? '' }}">
+                                    value="{{ $data->credit ?? '' }}" disabled>
                             </td>
                         </tr>
                         <tr>
@@ -112,7 +112,7 @@
                             <td colspan="3" class="border border-black align-top">
                                 <input type="text" name="curriculum_name" id="curriculum_name" 
                                     class="w-full p-2.5 border-none focus:outline-none focus:ring-0" 
-                                    value="{{ $data->curriculum_name ?? '' }}">
+                                    value="{{ $data->curriculum_name ?? '' }}" disabled>
                             </td>
                         </tr>
                         <tr>
@@ -150,7 +150,9 @@
                         </tr> 
                         <tr> 
                             <th class="border border-black p-2.5 align-top bg-blue-100 text-center">7. ผู้สอน</th>
-                            <td colspan="3" class="border border-black p-2.5 align-top" id="instructors">{{ $data->instructorName ?? '' }}</td>
+                            <td colspan="3" class="border border-black p-2.5 align-top" id="instructors"><input type="text" name="instructor_name" id="instructor_name"
+                                    class="w-full border-none focus:outline-none focus:ring-0" 
+                                    value="{{ $data->instructor_name ?? '' }}"></td>
                             </tr> 
                         <tr>
                             <th class="border border-black p-2.5 align-top bg-blue-100 text-center">8.การแก้ไขล่าสุด</th>
@@ -211,21 +213,50 @@
                                     rows="4"
                                     class="w-full mt-2 p-3 text-[15px] leading-relaxed border border-gray-300 rounded-lg bg-white resize-vertical shadow-sm transition-all
                                         focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
-                                >
-                            {{ $data->course_detail_th ?? ($data->course_detail_th ?? '') }}
-                            {{ $data->course_detail_en ?? ($data->course_detail_en ?? '') }}</textarea>
+                                >     {{ $data->course_detail_th ?? ($data->course_detail_th ?? '') }}
+                                </textarea>
+                                <textarea
+                                    rows="5"
+                                    class="w-full mt-2 p-3 text-[15px] leading-relaxed border border-gray-300 rounded-lg bg-white resize-vertical shadow-sm transition-all
+                                        focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                                >     {{ $data->course_detail_en ?? ($data->course_detail_en ?? '') }}
+                                </textarea>
                             </td>
                         </tr>
                         <tr>
                             <td class="p-4 border border-gray-300">
                                 <b>2.2 ผลลัพธ์การเรียนรู้ระดับรายวิชา (Course learning Outcome) CLOs </b>
                                 <br>
-                                <textarea
-                                    name="ai_text"
-                                    rows="4"
-                                    class="w-full mt-2 p-3 text-[15px] leading-relaxed border border-gray-300 rounded-lg bg-white resize-vertical shadow-sm transition-all
-                                        focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
-                                >{{ $data->ai_text ?? '' }}</textarea>
+                                <div id="clo-input-container" class="mt-2 space-y-2">
+                                    @php
+                                        $aiTextRaw = $data->ai_text ?? '{}';
+                                        $closArray = json_decode($aiTextRaw, true);
+                                        
+                                        if (is_array($closArray) && json_last_error() === JSON_ERROR_NONE) {
+                                            // เรียงลำดับ CLO
+                                            uksort($closArray, function($a, $b) {
+                                                preg_match('/(\d+)/', $a, $matchesA);
+                                                preg_match('/(\d+)/', $b, $matchesB);
+                                                return ((int)($matchesA[1] ?? 9999)) <=> ((int)($matchesB[1] ?? 9999));
+                                            });
+                                        } else {
+                                            $closArray = [];
+                                        }
+                                    @endphp
+
+                                    @foreach ($closArray as $key => $details)
+                                        <div class="flex gap-2 clo-item-row">
+                                            <input type="text" 
+                                                class="w-20 p-2 text-sm font-bold border border-gray-300 rounded bg-gray-100 clo-key" 
+                                                value="{{ str_replace(' ', '', $key) }}" readonly>
+                                            
+                                            <input type="text"
+                                                class="clo-edit-input flex-1 p-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 clo-description"
+                                                data-original-key="{{ $key }}"
+                                                value="{{ $details['CLO'] ?? '' }}">
+                                        </div>
+                                    @endforeach
+                                </div>
                             </td>
                         </tr>
                     </tbody>
@@ -275,81 +306,54 @@
                 <div>
                     <h4 class="mt-2 font-semibold">5.1 ผลลัพธ์การเรียนรู้ของหลักสูตร</h4>
                     <h4 class="mt-2 font-semibold">หลักสูตรฯ วิทยาศาสตรบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์</h4>
-                    <div class="flex justify-end -mt-10 ">
-                        <button type="button" id="addPloRowBtn"
-                            class="px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg shadow-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75">
-                            + เพิ่มแถว PLO
-                        </button>
-                    </div>
                 </div>
                 <table class="w-full border-collapse border border-gray-400 mt-2 text-sm">
                     <thead class="bg-gray-100 font-semibold text-center">
                         <tr>
                             <th class="w-[8%] border border-black p-2.5 align-top bg-blue-100 text-center">PLOs</th>
                             <th class="w-[45%] border border-black p-2.5 align-top bg-blue-100 text-center">Outcome Statement</th>
-                            <th class="w-[8%] border border-black p-2.5 align-top bg-blue-100 text-center">Specific LO</th>
-                            <th class="w-[8%] border border-black p-2.5 align-top bg-blue-100 text-center">Generic LO</th>
-                            <th class="w-[8%] border border-black p-2.5 align-top bg-blue-100 text-center">Level</th>
+                            <th class="w-[10%] border border-black p-2.5 align-top bg-blue-100 text-center">Specific LO</th>
+                            <th class="w-[10%] border border-black p-2.5 align-top bg-blue-100 text-center">Generic LO</th>
+                            <th class="w-[12%] border border-black p-2.5 align-top bg-blue-100 text-center">Level</th>
                             <th class="w-[15%] border border-black p-2.5 align-top bg-blue-100 text-center">Type</th>
                         </tr>
                     </thead>
-                    @php
-                        $outcomeStatements = isset($data->outcome_statement) && is_array($data->outcome_statement) ? $data->outcome_statement : [];
-                        if (empty($outcomeStatements)) {
-                            $maxPlos = 4;
-                        } else {
-                            $maxPlos = max(array_keys($outcomeStatements));
-                        }
-                    @endphp
-                    <tbody id="plosTableBody" data-max-plo="{{ $maxPlos }}">
-                        @for ($i = 1; $i <= $maxPlos; $i++)
-                            @php
-                                $ploData = $outcomeStatements[$i] ?? [
-                                    'outcome' => '',
-                                    'specific' => false,
-                                    'generic' => false,
-                                    'level' => '',
-                                    'type' => ''
-                                ];
-                            @endphp
+                    <tbody>
+                        @if(!empty($data->outcome_statement))
+                            @foreach ($data->outcome_statement as $ploData)
+                                <tr>
+                                    <td class="text-center border border-black p-2.5 align-top font-bold">
+                                        {{ $ploData['plo'] }}
+                                    </td>
+                                    
+                                    <td class="border border-black p-2.5 align-top">
+                                        {{ $ploData['outcome'] }}
+                                    </td>
+                                    <td class="text-center border border-black p-2.5 align-top text-gray-700">
+                                        {!! $ploData['specific'] == 1 ? '<span class="font-bold text-lg">✓</span>' : '' !!}
+                                    </td>
+
+                                    <td class="text-center border border-black p-2.5 align-top text-gray-700">
+                                        {!! $ploData['specific'] == 0 ? '<span class="font-bold text-lg">✓</span>' : '' !!}
+                                    </td>                                  
+                                    <td class="text-center border border-black p-2.5 align-top">
+                                        {{ $ploData['level'] }}
+                                    </td>
+                                    
+                                    <td class="text-center border border-black p-2.5 align-top">
+                                        {{ $ploData['type'] }}
+                                    </td>
+                                </tr>
+                            @endforeach
+                        @else
                             <tr>
-                                <td class="text-center border border-black p-2.5 align-top">{{ $i }}</td>
-                                <td class="border border-black p-2.5 align-top">
-                                    <textarea name="plo{{ $i }}_outcome" rows="3" class="w-full border border-gray-300 rounded p-1">{{ $ploData['outcome'] ?? '' }}</textarea>
-                                </td>
-                                <td class="text-center border border-black p-2.5 align-top">
-                                    <input type="checkbox" name="plo{{ $i }}_specific" class="scale-125" value="1" {{ ($ploData['specific'] ?? false) ? 'checked' : '' }}>
-                                </td>
-                                <td class="text-center border border-black p-2.5 align-top">
-                                    <input type="checkbox" name="plo{{ $i }}_generic" class="scale-125" value="1" {{ ($ploData['generic'] ?? false) ? 'checked' : '' }}>
-                                </td>
-                                <td class="text-center border border-black p-2.5 align-top">
-                                    <select name="plo{{ $i }}_level"
-                                    class="border rounded px-2 py-1 text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
-                                        <option value="">--เลือก--</option>
-                                        @foreach (['R', 'U', 'AP', 'AN', 'E', 'C'] as $levelValue)
-                                            <option value="{{ $levelValue }}" {{ ($ploData['level'] ?? '') === $levelValue ? 'selected' : '' }}>
-                                                {{ explode(' - ', $levelValue)[0] }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </td>
-                                <td class="text-center border border-black p-2.5 align-top">
-                                    <select name="plo{{ $i }}_type"
-                                    class="border rounded px-2 py-1 text-gray-700 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500">
-                                        <option value="">--เลือก--</option>
-                                        @foreach (['K', 'S', 'AR', 'Rs'] as $typeValue)
-                                            <option value="{{ $typeValue }}" {{ ($ploData['type'] ?? '') === $typeValue ? 'selected' : '' }}>
-                                                {{ explode(' - ', $typeValue)[0] }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </td>
+                                <td colspan="6" class="text-center border border-black p-4 text-gray-500">ไม่มีข้อมูลจากฐานข้อมูล</td>
                             </tr>
-                        @endfor
+                        @endif
                     </tbody>
                 </table>
-                <p class="text-xs">Bloom's Taxonomy : R-Remember, U-Understand,  AP-Apply,  AN-Analyze, E-Evaluate,  C-Create </p>
+                <p class="text-s mt-2 text-gray-600">Bloom's Taxonomy : R-Remember, U-Understand, AP-Apply, AN-Analyze, E-Evaluate, C-Create </p>
+                <p class="text-s mb-2 text-gray-600">Type : K-Knowledge, S-Skill, AR-Application and Responsibility </p>
                 
                 <div id="section-5-2">
                     <h3 class="font-bold text-lg">5.2 มาตรฐานผลการเรียนรู้รายวิชา (Curriculum Mapping)</h3>
@@ -397,19 +401,21 @@
                         <tr>
                             <th class="border border-gray-400 p-2 bg-gray-200 font-bold w-[10%]">รหัส</th>
                             <th class="border border-gray-400 p-2 bg-gray-200 font-bold w-[40%]">คำอธิบาย CLOs/LLLs</th>
-                            @foreach ($outcomeStatements as $p => $ploData)
-                                @php
-                                    $ploLevel = '';
-                                    // We already have $ploData from the loop
-                                    if(isset($ploData['level'])) {
-                                        // Handle cases where level might be just "R" or "R - Remember"
-                                        $levelParts = explode(' - ', $ploData['level']);
-                                        $ploLevel = $levelParts[0] ?? '';
-                                    }
-                                @endphp
-                                {{-- Use $p (the key, e.g., 1, 2, 5) for the PLO number --}}
-                                <th class="border border-gray-400 p-2 bg-gray-200 font-bold w-[12.5%]">PLO{{ $p }} {{ $ploLevel ? "($ploLevel)" : '' }}</th>
-                            @endforeach
+                            
+                            @if(!empty($data->outcome_statement))
+                                @foreach ($data->outcome_statement as $p => $ploData)
+                                    @php
+                                        $ploLevel = '';
+                                        if(isset($ploData['level'])) {
+                                            $levelParts = explode(' - ', $ploData['level']);
+                                            $ploLevel = $levelParts[0] ?? '';
+                                        }
+                                    @endphp
+                                    <th class="border border-gray-400 p-2 bg-gray-200 font-bold w-[12.5%]">
+                                        PLO{{ $p }} {{ $ploLevel ? "($ploLevel)" : '' }}
+                                    </th>
+                                @endforeach
+                            @endif
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -667,12 +673,14 @@
             curriculumMapData: @json($data->curriculum_map_data ?? []),
             aiText: @json($data->ai_text ?? '{}'),
             courseAccord: @json($data->course_accord ?? []),
-            teachingMethods: @json($data->teaching_methods ?? null), // ใช้ในข้อ 1
-            planData: @json($data->plan_data ?? []),             // ใช้ในข้อ 2
-            assessmentData: @json($data->assessment_data ?? []), // ใช้ในข้อ 3
-            rubricsData: @json($data->rubrics_data ?? []),       // ใช้ในข้อ 4
-            referencesData: @json($data->references_data ?? []), // ใช้ในข้อ 5
-            ploCount: {{ count(isset($data->outcome_statement) && is_array($data->outcome_statement) ? $data->outcome_statement : []) ?: 4 }}
+            teachingMethods: @json($data->teaching_methods ?? null),
+            planData: @json($data->plan_data ?? []),
+            assessmentData: @json($data->assessment_data ?? []),
+            rubricsData: @json($data->rubrics_data ?? []),
+            referencesData: @json($data->references_data ?? []),
+            ploCount: {{ count(isset($data->outcome_statement) && is_array($data->outcome_statement) ? $data->outcome_statement : []) ?: 4 }},
+            lllData: {!! $data->lll_data ?? '[]' !!},
+            levelOptions: @json($data->level_options ?? []),
         };
     </script>
 </body>

@@ -30,6 +30,6 @@ class Curriculum extends Model
     }
 
     public function llls() {
-        return $this->hasMany(curriculum_llls::class, 'curriculum_id_ref', 'id');
+        return $this->hasMany(curriculum_llls::class, 'curriculum_year_ref', 'curriculum_year');
     }
 }
