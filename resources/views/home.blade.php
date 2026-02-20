@@ -81,12 +81,11 @@
                                         @foreach($TQFItems as $item)
                                             @php
                                                 $stepCount = collect([$item->startprompt, $item->generated, $item->success])->filter()->count();
-                                                $progress = ($stepCount / 3) * 100;
                                                 
                                                 $statusConfig = match($stepCount) {
                                                     0 => ['text' => 'ยังไม่เริ่ม', 'color' => 'text-gray-500', 'bg' => 'bg-gray-200', 'btn' => 'เริ่มต้น', 'url' => '/form'],
-                                                    1 => ['text' => 'เริ่มทำแล้ว', 'color' => 'text-orange-500', 'bg' => 'bg-orange-500', 'btn' => 'สร้างต่อ', 'url' => '/form'],
-                                                    2 => ['text' => 'อยู่ระหว่างการสร้าง', 'color' => 'text-blue-500', 'bg' => 'bg-blue-500', 'btn' => 'แก้ไข', 'url' => '/editdoc'],
+                                                    1 => ['text' => 'เริ่มทำแล้ว', 'color' => 'text-red-500', 'bg' => 'bg-orange-500', 'btn' => 'สร้างต่อ', 'url' => '/form'],
+                                                    2 => ['text' => 'อยู่ระหว่างการสร้าง', 'color' => 'text-orange-500', 'bg' => 'bg-blue-500', 'btn' => 'แก้ไข', 'url' => '/editdoc'],
                                                     3 => ['text' => 'เสร็จสมบูรณ์', 'color' => 'text-green-600', 'bg' => 'bg-green-500', 'btn' => 'ตรวจสอบ', 'url' => '/editdoc'],
                                                     default => ['text' => '-', 'color' => 'text-gray-400', 'bg' => 'bg-gray-200', 'btn' => '', 'url' => '#']
                                                 };
@@ -108,11 +107,7 @@
                                                         <span class="text-xs {{ $statusConfig['color'] }} border px-2 py-0.5 rounded-full bg-white">
                                                             {{ $statusConfig['text'] }}
                                                         </span>
-                                                    </div>
-                                                    <div class="w-full sm:w-48 bg-gray-200 rounded-full h-1.5 mt-2">
-                                                        <div class="{{ $statusConfig['bg'] }} h-1.5 rounded-full transition-all duration-500" 
-                                                             style="width: {{ $progress }}%"></div>
-                                                    </div>
+                                                    </div>                                     
                                                 </div>
                                                 <div>
                                                     <a href="{{ $url }}" class="inline-block text-sm bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:border-blue-300 px-4 py-2 rounded-md transition shadow-sm">
