@@ -567,8 +567,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 tr.innerHTML = `
                     <td class="border border-gray-400 p-2 text-center font-bold" readonly>${itemCode}</td>
                     <td class="border border-gray-400 p-2 text-left">
-                       <span class="inline-block w-full ${isLLL ? 'text-gray-500' : 'hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500'} p-1 rounded"
-                            contenteditable="${!isLLL}" data-field="cloLll_desc_${itemCode}">${item.description ?? ''}</span>
+                       <span class="inline-block w-full ${isLLL ? 'text-gray-800' : ''} p-1 rounded"
+                            data-field="cloLll_desc_${itemCode}">${item.description ?? ''}</span>
                     </td>`;
 
                 for (let colIndex = 0; colIndex < ploCount; colIndex++) {

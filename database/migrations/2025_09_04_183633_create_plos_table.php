@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('description');
             $table->string('domain')->nullable();
             $table->string('learning_level')->nullable();
-            $table->boolean('specific_lo')->default(false); // 1 = Specific LO, 0 = Not Specific LO
+            $table->boolean('specific_lo')->nullable();
             $table->timestamps();
 
             $table->foreign('curriculum_year_ref')->references('curriculum_year')->on('curriculum')->onDelete('cascade');

@@ -64,6 +64,7 @@
                                 <th class="border px-4 py-2 text-left">Description</th>
                                 <th class="border px-4 py-2 w-40 text-left">Domain</th>
                                 <th class="border px-4 py-2 w-48 text-left">Learning Level</th>
+                                <th class="border px-4 py-2 w-40 text-left">Specific LO</th>
                                 <th class="border px-4 py-2 w-40 text-center">Action</th>
                             </tr>
                         </thead>
@@ -73,6 +74,7 @@
                                 data-plo-num="{{ $plo->plo }}" 
                                 data-domain="{{ $plo->domain ?? '' }}" 
                                 data-level="{{ $plo->learning_level ?? '' }}" 
+                                data-specific-lo="{{ $plo->specific_lo ? '1' : '0' }}"
                                 class="hover:bg-gray-50 transition">
                                 <td class="px-4 py-2 text-center font-bold text-gray-700">
                                     {{ $plo->plo }}
@@ -86,6 +88,12 @@
                                 <td class="px-4 py-2 text-sm text-gray-600">
                                     {{ $plo->learning_level }}
                                 </td>
+                                <td class="px-4 py-2 text-sm text-gray-600">
+                                    @if($plo->specific_lo)
+                                        <span class="inline-block px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-semibold">Specific LO</span>
+                                    @else
+                                        <span class="inline-block px-2 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-semibold">Generic LO</span>
+                                    @endif
                                 <td class="px-4 py-2 text-center space-x-1">
                                     <button type="button" class="edit-btn text-amber-500 hover:text-amber-700 transition p-1 rounded-md hover:bg-amber-50">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 25 25" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
@@ -159,6 +167,14 @@
                             <label class="block mb-1 font-semibold text-gray-700">Level</label>
                             <input type="text" id="new-level" class="border px-3 py-2 w-full rounded focus:ring-2 focus:ring-blue-300 outline-none">
                         </div>
+                        <div class="flex items-center gap-2 pt-6">
+                            <label for="new-specific-lo" class="font-semibold text-gray-700 cursor-pointer select-none">Specific LO</label>
+                            <input type="radio" id="new-specific-lo" name="lo_type" value="1" class="w-5 h-5 cursor-pointer">
+                        </div>
+                        <div class="flex items-center gap-2 pt-6">
+                            <label for="new-generic-lo" class="font-semibold text-gray-700 cursor-pointer select-none">Generic LO</label>
+                            <input type="radio" id="new-generic-lo" name="lo_type" value="0" class="w-5 h-5 cursor-pointer">
+                        </div>
                     </div>
 
                     <div class="flex justify-end space-x-2 pt-2">
@@ -191,6 +207,20 @@
                         <div>
                             <label class="block mb-1 font-semibold text-gray-700">Level</label>
                             <input type="text" id="edit-level" class="border px-3 py-2 w-full rounded focus:ring-2 focus:ring-yellow-300 outline-none">
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-4 pt-6">
+                        <div class="flex items-center gap-2">
+                            <input type="radio" id="edit-specific-lo" name="lo_type" value="1" class="border w-5 h-5 cursor-pointer focus:ring-2 focus:ring-blue-300">
+                            <label for="edit-specific-lo" class="font-semibold text-gray-700 cursor-pointer select-none mr-4">
+                                Specific LO
+                            </label>
+
+                            <input type="radio" id="edit-generic-lo" name="lo_type" value="0" class="border w-5 h-5 cursor-pointer focus:ring-2 focus:ring-blue-300">
+                            <label for="edit-generic-lo" class="font-semibold text-gray-700 cursor-pointer select-none">
+                                Generic LO
+                            </label>
                         </div>
                     </div>
 

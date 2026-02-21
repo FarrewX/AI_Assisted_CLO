@@ -428,7 +428,7 @@
                                             $ploLevel = $levelParts[0] ?? '';
                                         }
                                     @endphp
-                                    <th class="border border-gray-400 p-2 bg-gray-200 font-bold w-[12.5%]">
+                                    <th class="border border-gray-400 p-2 bg-gray-200 font-bold w-[5%]">
                                         PLO{{ $p }} {{ $ploLevel ? "($ploLevel)" : '' }}
                                     </th>
                                 @endforeach

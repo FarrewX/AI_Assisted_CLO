@@ -43,6 +43,7 @@ class PlosController extends Controller
         $plo->description = $request->description;
         $plo->domain = $request->domain;
         $plo->learning_level = $request->learning_level;
+        $plo->specific_lo = $request->specific_lo;
         $plo->save();
 
         return response()->json(['message' => 'อัพเดทสำเร็จ']);
@@ -74,6 +75,7 @@ class PlosController extends Controller
         $plo->description = $request->description;
         $plo->domain = $request->domain;
         $plo->learning_level = $request->learning_level;
+        $plo->specific_lo = $request->specific_lo;
         $plo->save();
 
         return response()->json(['message' => 'เพิ่ม PLO สำเร็จ']);

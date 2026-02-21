@@ -134,11 +134,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const descInput = document.getElementById('new-desc');
             const domainInput = document.getElementById('new-domain');
             const levelInput = document.getElementById('new-level');
+            const specificLoInput = document.getElementById('new-specific-lo');
 
             const ploNum = ploInput ? ploInput.value : '';
             const desc = descInput ? descInput.value.trim() : '';
             const domain = domainInput ? domainInput.value.trim() : '';
             const level = levelInput ? levelInput.value.trim() : '';
+            const specificLo = specificLoInput ? specificLoInput.checked : false;
 
             if(!desc) { showPopup('กรุณากรอก Description'); return; }
 
@@ -148,6 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 description: desc,
                 domain: domain,
                 learning_level: level,
+                specific_lo: specificLo,
                 _token: csrfToken
             })
             .then(res => {
@@ -183,6 +186,19 @@ document.addEventListener('DOMContentLoaded', () => {
             const editDescInput = document.getElementById('edit-desc');
             const editDomainInput = document.getElementById('edit-domain');
             const editLevelInput = document.getElementById('edit-level');
+
+            const isSpecific = tr.dataset.specificLo; 
+            
+            const radioSpecific = document.getElementById('edit-specific-lo');
+            const radioGeneric = document.getElementById('edit-generic-lo');
+
+            if (radioSpecific && radioGeneric) {
+                if (isSpecific === '1') {
+                    radioSpecific.checked = true; // Specific
+                } else {
+                    radioGeneric.checked = true;  // Generic
+                }
+            }
 
             if(editIdInput) editIdInput.value = id;
             if(editPloInput) editPloInput.value = ploNum;
@@ -225,6 +241,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const desc = document.getElementById('edit-desc').value.trim();
             const domain = document.getElementById('edit-domain').value.trim();
             const level = document.getElementById('edit-level').value.trim();
+            const selectedLoType = document.querySelector('input[name="lo_type"]:checked')?.value;
+            
+            const specificLo = (selectedLoType === '1') ? 1 : 0;
             
             showConfirm('ต้องการบันทึกการแก้ไขหรือไม่?', () => {
                 axios.post(`/management/plos/update/${id}`, { 
@@ -232,6 +251,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     description: desc,
                     domain: domain,
                     learning_level: level,
+                    specific_lo: specificLo,
                     _token: csrfToken
                 })
                 .then(res => {
