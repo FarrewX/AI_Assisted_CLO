@@ -2,6 +2,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // ดึงข้อมูลจาก Global Variable ที่ประกาศไว้ใน Blade
     const PAGE_DATA = window.pageData || {};
 
+    // สำหรับ Popup (SweetAlert2)
+    const AppAlert = (message, iconType = 'warning') => {
+        return Swal.fire({ title: 'แจ้งเตือน', text: message, icon: iconType, confirmButtonText: 'ตกลง', confirmButtonColor: '#3085d6' });
+    };
+    const AppConfirm = (message) => {
+        return Swal.fire({ title: 'ยืนยันการดำเนินการ', text: message, icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'ตกลง', cancelButtonText: 'ยกเลิก' });
+    };
+
     async function saveData(fieldName, value, targetElement = null) {
         const saveUrl = '/savedataedit';
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
@@ -244,16 +252,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const term = urlParams.get('term');
 
             if (!CC_id || !year || !term) {
-                alert('ข้อมูล URL ไม่ครบถ้วน ไม่สามารถดึงข้อมูลได้');
+                AppAlert('ข้อมูล URL ไม่ครบถ้วน ไม่สามารถดึงข้อมูลได้');
                 return;
             }
 
             // ยืนยันก่อนดึงหากมีข้อมูลเดิมพิมพ์ค้างไว้อยู่
             const textarea = document.querySelector('textarea[name="agreement"]');
             if (textarea && textarea.value.trim() !== '') {
-                if (!confirm('คุณมีข้อความเดิมอยู่แล้ว การดึงข้อมูลใหม่จะลบข้อความเดิมทิ้ง ต้องการทำต่อหรือไม่?')) {
-                    return;
-                }
+                const conf = await AppConfirm('คุณมีข้อความเดิมอยู่แล้ว การดึงข้อมูลใหม่จะลบข้อความเดิมทิ้ง ต้องการทำต่อหรือไม่?');
+                if (!conf.isConfirmed) return;
             }
 
             try {
@@ -275,7 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
                 } else {
-                    alert(result.message || 'ไม่พบข้อมูลเก่า');
+                    AppAlert(result.message || 'ไม่พบข้อมูลเก่า', 'info');
                 }
                 
                 // คืนค่าปุ่มเดิม
@@ -284,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             } catch (error) {
                 console.error('Error fetching previous agreement:', error);
-                alert('เกิดข้อผิดพลาดในการดึงข้อมูลจากเซิร์ฟเวอร์');
+                AppAlert('เกิดข้อผิดพลาดในการดึงข้อมูลจากเซิร์ฟเวอร์', 'error');
                 fetchPrevAgreementBtn.innerText = 'ดึงข้อมูลเก่า';
                 fetchPrevAgreementBtn.disabled = false;
             }
@@ -352,9 +359,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const year = urlParams.get('year');
                 const term = urlParams.get('term');
 
-                if (!confirm('ข้อมูลเดิมจะถูกแทนที่ด้วยข้อมูลจุดจากเทอมก่อนหน้า ต้องการทำต่อหรือไม่?')) {
-                    return;
-                }
+                const conf = await AppConfirm('ข้อมูลเดิมจะถูกแทนที่ด้วยข้อมูลจุดจากเทอมก่อนหน้า ต้องการทำต่อหรือไม่?');
+                if (!conf.isConfirmed) return;
 
                 try {
                     const originalText = fetchPrevMapBtn.innerHTML;
@@ -383,7 +389,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         saveData('curriculum_map_data_all', result.data, mappingTable);
 
                     } else {
-                        alert(result.message || 'ไม่พบข้อมูลเก่า');
+                        AppAlert(result.message || 'ไม่พบข้อมูลเก่า', 'info');
                     }
 
                     fetchPrevMapBtn.innerHTML = originalText;
@@ -391,7 +397,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 } catch (error) {
                     console.error('Error fetching previous map:', error);
-                    alert('เกิดข้อผิดพลาดในการดึงข้อมูลจากเซิร์ฟเวอร์');
+                    AppAlert('เกิดข้อผิดพลาดในการดึงข้อมูลจากเซิร์ฟเวอร์', 'error');
                     fetchPrevMapBtn.innerText = 'ดึงข้อมูลเก่า';
                     fetchPrevMapBtn.disabled = false;
                 }
@@ -721,6 +727,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const template = document.getElementById('cloRowTemplate_S6');
 
             let section6Data = {};
+
             try {
                 const jsonDataString = PAGE_DATA.teachingMethods || null;
                 if (typeof jsonDataString === 'string' && jsonDataString.length > 0 && jsonDataString !== 'null') {
@@ -777,7 +784,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 for (const key in optionsObject) {
                     const category = optionsObject[key];
-                    const catLabel = category.label;
+                    const catLabel = category.label; 
                     
                     html += `<div class="font-semibold mt-2">${catLabel}</div>`;
                     
@@ -1008,6 +1015,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 tbody.appendChild(row);
             }
         }
+        
         const lessonBtn = document.getElementById('generateLessonTableBtn');
         if (lessonBtn) {
             lessonBtn.addEventListener('click', (event) => {
@@ -1029,9 +1037,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const year = urlParams.get('year');
                 const term = urlParams.get('term');
 
-                if (!confirm('ข้อมูลตารางแผนการสอนเดิมจะถูกแทนที่ด้วยข้อมูลจากเทอมก่อนหน้า ต้องการทำต่อหรือไม่?')) {
-                    return;
-                }
+                const conf = await AppConfirm('ข้อมูลตารางแผนการสอนเดิมจะถูกแทนที่ด้วยข้อมูลจากเทอมก่อนหน้า ต้องการทำต่อหรือไม่?');
+                if (!conf.isConfirmed) return;
 
                 try {
                     const originalText = fetchPrevLessonPlanBtn.innerHTML;
@@ -1054,7 +1061,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         saveData('section7_data', section7JSON, document.getElementById('planTable'));
 
                     } else {
-                        alert(result.message || 'ไม่พบข้อมูลเก่า');
+                        AppAlert(result.message || 'ไม่พบข้อมูลเก่า', 'info');
                     }
 
                     fetchPrevLessonPlanBtn.innerHTML = originalText;
@@ -1062,7 +1069,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 } catch (error) {
                     console.error('Error fetching previous lesson plan:', error);
-                    alert('เกิดข้อผิดพลาดในการดึงข้อมูลจากเซิร์ฟเวอร์');
+                    AppAlert('เกิดข้อผิดพลาดในการดึงข้อมูลจากเซิร์ฟเวอร์', 'error');
                     fetchPrevLessonPlanBtn.innerText = 'ดึงข้อมูลเก่า';
                     fetchPrevLessonPlanBtn.disabled = false;
                 }
@@ -1230,7 +1237,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }, true);
         }
 
-        // ปุ่มดึงข้อมูลและบันทึกอัตโนมัติ หมวด 8.1
         const fetchPrevAssessmentBtn = document.getElementById('fetchPrevAssessmentBtn');
         if (fetchPrevAssessmentBtn) {
             fetchPrevAssessmentBtn.addEventListener('click', async () => {
@@ -1239,9 +1245,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const year = urlParams.get('year');
                 const term = urlParams.get('term');
 
-                if (!confirm('ข้อมูลตารางกลยุทธ์การประเมินเดิมจะถูกแทนที่ด้วยข้อมูลจากเทอมก่อนหน้า ต้องการทำต่อหรือไม่?')) {
-                    return;
-                }
+                const conf = await AppConfirm('ข้อมูลตารางกลยุทธ์การประเมินเดิมจะถูกแทนที่ด้วยข้อมูลจากเทอมก่อนหน้า ต้องการทำต่อหรือไม่?');
+                if (!conf.isConfirmed) return;
 
                 try {
                     const originalText = fetchPrevAssessmentBtn.innerHTML;
@@ -1264,7 +1269,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         saveData('section8_1_data', section8_1JSON, document.getElementById('assessmentTable'));
 
                     } else {
-                        alert(result.message || 'ไม่พบข้อมูลเก่า');
+                        AppAlert(result.message || 'ไม่พบข้อมูลเก่า', 'info');
                     }
 
                     fetchPrevAssessmentBtn.innerHTML = originalText;
@@ -1272,7 +1277,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 } catch (error) {
                     console.error('Error fetching previous assessment data:', error);
-                    alert('เกิดข้อผิดพลาดในการดึงข้อมูลจากเซิร์ฟเวอร์');
+                    AppAlert('เกิดข้อผิดพลาดในการดึงข้อมูลจากเซิร์ฟเวอร์', 'error');
                     fetchPrevAssessmentBtn.innerText = 'ดึงข้อมูลเก่า';
                     fetchPrevAssessmentBtn.disabled = false;
                 }
@@ -1385,17 +1390,23 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
         
-        rubricContainer.addEventListener('click', (event) => {
+        rubricContainer.addEventListener('click', async (event) => {
             if (event.target.classList.contains('delete-rubric-btn')) {
                 const totalRubrics = rubricContainer.querySelectorAll('.rubric-section:not(.hidden)').length;
-                if (totalRubrics <= 1) { alert("อย่างน้อยต้องมี 1 หัวข้อ"); return; }
+                if (totalRubrics <= 1) { 
+                    await AppAlert("อย่างน้อยต้องมี 1 หัวข้อ"); 
+                    return; 
+                }
                 const rubricToRemove = event.target.closest('.rubric-section');
-                if (rubricToRemove && confirm('ต้องการลบหัวข้อนี้?')) {
-                    rubricToRemove.remove(); 
-                    updateRubricLetters(); 
-                    const d = getSection8_2Data(); 
-                    PAGE_DATA.rubricsData = d;
-                    saveData('section8_2_data', d);
+                if (rubricToRemove) {
+                    const conf = await AppConfirm('ต้องการลบหัวข้อนี้?');
+                    if (conf.isConfirmed) {
+                        rubricToRemove.remove(); 
+                        updateRubricLetters(); 
+                        const d = getSection8_2Data(); 
+                        PAGE_DATA.rubricsData = d;
+                        saveData('section8_2_data', d);
+                    }
                 }
             }
         });
@@ -1428,9 +1439,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const year = urlParams.get('year');
                 const term = urlParams.get('term');
 
-                if (!confirm('ข้อมูลตารางรูบริคเดิมจะถูกลบทิ้งและแทนที่ด้วยข้อมูลจากเทอมก่อนหน้า ต้องการทำต่อหรือไม่?')) {
-                    return;
-                }
+                const conf = await AppConfirm('ข้อมูลตารางรูบริคเดิมจะถูกลบทิ้งและแทนที่ด้วยข้อมูลจากเทอมก่อนหน้า ต้องการทำต่อหรือไม่?');
+                if (!conf.isConfirmed) return;
 
                 try {
                     const originalText = fetchPrevRubricsBtn.innerHTML;
@@ -1458,7 +1468,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         saveData('section8_2_data', section8_2JSON, container);
 
                     } else {
-                        alert(result.message || 'ไม่พบข้อมูลเก่า');
+                        AppAlert(result.message || 'ไม่พบข้อมูลเก่า', 'info');
                     }
 
                     fetchPrevRubricsBtn.innerHTML = originalText;
@@ -1466,7 +1476,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 } catch (error) {
                     console.error('Error fetching previous rubrics data:', error);
-                    alert('เกิดข้อผิดพลาดในการดึงข้อมูลจากเซิร์ฟเวอร์');
+                    AppAlert('เกิดข้อผิดพลาดในการดึงข้อมูลจากเซิร์ฟเวอร์', 'error');
                     fetchPrevRubricsBtn.innerText = 'ดึงข้อมูลเก่า';
                     fetchPrevRubricsBtn.disabled = false;
                 }
@@ -1519,15 +1529,17 @@ document.addEventListener('DOMContentLoaded', () => {
             addReferenceBtn.addEventListener('click', () => { createReferenceItem(); const d = getSection9_1Data(); saveData('section9_1_data', d); }); // Save after adding
         }
         if (referenceList) {
-            referenceList.addEventListener('click', (event) => {
+            referenceList.addEventListener('click', async (event) => {
                 if (event.target.classList.contains('remove-btn')) {
                     const itemCount = referenceList.children.length;
                     if (itemCount > 1) {
                         event.target.parentElement.remove();
                         // Re-index names AND save
                         referenceList.querySelectorAll('li input').forEach((input, index) => { input.name = `reference_${index}`; });
-                        const d = getSection9_1Data(); saveData('section9_1_data', d); // Save after deleting
-                    } else { alert("อย่างน้อยต้องมี 1 รายการ"); }
+                        const d = getSection9_1Data(); saveData('section9_1_data', d); 
+                    } else { 
+                        await AppAlert("อย่างน้อยต้องมี 1 รายการ"); 
+                    }
                 }
             });
             referenceList.addEventListener('change', (event) => {
@@ -1537,7 +1549,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if(event.target.tagName === 'INPUT'){ const d = getSection9_1Data(); saveData('section9_1_data', d); }
             }, true);
         }
-    } catch (e) { console.error("Error initializing Section 9.1 (Reference List):", e); }
+    } catch (e) { console.error("Error initializing Section 9.1:", e); }
 
     // Section 10
     // ปุ่มดึงข้อมูลและบันทึกอัตโนมัติ หมวด 10
@@ -1549,9 +1561,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const year = urlParams.get('year');
             const term = urlParams.get('term');
 
-            if (!confirm('ข้อมูลเกณฑ์การประเมินเดิมจะถูกแทนที่ด้วยข้อมูลจากเทอมก่อนหน้า ต้องการทำต่อหรือไม่?')) {
-                return;
-            }
+            const conf = await AppConfirm('ข้อมูลเกณฑ์การประเมินเดิมจะถูกแทนที่ด้วยข้อมูลจากเทอมก่อนหน้า ต้องการทำต่อหรือไม่?');
+            if (!conf.isConfirmed) return;
 
             try {
                 const originalText = fetchPrevGradingBtn.innerHTML;
@@ -1582,7 +1593,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     saveData('grading_criteria_all', gradingData, document.getElementById('gradeTable'));
 
                 } else {
-                    alert(result.message || 'ไม่พบข้อมูลเก่า');
+                    AppAlert(result.message || 'ไม่พบข้อมูลเก่า', 'info');
                 }
 
                 fetchPrevGradingBtn.innerHTML = originalText;
@@ -1590,7 +1601,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             } catch (error) {
                 console.error('Error fetching previous grading criteria:', error);
-                alert('เกิดข้อผิดพลาดในการดึงข้อมูลจากเซิร์ฟเวอร์');
+                AppAlert('เกิดข้อผิดพลาดในการดึงข้อมูลจากเซิร์ฟเวอร์', 'error');
                 fetchPrevGradingBtn.innerText = 'ดึงข้อมูลเก่า';
                 fetchPrevGradingBtn.disabled = false;
             }
