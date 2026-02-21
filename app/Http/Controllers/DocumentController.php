@@ -17,13 +17,13 @@ class DocumentController extends Controller
 {
     public function editdoc(Request $request)
     {
-        // 1. ดึงข้อมูลพื้นฐานของรายวิชา (แยกเป็นฟังก์ชันเพื่อใช้ซ้ำ)
+        // ดึงข้อมูลพื้นฐานของรายวิชา (แยกเป็นฟังก์ชันเพื่อใช้ซ้ำ)
         $context = $this->getBaseContext($request);
         
-        // 2. ดึงข้อมูลและรวมข้อมูลทั้งหมดจากทุกตาราง
+        // ดึงข้อมูลและรวมข้อมูลทั้งหมดจากทุกตาราง
         $data = $this->getAggregatedData($context);
 
-        // 3. ส่งข้อมูลไปที่ View
+        // ส่งข้อมูลไปที่ View
         return view('editdoc', compact('data'));
     }
 
@@ -135,7 +135,7 @@ class DocumentController extends Controller
             ->where('curriculum_courses.id', $CC_id)
             ->value('curriculum.curriculum_year');
         
-        // 2. ดึงข้อมูล check_LLL มาด้วย โดยใช้ curriculum_year_ref เป็นตัวกรอง
+        // ดึงข้อมูล check_LLL มาด้วย โดยใช้ curriculum_year_ref เป็นตัวกรอง
         $dbLlls = DB::table('curriculum_llls')
             ->where('curriculum_year_ref', $curriculumYear)
             ->orderBy('num_LLL')
@@ -143,12 +143,12 @@ class DocumentController extends Controller
 
         $lllDataArray = [];
         
-        // 3. ดึง course_accord ของเดิมมาก่อน (เพื่อไม่ให้ข้อมูล CLO ที่เซฟไว้หาย)
+        // ดึง course_accord ของเดิมมาก่อน (เพื่อไม่ให้ข้อมูล CLO ที่เซฟไว้หาย)
         $courseAccordArray = $this->safeJsonDecode($learningMaps->course_accord ?? '{}', true);
         $hasLllUpdates = false;
 
         foreach ($dbLlls as $lll) {
-            $lllKey = 'LLL' . $lll->num_LLL; // เช่น "LLL1"
+            $lllKey = 'LLL' . $lll->num_LLL;
             
             // เตรียม Array สำหรับส่งให้ JS โชว์ชื่อ LLL
             $lllDataArray[] = [
@@ -180,7 +180,7 @@ class DocumentController extends Controller
             }
         }
 
-        // 4. ถ้าพบว่ามีการดึง LLL ใหม่เข้ามา ให้ Auto-save กลับลงไปใน Database เลย
+        // ถ้าพบว่ามีการดึง LLL ใหม่เข้ามา ให้ Auto-save กลับลงไปใน Database เลย
         if ($hasLllUpdates) {
             $updatedCourseAccordJson = json_encode($courseAccordArray, JSON_UNESCAPED_UNICODE);
             if ($learningMaps) {
@@ -223,6 +223,152 @@ class DocumentController extends Controller
             }
         }
 
+        $defaultGrading = [
+            'grade_A_level' => 'A',   'grade_A_criteria' => '',
+            'grade_Bp_level' => 'B+', 'grade_Bp_criteria' => '',
+            'grade_B_level' => 'B',   'grade_B_criteria' => '',
+            'grade_Cp_level' => 'C+', 'grade_Cp_criteria' => '',
+            'grade_C_level' => 'C',   'grade_C_criteria' => '',
+            'grade_Dp_level' => 'D+', 'grade_Dp_criteria' => '',
+            'grade_D_level' => 'D',   'grade_D_criteria' => '',
+            'grade_F_level' => 'F',   'grade_F_criteria' => '',
+        ];
+
+        // ดึงข้อมูลที่เคยบันทึกไว้ใน Database (ถ้ามี) มาแปลงเป็น Array
+        $savedGrading = $this->safeJsonDecode($plans->grading_criteria ?? '{}', true);
+        if (!is_array($savedGrading)) {
+            $savedGrading = [];
+        }
+
+        //================================================ ดึงข้อมูลเก่า =======================================================================================
+        // ดึงข้อมูล S4 agreement ปัจจุบันมาแสดงก่อน ถ้าไม่มีค่อยไปค้นหาอดีต
+        $agreementText = $evaluations->agreement ?? '';
+
+        $user = Auth::user();
+        $hasPreviousAgreement = DB::table('courseyears')
+            ->join('course_evaluations', 'courseyears.id', '=', 'course_evaluations.courseyear_id_ref')
+            ->where('courseyears.CC_id', $context->CC_id) // ต้องเป็นวิชาเดียวกัน
+            ->where('courseyears.user_id', $user->user_id) // ของอาจารย์ท่านเดียวกัน
+            ->where(function ($query) use ($context) {
+                // เงื่อนไข: ปีก่อนหน้าทั้งหมด OR (ปีเดียวกัน แต่เทอมน้อยกว่า)
+                $query->where('courseyears.year', '<', $context->year)
+                      ->orWhere(function ($q) use ($context) {
+                          $q->where('courseyears.year', $context->year)
+                            ->where('courseyears.term', '<', $context->term);
+                      });
+            })
+            ->whereNotNull('course_evaluations.agreement') // ต้องมีข้อมูล
+            ->where('course_evaluations.agreement', '!=', '')
+            ->exists();
+
+        // เช็คว่ามีข้อมูล agreement
+        $user = Auth::user();
+        $hasPreviousAgreement = DB::table('courseyears')
+            ->join('course_evaluations', 'courseyears.id', '=', 'course_evaluations.courseyear_id_ref')
+            ->where('courseyears.CC_id', $context->CC_id)
+            ->where('courseyears.user_id', $user->user_id)
+            ->where(function ($query) use ($context) {
+                $query->where('courseyears.year', '<', $context->year)
+                      ->orWhere(function ($q) use ($context) {
+                          $q->where('courseyears.year', $context->year)
+                            ->where('courseyears.term', '<', $context->term);
+                      });
+            })
+            ->whereNotNull('course_evaluations.agreement')
+            ->where('course_evaluations.agreement', '!=', '')
+            ->exists();
+
+        // เช็คว่ามีข้อมูลตาราง 5.2
+        $hasPrevCurriculumMap = DB::table('courseyears')
+            ->join('course_evaluations', 'courseyears.id', '=', 'course_evaluations.courseyear_id_ref')
+            ->where('courseyears.CC_id', $context->CC_id)
+            ->where('courseyears.user_id', Auth::user()->user_id)
+            ->where(function ($query) use ($context) {
+                $query->where('courseyears.year', '<', $context->year)
+                      ->orWhere(function ($q) use ($context) {
+                          $q->where('courseyears.year', $context->year)
+                            ->where('courseyears.term', '<', $context->term);
+                      });
+            })
+            ->whereNotNull('course_evaluations.curriculum_map_data')
+            ->where('course_evaluations.curriculum_map_data', '!=', '[]')
+            ->where('course_evaluations.curriculum_map_data', '!=', 'null')
+            ->exists();
+
+        // เช็คข้อมูลหมวด 7 (แผนการสอน)
+        $hasPrevLessonPlan = DB::table('courseyears')
+            ->join('plans', 'courseyears.id', '=', 'plans.courseyear_id_ref')
+            ->where('courseyears.CC_id', $context->CC_id)
+            ->where('courseyears.user_id', Auth::user()->user_id)
+            ->where(function ($query) use ($context) {
+                $query->where('courseyears.year', '<', $context->year)
+                      ->orWhere(function ($q) use ($context) {
+                          $q->where('courseyears.year', $context->year)
+                            ->where('courseyears.term', '<', $context->term);
+                      });
+            })
+            ->whereNotNull('plans.lesson_plan')
+            ->where('plans.lesson_plan', '!=', '[]')
+            ->where('plans.lesson_plan', '!=', 'null')
+            ->where('plans.lesson_plan', '!=', '')
+            ->exists();
+
+        // เช็คข้อมูลหมวด 8.1
+        $hasPrevAssessment = DB::table('courseyears')
+            ->join('plans', 'courseyears.id', '=', 'plans.courseyear_id_ref')
+            ->where('courseyears.CC_id', $context->CC_id)
+            ->where('courseyears.user_id', Auth::user()->user_id)
+            ->where(function ($query) use ($context) {
+                $query->where('courseyears.year', '<', $context->year)
+                      ->orWhere(function ($q) use ($context) {
+                          $q->where('courseyears.year', $context->year)
+                            ->where('courseyears.term', '<', $context->term);
+                      });
+            })
+            ->whereNotNull('plans.assessment_strategies')
+            ->where('plans.assessment_strategies', '!=', '[]')
+            ->where('plans.assessment_strategies', '!=', 'null')
+            ->where('plans.assessment_strategies', '!=', '')
+            ->exists();
+
+        //  เช็คข้อมูลหมวด 8.2 (Rubric)
+        $hasPrevRubrics = DB::table('courseyears')
+            ->join('plans', 'courseyears.id', '=', 'plans.courseyear_id_ref')
+            ->where('courseyears.CC_id', $context->CC_id)
+            ->where('courseyears.user_id', Auth::user()->user_id)
+            ->where(function ($query) use ($context) {
+                $query->where('courseyears.year', '<', $context->year)
+                      ->orWhere(function ($q) use ($context) {
+                          $q->where('courseyears.year', $context->year)
+                            ->where('courseyears.term', '<', $context->term);
+                      });
+            })
+            ->whereNotNull('plans.rubrics')
+            ->where('plans.rubrics', '!=', '[]')
+            ->where('plans.rubrics', '!=', 'null')
+            ->where('plans.rubrics', '!=', '')
+            ->exists();
+
+        // เช็คข้อมูลหมวด 10 (เกณฑ์การประเมินผลการเรียน)
+        $hasPrevGrading = DB::table('courseyears')
+            ->join('plans', 'courseyears.id', '=', 'plans.courseyear_id_ref')
+            ->where('courseyears.CC_id', $context->CC_id)
+            ->where('courseyears.user_id', Auth::user()->user_id)
+            ->where(function ($query) use ($context) {
+                $query->where('courseyears.year', '<', $context->year)
+                      ->orWhere(function ($q) use ($context) {
+                          $q->where('courseyears.year', $context->year)
+                            ->where('courseyears.term', '<', $context->term);
+                      });
+            })
+            ->whereNotNull('plans.grading_criteria')
+            ->where('plans.grading_criteria', '!=', '{}')
+            ->where('plans.grading_criteria', '!=', '[]')
+            ->where('plans.grading_criteria', '!=', 'null')
+            ->where('plans.grading_criteria', '!=', '')
+            ->exists();
+        //=====================================================================================================================================================
+
         // ค่า Default
         $defaults = [
             'curriculum_name' => $curriculum->curriculum_name ?? '',
@@ -251,12 +397,10 @@ class DocumentController extends Controller
             'is_major_elective' => $curriculum->major_elective ?? 0,
             'is_free_elective'  => $curriculum->free_elective ?? 0,
 
-            'instructor_name'   => $context->instructor_name ?? $context->instructorName ?? '',
-
             // ข้อมูลตารางต่างๆ
             'feedback' => $evaluations->feedback ?? '',
             'improvement' => $evaluations->improvement ?? '',
-            'agreement' => $evaluations->agreement ?? '',
+            'agreement' => $agreementText,
             'curriculum_map_data' => $this->safeJsonDecode($evaluations->curriculum_map_data ?? '[]'),
             
             'course_accord' => $this->safeJsonDecode($learningMaps->course_accord ?? '[]'),
@@ -273,10 +417,17 @@ class DocumentController extends Controller
             'teaching_methods' => $this->safeJsonDecode($plans->teaching_methods ?? '{}'),
             'assessment_data' => $this->safeJsonDecode($plans->assessment_strategies ?? '[]'),
             'rubrics_data' => $this->safeJsonDecode($plans->rubrics ?? '[]'),
-            'grading_criteria' => $this->safeJsonDecode($plans->grading_criteria ?? '{}'),
+            'grading_criteria' => array_merge($defaultGrading, $savedGrading),
             'grade_correction' => $plans->grade_correction ?? '',
             
             'ai_text' => $generates->ai_text ?? '',
+
+            'has_previous_agreement' => $hasPreviousAgreement,
+            'has_previous_curriculum_map' => $hasPrevCurriculumMap,
+            'has_previous_lesson_plan' => $hasPrevLessonPlan,
+            'has_previous_assessment_data' => $hasPrevAssessment,
+            'has_previous_rubrics_data' => $hasPrevRubrics,
+            'has_previous_grading_criteria' => $hasPrevGrading,
         ];
 
         // รวมค่า Context และ Defaults
@@ -339,43 +490,47 @@ class DocumentController extends Controller
             return ['success' => true, 'message' => "Field '{$field}' updated in 'courses'."];
         }
 
-        // 1. หมวด Course Evaluations
+        // หมวด Course Evaluations
         if (in_array($field, ['feedback', 'improvement', 'agreement'])) {
             $targetTable = 'course_evaluations';
             $dataToUpdate = [$field => $value];
         } 
         else if (Str::startsWith($field, 'curriculum_map_')) {
             $targetTable = 'course_evaluations';
-            $currentData = DB::table($targetTable)->where($conditions)->first();
             
-            // แปลงข้อมูลเดิมมาเป็น Array
-            $jsonData = $this->safeJsonDecode($currentData ? $currentData->curriculum_map_data : '[]');
-            
-            if (preg_match('/curriculum_map_r(\d+)_c(\d+)/', $field, $matches)) {
-                $colIndex = (int)$matches[2];
+            // เซฟข้อมูลแบบรวดเดียวทั้งตาราง (ปุ่มดึงข้อมูลเก่า)
+            if ($field === 'curriculum_map_data_all') {
+                $dataToUpdate = [
+                    'curriculum_map_data' => is_string($value) ? $value : json_encode($value, JSON_UNESCAPED_UNICODE)
+                ];
+            } 
+            // เซฟข้อมูลแบบทีละจุด (คลิกเอง)
+            else {
+                $currentData = DB::table($targetTable)->where($conditions)->first();
                 
-                // ✅ แก้ไข 1: ถ้าเป็น Array ว่าง ให้สร้าง Array มิติที่ 2 เตรียมไว้
-                if (empty($jsonData) || !isset($jsonData[0])) {
-                    $jsonData[0] = [];
-                } else if (!is_array($jsonData[0])) {
-                    // เผื่อกรณีมันอ่านมาเป็น Object ให้แปลงเป็น Array
-                    $jsonData[0] = (array) $jsonData[0]; 
-                }
+                // แปลงข้อมูลเดิมมาเป็น Array
+                $jsonData = $this->safeJsonDecode($currentData ? $currentData->curriculum_map_data : '[]');
+                
+                if (preg_match('/curriculum_map_r(\d+)_c(\d+)/', $field, $matches)) {
+                    $colIndex = (int)$matches[2];
+                    
+                    if (empty($jsonData) || !isset($jsonData[0])) {
+                        $jsonData[0] = [];
+                    } else if (!is_array($jsonData[0])) {
+                        $jsonData[0] = (array) $jsonData[0]; 
+                    }
 
-                // ✅ แก้ไข 2: ใช้ไวยากรณ์แบบ Array ([...]) แทน Object (->) 
-                // และรับค่าตัวเลขตรงๆ เพื่อให้เซฟค่า 0, 1 (จุดดำ), 2 (จุดขาว) ได้
-                $jsonData[0][strval($colIndex)] = (int) $value; 
+                    $jsonData[0][strval($colIndex)] = (int) $value; 
+                }
+                
+                $dataToUpdate = ['curriculum_map_data' => json_encode($jsonData, JSON_UNESCAPED_UNICODE)];
             }
-            
-            $dataToUpdate = ['curriculum_map_data' => json_encode($jsonData, JSON_UNESCAPED_UNICODE)];
         }
         
         // หมวด Course Learning Maps (PLO/CLO Mappings)
         else if (Str::startsWith($field, 'plo_map_')) {
             $targetTable = 'course_learning_maps';
             $currentData = DB::table($targetTable)->where($conditions)->first();
-            
-            // ✅ แก้ไข: ป้องกัน Error
             $jsonData = $this->safeJsonDecode($currentData ? $currentData->course_accord : '{}');
 
             if (preg_match('/plo_map_([a-zA-Z0-9]+)_c(\d+)_(\w+)/', $field, $matches)) {
@@ -391,7 +546,7 @@ class DocumentController extends Controller
             $dataToUpdate = ['course_accord' => json_encode($jsonData, JSON_UNESCAPED_UNICODE)];
         }
 
-        // 3. หมวด Course Resources
+        // หมวด Course Resources
         else if (in_array($field, ['research_subjects', 'academic_service', 'art_culture'])) {
             $targetTable = 'course_resources';
             $dataToUpdate = [$field => $value];
@@ -401,7 +556,7 @@ class DocumentController extends Controller
             $dataToUpdate = ['research' => json_encode($this->prepareJsonValue($value), JSON_UNESCAPED_UNICODE)];
         }
 
-        // 4. หมวด Plans
+        // หมวด Plans
         else if (in_array($field, ['grade_correction'])) {
             $targetTable = 'plans';
             $dataToUpdate = [$field => $value];
@@ -426,14 +581,12 @@ class DocumentController extends Controller
         else if (Str::startsWith($field, 'grade_')) {
             $targetTable = 'plans';
             $currentData = DB::table($targetTable)->where($conditions)->first();
-            
-            // ✅ แก้ไข: ป้องกัน Error
             $jsonData = $this->safeJsonDecode($currentData ? $currentData->grading_criteria : '{}');
             $jsonData[$field] = $value;
             $dataToUpdate = ['grading_criteria' => json_encode($jsonData, JSON_UNESCAPED_UNICODE)];
         }
 
-        // 5. หมวด Generates (AI Text)
+        // หมวด Generates (AI Text)
         else if ($field === 'ai_text') {
             $targetTable = 'generates';
             $dataToUpdate = ['ai_text' => $value];
@@ -443,23 +596,28 @@ class DocumentController extends Controller
         else if (Str::startsWith($field, 'cloLll_desc_')) {
             $targetTable = 'generates';
             
-            // 1. ดึง Code ออกมา (เช่น CLO1) และจัด Format ให้มีช่องว่าง (เช่น CLO 1) เพื่อให้ตรงกับ JSON เดิม
+            // ดึง Code ออกมา (เช่น CLO1) และจัด Format ให้มีช่องว่าง (เช่น CLO 1) เพื่อให้ตรงกับ JSON เดิม
             $rawCode = str_replace('cloLll_desc_', '', $field); 
             $cloKey = preg_replace('/([a-zA-Z]+)(\d+)/', '$1 $2', $rawCode); // "CLO1" -> "CLO 1"
 
-            // 2. ดึงข้อมูลเดิมจาก DB มาก่อน
+            // ดึงข้อมูลเดิมจาก DB มาก่อน
             $currentData = DB::table($targetTable)->where($conditions)->first();
             $aiTextArray = $this->safeJsonDecode($currentData->ai_text ?? '{}');
 
-            // 3. อัปเดตเฉพาะเนื้อหาของ CLO นั้นๆ
+            //อัปเดตเฉพาะเนื้อหาของ CLO นั้นๆ
             if (!isset($aiTextArray[$cloKey])) {
                 $aiTextArray[$cloKey] = ['CLO' => $value];
             } else {
                 $aiTextArray[$cloKey]['CLO'] = $value;
             }
 
-            // 4. เตรียมบันทึกกลับเป็น JSON String
+            // เตรียมบันทึกกลับเป็น JSON String
             $dataToUpdate = ['ai_text' => json_encode($aiTextArray, JSON_UNESCAPED_UNICODE)];
+        }
+
+        else if ($field === 'grading_criteria_all') {
+            $targetTable = 'plans';
+            $dataToUpdate = ['grading_criteria' => is_string($value) ? $value : json_encode($value, JSON_UNESCAPED_UNICODE)];
         }
 
         // บันทึกลงฐานข้อมูล
@@ -477,7 +635,7 @@ class DocumentController extends Controller
         $dbPlos = DB::table('plos')->orderBy('plo')->get();
         $finalOutcomeStatement = [];
 
-        // 1. ฟังก์ชันเช็คและแปลงคำสำหรับ Level (รองรับกรณีมีหลายคำ)
+        // เช็คและแปลงคำสำหรับ Level (รองรับกรณีมีหลายคำ)
         $formatLevel = function($word) {
             if (empty($word)) return '';
             $lowerWord = strtolower(trim($word)); 
@@ -498,7 +656,7 @@ class DocumentController extends Controller
             return ucfirst(trim($word)); 
         };
 
-        // 2. ฟังก์ชันเช็คและแปลงคำสำหรับ Type (รองรับกรณีมีหลายคำ)
+        // เช็คและแปลงคำสำหรับ Type (รองรับกรณีมีหลายคำ)
         $formatType = function($word) {
             if (empty($word)) return '';
             $lowerWord = strtolower(trim($word));
@@ -522,7 +680,7 @@ class DocumentController extends Controller
             return ucfirst(trim($word)); 
         };
 
-        // 3. จัดเตรียมข้อมูลสำหรับแสดงผลลงตาราง
+        // จัดเตรียมข้อมูลสำหรับแสดงผลลงตาราง
         foreach ($dbPlos as $masterPlo) {
             $isSpecific = property_exists($masterPlo, 'specific_lo') ? $masterPlo->specific_lo : ($masterPlo->plo < 5 ? 1 : 0);
 
@@ -577,4 +735,199 @@ class DocumentController extends Controller
         }
     }
 
+    public function getPreviousAgreement(Request $request)
+    {
+        $user = Auth::user();
+        $CC_id = $request->input('CC_id');
+        $year = (int) $request->input('year');
+        $term = (int) $request->input('term');
+
+        if (!$user || !$CC_id || !$year || !$term) {
+            return response()->json(['success' => false, 'message' => 'ข้อมูลไม่ครบถ้วน']);
+        }
+
+        // ค้นหาข้อมูลจากปีและเทอมก่อนหน้า
+        $previousAgreement = DB::table('courseyears')
+            ->join('course_evaluations', 'courseyears.id', '=', 'course_evaluations.courseyear_id_ref')
+            ->where('courseyears.CC_id', $CC_id)
+            ->where('courseyears.user_id', $user->user_id) // ดึงเฉพาะของอาจารย์ท่านนี้
+            ->where(function ($query) use ($year, $term) {
+                $query->where('courseyears.year', '<', $year)
+                      ->orWhere(function ($q) use ($year, $term) {
+                          $q->where('courseyears.year', $year)
+                            ->where('courseyears.term', '<', $term);
+                      });
+            })
+            ->whereNotNull('course_evaluations.agreement')
+            ->where('course_evaluations.agreement', '!=', '')
+            ->orderBy('courseyears.year', 'desc')
+            ->orderBy('courseyears.term', 'desc')
+            ->value('course_evaluations.agreement');
+
+        if ($previousAgreement) {
+            return response()->json(['success' => true, 'data' => $previousAgreement]);
+        }
+
+        return response()->json(['success' => false, 'message' => 'ไม่พบข้อมูลจากเทอมก่อนหน้า']);
+    }
+
+    public function getPreviousCurriculumMap(Request $request)
+    {
+        $user = Auth::user();
+        $CC_id = $request->input('CC_id');
+        $year = (int) $request->input('year');
+        $term = (int) $request->input('term');
+
+        $previousMap = DB::table('courseyears')
+            ->join('course_evaluations', 'courseyears.id', '=', 'course_evaluations.courseyear_id_ref')
+            ->where('courseyears.CC_id', $CC_id)
+            ->where('courseyears.user_id', $user->user_id)
+            ->where(function ($query) use ($year, $term) {
+                $query->where('courseyears.year', '<', $year)
+                      ->orWhere(function ($q) use ($year, $term) {
+                          $q->where('courseyears.year', $year)
+                            ->where('courseyears.term', '<', $term);
+                      });
+            })
+            ->whereNotNull('course_evaluations.curriculum_map_data')
+            ->where('course_evaluations.curriculum_map_data', '!=', '[]')
+            ->where('course_evaluations.curriculum_map_data', '!=', 'null')
+            ->orderBy('courseyears.year', 'desc')
+            ->orderBy('courseyears.term', 'desc')
+            ->value('course_evaluations.curriculum_map_data');
+
+        if ($previousMap) {
+            return response()->json(['success' => true, 'data' => json_decode($previousMap, true)]);
+        }
+        return response()->json(['success' => false, 'message' => 'ไม่พบข้อมูลตารางเก่า']);
+    }
+
+    public function getPreviousLessonPlan(Request $request)
+    {
+        $user = Auth::user();
+        $CC_id = $request->input('CC_id');
+        $year = (int) $request->input('year');
+        $term = (int) $request->input('term');
+
+        $previousPlan = DB::table('courseyears')
+            ->join('plans', 'courseyears.id', '=', 'plans.courseyear_id_ref')
+            ->where('courseyears.CC_id', $CC_id)
+            ->where('courseyears.user_id', $user->user_id)
+            ->where(function ($query) use ($year, $term) {
+                $query->where('courseyears.year', '<', $year)
+                      ->orWhere(function ($q) use ($year, $term) {
+                          $q->where('courseyears.year', $year)
+                            ->where('courseyears.term', '<', $term);
+                      });
+            })
+            ->whereNotNull('plans.lesson_plan')
+            ->where('plans.lesson_plan', '!=', '[]')
+            ->where('plans.lesson_plan', '!=', 'null')
+            ->where('plans.lesson_plan', '!=', '')
+            ->orderBy('courseyears.year', 'desc')
+            ->orderBy('courseyears.term', 'desc')
+            ->value('plans.lesson_plan');
+
+        if ($previousPlan) {
+            return response()->json(['success' => true, 'data' => json_decode($previousPlan, true)]);
+        }
+        return response()->json(['success' => false, 'message' => 'ไม่พบข้อมูลแผนการสอนเก่า']);
+    }
+
+    public function getPreviousAssessmentData(Request $request)
+    {
+        $user = Auth::user();
+        $CC_id = $request->input('CC_id');
+        $year = (int) $request->input('year');
+        $term = (int) $request->input('term');
+
+        $previousAssessment = DB::table('courseyears')
+            ->join('plans', 'courseyears.id', '=', 'plans.courseyear_id_ref')
+            ->where('courseyears.CC_id', $CC_id)
+            ->where('courseyears.user_id', $user->user_id)
+            ->where(function ($query) use ($year, $term) {
+                $query->where('courseyears.year', '<', $year)
+                      ->orWhere(function ($q) use ($year, $term) {
+                          $q->where('courseyears.year', $year)
+                            ->where('courseyears.term', '<', $term);
+                      });
+            })
+            ->whereNotNull('plans.assessment_strategies')
+            ->where('plans.assessment_strategies', '!=', '[]')
+            ->where('plans.assessment_strategies', '!=', 'null')
+            ->where('plans.assessment_strategies', '!=', '')
+            ->orderBy('courseyears.year', 'desc')
+            ->orderBy('courseyears.term', 'desc')
+            ->value('plans.assessment_strategies');
+
+        if ($previousAssessment) {
+            return response()->json(['success' => true, 'data' => json_decode($previousAssessment, true)]);
+        }
+        return response()->json(['success' => false, 'message' => 'ไม่พบข้อมูลตารางประเมินเก่า']);
+    }
+
+    public function getPreviousRubricsData(Request $request)
+    {
+        $user = Auth::user();
+        $CC_id = $request->input('CC_id');
+        $year = (int) $request->input('year');
+        $term = (int) $request->input('term');
+
+        $previousRubrics = DB::table('courseyears')
+            ->join('plans', 'courseyears.id', '=', 'plans.courseyear_id_ref')
+            ->where('courseyears.CC_id', $CC_id)
+            ->where('courseyears.user_id', $user->user_id)
+            ->where(function ($query) use ($year, $term) {
+                $query->where('courseyears.year', '<', $year)
+                      ->orWhere(function ($q) use ($year, $term) {
+                          $q->where('courseyears.year', $year)
+                            ->where('courseyears.term', '<', $term);
+                      });
+            })
+            ->whereNotNull('plans.rubrics')
+            ->where('plans.rubrics', '!=', '[]')
+            ->where('plans.rubrics', '!=', 'null')
+            ->where('plans.rubrics', '!=', '')
+            ->orderBy('courseyears.year', 'desc')
+            ->orderBy('courseyears.term', 'desc')
+            ->value('plans.rubrics');
+
+        if ($previousRubrics) {
+            return response()->json(['success' => true, 'data' => json_decode($previousRubrics, true)]);
+        }
+        return response()->json(['success' => false, 'message' => 'ไม่พบข้อมูลรูบริคเก่า']);
+    }
+
+    public function getPreviousGradingCriteria(Request $request)
+    {
+        $user = Auth::user();
+        $CC_id = $request->input('CC_id');
+        $year = (int) $request->input('year');
+        $term = (int) $request->input('term');
+
+        $previousGrading = DB::table('courseyears')
+            ->join('plans', 'courseyears.id', '=', 'plans.courseyear_id_ref')
+            ->where('courseyears.CC_id', $CC_id)
+            ->where('courseyears.user_id', $user->user_id)
+            ->where(function ($query) use ($year, $term) {
+                $query->where('courseyears.year', '<', $year)
+                      ->orWhere(function ($q) use ($year, $term) {
+                          $q->where('courseyears.year', $year)
+                            ->where('courseyears.term', '<', $term);
+                      });
+            })
+            ->whereNotNull('plans.grading_criteria')
+            ->where('plans.grading_criteria', '!=', '{}')
+            ->where('plans.grading_criteria', '!=', '[]')
+            ->where('plans.grading_criteria', '!=', 'null')
+            ->where('plans.grading_criteria', '!=', '')
+            ->orderBy('courseyears.year', 'desc')
+            ->orderBy('courseyears.term', 'desc')
+            ->value('plans.grading_criteria');
+
+        if ($previousGrading) {
+            return response()->json(['success' => true, 'data' => json_decode($previousGrading, true)]);
+        }
+        return response()->json(['success' => false, 'message' => 'ไม่พบข้อมูลเกณฑ์การประเมินเก่า']);
+    }
 }

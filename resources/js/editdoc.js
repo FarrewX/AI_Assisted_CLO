@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
         const urlParams = new URLSearchParams(window.location.search);
         
-        // 🔥 1. แก้ไขให้ดึงค่า CC_id (ให้ตรงกับ URL parameter ที่คุณใช้)
+        // แก้ไขให้ดึงค่า CC_id (ให้ตรงกับ URL parameter ที่คุณใช้)
         const CC_id = urlParams.get('CC_id'); 
         const year = urlParams.get('year');
         const term = urlParams.get('term');
@@ -196,10 +196,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!fieldName) { console.warn("Could not determine field name on change:", target); return; }
 
-        if (fieldName === 'section6_data_trigger') { saveData('section6_data', getSection6Data(), target); return; }
-        if (fieldName === 'section7_data_trigger') { saveData('section7_data', getSection7Data(), target); return; }
-        if (fieldName === 'section8_1_data_trigger') { saveData('section8_1_data', getSection8_1Data(), target); return; }
-        if (fieldName === 'section8_2_data_trigger') { saveData('section8_2_data', getSection8_2Data(), target); return; }
         if (fieldName === 'section9_1_data_trigger') { return; }
 
         let value;
@@ -217,13 +213,6 @@ document.addEventListener('DOMContentLoaded', () => {
             let fieldName = getFieldName(target);
             if (!fieldName) { console.warn("Could not determine field name on blur:", target); return; }
 
-            if (fieldName === 'section6_data_trigger') {
-                if (target.classList.contains('clo-cell-s6')) saveData('section6_data', getSection6Data(), target);
-                return;
-            }
-            if (fieldName === 'section7_data_trigger') return;
-            if (fieldName === 'section8_1_data_trigger') return;
-            if (fieldName === 'section8_2_data_trigger') { saveData('section8_2_data', getSection8_2Data(), target); return; }
             if (fieldName === 'section9_1_data_trigger') { saveData('section9_1_data', getSection9_1Data(), target); return; }
 
             const value = target.textContent.trim();
@@ -242,6 +231,64 @@ document.addEventListener('DOMContentLoaded', () => {
     if (formContainer) {
         formContainer.addEventListener('change', handleFormChange);
         formContainer.addEventListener('blur', handleFormBlur, true);
+    }
+
+    // --- ปุ่มดึงข้อมูล หมวด 4 ---
+    const fetchPrevAgreementBtn = document.getElementById('fetchPrevAgreementBtn');
+    if (fetchPrevAgreementBtn) {
+        fetchPrevAgreementBtn.addEventListener('click', async () => {
+            // ดึงพารามิเตอร์จาก URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const CC_id = urlParams.get('CC_id'); 
+            const year = urlParams.get('year');
+            const term = urlParams.get('term');
+
+            if (!CC_id || !year || !term) {
+                alert('ข้อมูล URL ไม่ครบถ้วน ไม่สามารถดึงข้อมูลได้');
+                return;
+            }
+
+            // ยืนยันก่อนดึงหากมีข้อมูลเดิมพิมพ์ค้างไว้อยู่
+            const textarea = document.querySelector('textarea[name="agreement"]');
+            if (textarea && textarea.value.trim() !== '') {
+                if (!confirm('คุณมีข้อความเดิมอยู่แล้ว การดึงข้อมูลใหม่จะลบข้อความเดิมทิ้ง ต้องการทำต่อหรือไม่?')) {
+                    return;
+                }
+            }
+
+            try {
+                // เปลี่ยนข้อความปุ่มระหว่างโหลด
+                const originalText = fetchPrevAgreementBtn.innerHTML;
+                fetchPrevAgreementBtn.innerHTML = 'กำลังค้นหา...';
+                fetchPrevAgreementBtn.disabled = true;
+
+                const response = await fetch(`/get-previous-agreement?CC_id=${CC_id}&year=${year}&term=${term}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    if (textarea) {
+                        textarea.value = result.data; // เติมข้อความลงกล่อง
+                        
+                        // สั่ง Auto-save ทันทีที่ดึงข้อมูลเสร็จ
+                        if (typeof saveData === 'function') {
+                            saveData('agreement', result.data, textarea);
+                        }
+                    }
+                } else {
+                    alert(result.message || 'ไม่พบข้อมูลเก่า');
+                }
+                
+                // คืนค่าปุ่มเดิม
+                fetchPrevAgreementBtn.innerHTML = originalText;
+                fetchPrevAgreementBtn.disabled = false;
+
+            } catch (error) {
+                console.error('Error fetching previous agreement:', error);
+                alert('เกิดข้อผิดพลาดในการดึงข้อมูลจากเซิร์ฟเวอร์');
+                fetchPrevAgreementBtn.innerText = 'ดึงข้อมูลเก่า';
+                fetchPrevAgreementBtn.disabled = false;
+            }
+        });
     }
 
     // --- Section 5.1 Logic ---
@@ -296,6 +343,61 @@ document.addEventListener('DOMContentLoaded', () => {
         const stateSymbols_s5_2 = { '0': '&nbsp;', '1': '<span class="text-xl font-bold">●</span>', '2': '<span class="text-xl">○</span>' };
         const mappingTable = document.getElementById('curriculum-mapping-table');
 
+        // ปุ่มดึงข้อมูล 5.2
+        const fetchPrevMapBtn = document.getElementById('fetchPrevMapBtn');
+        if (fetchPrevMapBtn) {
+            fetchPrevMapBtn.addEventListener('click', async () => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const CC_id = urlParams.get('CC_id'); 
+                const year = urlParams.get('year');
+                const term = urlParams.get('term');
+
+                if (!confirm('ข้อมูลเดิมจะถูกแทนที่ด้วยข้อมูลจุดจากเทอมก่อนหน้า ต้องการทำต่อหรือไม่?')) {
+                    return;
+                }
+
+                try {
+                    const originalText = fetchPrevMapBtn.innerHTML;
+                    fetchPrevMapBtn.innerHTML = 'กำลังโหลด...';
+                    fetchPrevMapBtn.disabled = true;
+
+                    const response = await fetch(`/get-previous-curriculum-map?CC_id=${CC_id}&year=${year}&term=${term}`);
+                    const result = await response.json();
+
+                    if (result.success && result.data && result.data.length > 0) {
+                        const rowData = result.data[0] || {}; 
+                        
+                        // วาดจุดลงในตาราง HTML ปัจจุบัน
+                        const cells = mappingTable.querySelectorAll('.score-cell');
+                        cells.forEach(cell => {
+                            const colIndex = cell.dataset.col;
+                            const state = rowData[colIndex] ?? 0;
+                            cell.dataset.state = state;
+                            cell.innerHTML = stateSymbols_s5_2[state] || '&nbsp;';
+                        });
+
+                        // อัปเดตข้อมูลบนหน้าจอ
+                        PAGE_DATA.curriculumMapData = result.data; 
+
+                        // สั่ง Save ข้อมูลทั้งตารางลง Database ทันที
+                        saveData('curriculum_map_data_all', result.data, mappingTable);
+
+                    } else {
+                        alert(result.message || 'ไม่พบข้อมูลเก่า');
+                    }
+
+                    fetchPrevMapBtn.innerHTML = originalText;
+                    fetchPrevMapBtn.disabled = false;
+
+                } catch (error) {
+                    console.error('Error fetching previous map:', error);
+                    alert('เกิดข้อผิดพลาดในการดึงข้อมูลจากเซิร์ฟเวอร์');
+                    fetchPrevMapBtn.innerText = 'ดึงข้อมูลเก่า';
+                    fetchPrevMapBtn.disabled = false;
+                }
+            });
+        }
+
         if (mappingTable && Array.isArray(curriculumMapData) && curriculumMapData.length > 0 && typeof curriculumMapData[0] === 'object') {
             const rowData = curriculumMapData[0] || {};
             const cells = mappingTable.querySelectorAll('.score-cell');
@@ -336,7 +438,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let aiTextData = {};
         let cloData = [];
 
-        // ฟังก์ชันตัวช่วย: ดึงข้อมูลข้าม Error JSON
+        // ตัวช่วย: ดึงข้อมูลข้าม Error JSON
         function extractCloDataFromBadJson(rawText) {
             let finalData = {};
             if (typeof rawText !== 'string') return finalData;
@@ -348,7 +450,7 @@ document.addEventListener('DOMContentLoaded', () => {
             blocks.forEach((block, index) => {
                 const cloKey = `CLO ${index + 1}`;
                 
-                // ฟังก์ชันดึงค่าด้วย Regex (หยุดดึงเมื่อเจอการขึ้นบรรทัดใหม่)
+                // ดึงค่าด้วย Regex (หยุดดึงเมื่อเจอการขึ้นบรรทัดใหม่)
                 const extractValue = (keyword) => {
                     const regex = new RegExp(`"?${keyword}"?\\s*:\\s*"?([^\\n\\}]+)"?`, 'i');
                     const match = block.match(regex);
@@ -392,7 +494,7 @@ document.addEventListener('DOMContentLoaded', () => {
             aiTextData = extractCloDataFromBadJson(aiTextJson);
         }
 
-        // ฟังก์ชันแปลง Domain เป็นคำย่อ (K, S, AR)
+        // แปลง Domain เป็นคำย่อ (K, S, AR)
         function getDomainAbbr(domainText) {
             if (!domainText) return '';
             const lower = String(domainText).toLowerCase();
@@ -403,7 +505,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return types.join(', ');
         }
 
-        // ฟังก์ชันดึงเฉพาะตัวเลขออกจากข้อความ PLO
+        // ดึงเฉพาะตัวเลขออกจากข้อความ PLO
         function getPloNumbers(ploText) {
             if (!ploText) return [];
             const matches = String(ploText).match(/\d+/g);
@@ -541,9 +643,40 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Section 6 Logic ---
     try {
-        const data_s6_teachingOptions = { onSite: { label: "On-site โดยมีการเรียนการสอนแบบ", items: ["บรรยาย (Lecture)","ฝึกปฏิบัติ (Laboratory Model)","เรียนรู้จากการลงมือทำ (Learning by Doing)","การเรียนรู้โดยใช้กิจกรรมเป็นฐาน (Activity-based Learning)","การเรียนรู้โดยใช้วิจัยเป็นฐาน (Research-based Learning)","ถามตอบสะท้อนคิด (Refractive Learning)","นำเสนออภิปรายกลุ่ม (Discussion Group)","เรียนรู้จากการสืบเสาะหาความรู้ (Inquiry-based Learning)","การเรียนรู้แบบร่วมมือร่วมใจ (Cooperative Learning)","การเรียนรู้แบบร่วมมือ (Collaborative Learning)","การเรียนรู้โดยใช้โครงการเป็นฐาน (Project-based Learning: PBL)","การเรียนรู้โดยใช้ปัญหาเป็นฐาน (Problem-based Learning)","วิเคราะห์โจทย์ปัญหา (Problem Solving)","เรียนรู้การตัดสินใจ (Decision Making)","ศึกษาค้นคว้าจากกรณีศึกษา (Case Study)","เรียนรู้ผ่านการเกม/การเล่น (Game/Play Learning)","ศึกษาดูงาน (Field Trips)","อื่น ๆ....................................." ], indent: true }, online: { label: "Online โดยมีการเรียนการสอนแบบ", items: ["บรรยาย (Lecture)"], indent: true } };
-        const data_s6_assessmentOptions = { exam: { label: "คะแนนจากแบบทดสอบสัมฤทธิ์ผล (ข้อสอบ)", items: ["ทดสอบย่อย (Quiz)","ทดสอบกลางภาค (Midterm)","ทดสอบปลายภาค (Final)" ] }, performance: { label: "คะแนนจากผลงานที่ได้รับมอบหมาย (Performance) โดยใช้เกณฑ์ Rubric Score การทำงานกลุ่มและเดี่ยว", items: ["การทำงานเป็นทีม (Team Work)","โปรแกรม ซอฟต์แวร์","ผลงาน ชิ้นงาน","รายงาน (Report)","การนำเสนอ (Presentation)","แฟ้มสะสมงาน (Portfolio)","รายงานการศึกษาด้วยตนเอง (Self-Study Report)" ] }, behavior: { label: "คะแนนจากผลการพฤติกรรม", items: ["ความรับผิดชอบ การมีส่วนร่วม","ประเมินผลการงานที่ส่ง" ] } };
+        const data_s6_teachingOptions = { 
+            onSite: { 
+                label: "On-site โดยมีการเรียนการสอนแบบ", 
+                items: ["บรรยาย (Lecture)","ฝึกปฏิบัติ (Laboratory Model)","เรียนรู้จากการลงมือทำ (Learning by Doing)","การเรียนรู้โดยใช้กิจกรรมเป็นฐาน (Activity-based Learning)",
+                    "การเรียนรู้โดยใช้วิจัยเป็นฐาน (Research-based Learning)","ถามตอบสะท้อนคิด (Refractive Learning)","นำเสนออภิปรายกลุ่ม (Discussion Group)",
+                    "เรียนรู้จากการสืบเสาะหาความรู้ (Inquiry-based Learning)","การเรียนรู้แบบร่วมมือร่วมใจ (Cooperative Learning)","การเรียนรู้แบบร่วมมือ (Collaborative Learning)",
+                    "การเรียนรู้โดยใช้โครงการเป็นฐาน (Project-based Learning: PBL)","การเรียนรู้โดยใช้ปัญหาเป็นฐาน (Problem-based Learning)","วิเคราะห์โจทย์ปัญหา (Problem Solving)",
+                    "เรียนรู้การตัดสินใจ (Decision Making)","ศึกษาค้นคว้าจากกรณีศึกษา (Case Study)","เรียนรู้ผ่านการเกม/การเล่น (Game/Play Learning)","ศึกษาดูงาน (Field Trips)",
+                    "อื่น ๆ....................................." ], 
+                indent: true 
+            }, 
+            online: { 
+                label: "Online โดยมีการเรียนการสอนแบบ", 
+                items: ["บรรยาย (Lecture)"], 
+                indent: true 
+            }
+        };
+        const data_s6_assessmentOptions = { 
+            exam: { 
+                label: "คะแนนจากแบบทดสอบสัมฤทธิ์ผล (ข้อสอบ)", 
+                items: ["ทดสอบย่อย (Quiz)","ทดสอบกลางภาค (Midterm)","ทดสอบปลายภาค (Final)" ] 
+            }, 
+            performance: { 
+                label: "คะแนนจากผลงานที่ได้รับมอบหมาย (Performance) โดยใช้เกณฑ์ Rubric Score การทำงานกลุ่มและเดี่ยว", 
+                items: ["การทำงานเป็นทีม (Team Work)","โปรแกรม ซอฟต์แวร์","ผลงาน ชิ้นงาน","รายงาน (Report)","การนำเสนอ (Presentation)",
+                    "แฟ้มสะสมงาน (Portfolio)","รายงานการศึกษาด้วยตนเอง (Self-Study Report)" ] 
+            }, 
+            behavior: { 
+                label: "คะแนนจากผลการพฤติกรรม", 
+                items: ["ความรับผิดชอบ การมีส่วนร่วม","ประเมินผลการงานที่ส่ง" ] 
+            } 
+        };
 
+        // ดึงข้อมูลจัดรูปแบบใหม่ (แยกย่อยตามหมวดหมู่)
         function getSection6Data() {
             const sectionData = {};
             const tableBody = document.getElementById('cloTableBody_S6');
@@ -556,16 +689,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 let cloKey = cloCell ? cloCell.textContent.trim().replace(/ \[คลิกเพื่อแก้ไข\]$/, '').trim().replace(/\s/g, '') : `CLO${rowIndex + 1}`;
                 if (!cloKey) cloKey = `CLO${rowIndex + 1}`;
 
-                const teachingMethods = [];
+                // สร้าง Object เก็บหมวดย่อยของการสอน
+                const teachingMethods = {};
                 row.querySelectorAll('.teaching-cell-s6 input[type="checkbox"]:checked').forEach(cb => {
-                    const labelSpan = cb.closest('label')?.querySelector('span');
-                    if (labelSpan) teachingMethods.push(labelSpan.textContent.trim());
+                    const category = cb.getAttribute('data-category');
+                    const val = cb.value;
+                    if (!teachingMethods[category]) teachingMethods[category] = [];
+                    teachingMethods[category].push(val);
                 });
 
-                const assessmentMethods = [];
+                // สร้าง Object เก็บหมวดย่อยของการประเมิน
+                const assessmentMethods = {};
                 row.querySelectorAll('.assessment-cell-s6 input[type="checkbox"]:checked').forEach(cb => {
-                    const labelSpan = cb.closest('label')?.querySelector('span');
-                    if (labelSpan) assessmentMethods.push(labelSpan.textContent.trim());
+                    const category = cb.getAttribute('data-category');
+                    const val = cb.value;
+                    if (!assessmentMethods[category]) assessmentMethods[category] = [];
+                    assessmentMethods[category].push(val);
                 });
 
                 sectionData[cloKey] = [
@@ -573,18 +712,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     { "การประเมินผล": assessmentMethods }
                 ];
             });
-            console.log("Prepared Section 6 Data:", sectionData);
+            console.log("Prepared Section 6 Data (Nested):", sectionData);
             return sectionData;
         }
 
         function initializeCloTable_Section6() {
             const tableBody = document.getElementById('cloTableBody_S6');
-            const addBtn = document.getElementById('addCloBtn_S6');
             const template = document.getElementById('cloRowTemplate_S6');
-            if (!tableBody || !addBtn || !template) {
-                console.warn("Section 6 elements not found.");
-                return;
-            }
 
             let section6Data = {};
             try {
@@ -595,9 +729,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     section6Data = jsonDataString;
                 }
                 if (typeof section6Data !== 'object' || section6Data === null) section6Data = {};
-                console.log("Loaded Section 6 Data:", section6Data);
             } catch (parseError) {
-                console.error("Error parsing section 6 JSON data:", parseError, PAGE_DATA.teachingMethods);
+                console.error("Error parsing section 6 JSON data:", parseError);
                 section6Data = {};
             }
 
@@ -616,46 +749,57 @@ document.addEventListener('DOMContentLoaded', () => {
                     Object.keys(aiTextData).forEach(key => {
                         const details = aiTextData[key];
                         if (details && typeof details === 'object' && details.CLO) {
-                            // Normalize key ("CLO 1" -> "CLO1")
                             cloKeysFromAI.push(key.replace(/\s/g, ''));
                         }
                     });
                     
-                    // Sort keys numerically
                     cloKeysFromAI.sort((a, b) => {
                         const numA = parseInt(a.replace('CLO', '')) || 0;
                         const numB = parseInt(b.replace('CLO', '')) || 0;
                         return numA - numB;
                     });
                 }
-                console.log("Loaded CLO Keys from ai_text for S6:", cloKeysFromAI);
             } catch (e) {
-                console.error("Error parsing ai_text for S6:", e, PAGE_DATA.aiText);
+                console.error("Error parsing ai_text for S6:", e);
             }
 
-            // rowData (e.g., [ {"วิธีการสอน":...}, {"การประเมินผล":...} ])
+            // สร้าง Checkbox รองรับการอ่านทั้ง Format เก่าและใหม่
             function _s6_createCheckboxHtml(optionsObject, type, rowData) {
                 let html = '';
-                let checkedItems = [];
-                const cloEntry = rowData;
+                const typeKey = (type === 'teach') ? 'วิธีการสอน' : 'การประเมินผล';
+                let relevantData = null;
 
-                if(cloEntry && Array.isArray(cloEntry)) {
-                    const typeKey = (type === 'teach') ? 'วิธีการสอน' : 'การประเมินผล';
-                    const relevantObject = cloEntry.find(obj => obj && typeof obj === 'object' && obj.hasOwnProperty(typeKey));
-                    if(relevantObject && Array.isArray(relevantObject[typeKey])) {
-                        checkedItems = relevantObject[typeKey].map(item => String(item).trim());
-                    }
+                // ดึงก้อนข้อมูล (วิธีการสอน หรือ การประเมินผล) ของ CLO นั้นๆ
+                if (rowData && Array.isArray(rowData)) {
+                    const relevantObject = rowData.find(obj => obj && typeof obj === 'object' && obj.hasOwnProperty(typeKey));
+                    if (relevantObject) relevantData = relevantObject[typeKey];
                 }
 
                 for (const key in optionsObject) {
                     const category = optionsObject[key];
-                    html += `<div class="font-semibold mt-2">${category.label}</div>`;
+                    const catLabel = category.label;
+                    
+                    html += `<div class="font-semibold mt-2">${catLabel}</div>`;
+                    
                     category.items.forEach(itemText => {
                         const indentClass = category.indent ? 'ml-4' : '';
-                        const isChecked = checkedItems.includes(String(itemText).trim());
+                        let isChecked = false;
+                        
+                        if (relevantData) {
+                            // ตรวจสอบว่าเป็น Format ใหม่ที่แบ่งหมวดหมู่ไว้ หรือแบบเก่าที่เป็น Array ก้อนเดียว
+                            if (Array.isArray(relevantData)) {
+                                // รองรับ Format เก่า (เผื่อข้อมูลที่เซฟไปแล้ว)
+                                isChecked = relevantData.includes(String(itemText).trim());
+                            } else if (typeof relevantData === 'object' && relevantData[catLabel] && Array.isArray(relevantData[catLabel])) {
+                                // รองรับ Format ใหม่
+                                isChecked = relevantData[catLabel].includes(String(itemText).trim());
+                            }
+                        }
+
+                        // ฝัง data-category ลงใน input เพื่อใช้ตอนดึงข้อมูลกลับ
                         html += `
                             <label class="flex items-start ${indentClass} hover:bg-gray-50 cursor-pointer">
-                                <input type="checkbox" class="mt-1 scale-125 mr-1.5 s6-checkbox" ${isChecked ? 'checked' : ''}>
+                                <input type="checkbox" class="mt-1 scale-125 mr-1.5 s6-checkbox" data-category="${catLabel}" value="${itemText}" ${isChecked ? 'checked' : ''}>
                                 <span class="ml-2">${itemText}</span>
                             </label>
                         `;
@@ -676,8 +820,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const teachingCell = newRow.querySelector('.teaching-cell-s6');
                 const assessmentCell = newRow.querySelector('.assessment-cell-s6');
 
-                cloCell.textContent = cloKey;
+                if (cloCell.hasAttribute('data-field')) cloCell.removeAttribute('data-field');
 
+                cloCell.textContent = cloKey;
                 teachingCell.innerHTML = _s6_createCheckboxHtml(data_s6_teachingOptions, 'teach', rowData);
                 assessmentCell.innerHTML = _s6_createCheckboxHtml(data_s6_assessmentOptions, 'assess', rowData);
 
@@ -687,7 +832,7 @@ document.addEventListener('DOMContentLoaded', () => {
             tableBody.innerHTML = '';
             
             if (cloKeysFromAI.length > 0) {
-                cloKeysFromAI.forEach((cloKey, index) => { // cloKey is "CLO1"
+                cloKeysFromAI.forEach((cloKey, index) => { 
                     const savedData = section6Data[cloKey] || null; 
                     _s6_addNewCloRow(cloKey, savedData, index);
                 });
@@ -706,13 +851,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     _s6_addNewCloRow(null, null, 0); 
                 }
             }
-
-            addBtn.addEventListener('click', (event) => {
-                _s6_addNewCloRow();
-                const section6JSON = getSection6Data();
-                saveData('section6_data', section6JSON, event.target);
+            
+            tableBody.addEventListener('change', (event) => {
+                if (event.target.type === 'checkbox') {
+                    const section6JSON = getSection6Data();
+                    saveData('section6_data', section6JSON, event.target);
+                }
             });
+
+            tableBody.addEventListener('blur', (event) => {
+                if (event.target.classList.contains('clo-cell-s6')) {
+                    const section6JSON = getSection6Data();
+                    saveData('section6_data', section6JSON, event.target);
+                }
+            }, true);
         }
+        
         initializeCloTable_Section6();
     } catch (e) {
         console.error("Error initializing Section 6 (CLO Table):", e);
@@ -746,18 +900,14 @@ document.addEventListener('DOMContentLoaded', () => {
         function createCloOptions(cloKeys, selectedClo) {
             let optionsHtml = '<option value="">--เลือก--</option>';
             
-            // ตรวจสอบว่า cloKeys เป็น Array และมีข้อมูล
             if (!Array.isArray(cloKeys) || cloKeys.length === 0) {
                 console.warn("S7: No CLO keys from ai_text, using default fallback.");
-                // Fallback ถ้า ai_text ว่าง
                 optionsHtml += '<option value="CLO1" ' + (selectedClo === 'CLO1' ? 'selected' : '') + '>CLO 1</option>';
                 optionsHtml += '<option value="CLO2" ' + (selectedClo === 'CLO2' ? 'selected' : '') + '>CLO 2</option>';
                 optionsHtml += '<option value="CLO3" ' + (selectedClo === 'CLO3' ? 'selected' : '') + '>CLO 3</option>';
             } else {
-                // วน Loop สร้าง <option> จาก Keys ที่ได้
-                cloKeys.forEach(cloKey => { // cloKey is "CLO1"
+                cloKeys.forEach(cloKey => { 
                     const isSelected = (selectedClo === cloKey) ? 'selected' : '';
-                    // "CLO1" -> "CLO 1" (สำหรับแสดงผล)
                     const cleanKey = cloKey.replace(/(\d+)$/, ' $1'); 
                     optionsHtml += `<option value="${cloKey}" ${isSelected}>${cleanKey}</option>`; 
                 });
@@ -771,45 +921,32 @@ document.addEventListener('DOMContentLoaded', () => {
             tbody.innerHTML = "";
             const weekCountInput = document.getElementById("weekCount");
             
-            // Load data
             const loadedPlanData = PAGE_DATA.planData || [];
-
-            // Find the last week that actually has data
             let lastWeekWithData = 0;
             if (Array.isArray(loadedPlanData) && loadedPlanData.length > 0) {
-                // Loop backwards from the end
                 for (let i = loadedPlanData.length - 1; i >= 0; i--) {
                     const weekData = loadedPlanData[i] || {};
-                    // Check if all fields (except week) are empty
                     const isEmpty = !(weekData.topic || weekData.objective || weekData.activity || weekData.tool || weekData.assessment || weekData.clo);
-                    
                     if (!isEmpty) {
                         lastWeekWithData = parseInt(weekData.week || 0);
-                        break; // Found the last non-empty week
+                        break; 
                     }
                 }
             }
             
-            // Determine minimum required weeks (based on data)
-            const minWeekFromData = lastWeekWithData > 0 ? lastWeekWithData : 0; // e.g., 6 (or 0 if empty)
+            const minWeekFromData = lastWeekWithData > 0 ? lastWeekWithData : 0; 
+            const inputWeekCount = (weekCountInput && !isNaN(parseInt(weekCountInput.value))) ? parseInt(weekCountInput.value) : 10; 
 
-            // Get count from input field
-            const inputWeekCount = (weekCountInput && !isNaN(parseInt(weekCountInput.value))) ? parseInt(weekCountInput.value) : 10; // Default 10
-
-            // Determine final weekCount
             let weekCount;
             if(forceInputCount) {
-                // If button clicked (Req 3: Cannot go below data)
                 weekCount = Math.max(inputWeekCount, minWeekFromData); 
             } else {
-                // On initial load (Req 2: Start at input default OR data max, whichever is higher)
                 weekCount = Math.max(inputWeekCount, minWeekFromData);
             }
             
-            // Enforce limits
             if (weekCount > 20) weekCount = 20;
             if (weekCount < 1) weekCount = 1;
-            if (weekCountInput && parseInt(weekCountInput.value) !== weekCount) { // sync input
+            if (weekCountInput && parseInt(weekCountInput.value) !== weekCount) { 
                 weekCountInput.value = weekCount;
             }
 
@@ -827,7 +964,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     Object.keys(aiTextData).forEach(key => {
                         const details = aiTextData[key];
                         if (details && typeof details === 'object' && details.CLO) {
-                            cloKeysFromAI.push(key.replace(/\s/g, '')); // "CLO 1" -> "CLO1"
+                            cloKeysFromAI.push(key.replace(/\s/g, '')); 
                         }
                     });
                     cloKeysFromAI.sort((a, b) => {
@@ -837,14 +974,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 }
             } catch (e) {
-                console.error("Error parsing ai_text for S7:", e, PAGE_DATA.aiText || '{}');
+                console.error("Error parsing ai_text for S7:", e);
             }
 
             for (let i = 1; i <= weekCount; i++) {
                 const weekData = loadedPlanData.find(item => parseInt(item.week) === i) || {};
                 const row = document.createElement("tr");
-
-                // Call the helper function
                 const cloOptions = createCloOptions(cloKeysFromAI, weekData.clo || '');
 
                 row.innerHTML = `
@@ -876,19 +1011,91 @@ document.addEventListener('DOMContentLoaded', () => {
         const lessonBtn = document.getElementById('generateLessonTableBtn');
         if (lessonBtn) {
             lessonBtn.addEventListener('click', (event) => {
+                PAGE_DATA.planData = getSection7Data(); 
                 generateTableLesson(true);
                 const section7JSON = getSection7Data();
                 saveData('section7_data', section7JSON, event.target);
             });
-        } else {
-            console.warn("Button to generate lesson table (#generateLessonTableBtn) not found.");
         }
+
         generateTableLesson(false);
+
+        // ปุ่มดึงข้อมูล หมวด 7
+        const fetchPrevLessonPlanBtn = document.getElementById('fetchPrevLessonPlanBtn');
+        if (fetchPrevLessonPlanBtn) {
+            fetchPrevLessonPlanBtn.addEventListener('click', async () => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const CC_id = urlParams.get('CC_id'); 
+                const year = urlParams.get('year');
+                const term = urlParams.get('term');
+
+                if (!confirm('ข้อมูลตารางแผนการสอนเดิมจะถูกแทนที่ด้วยข้อมูลจากเทอมก่อนหน้า ต้องการทำต่อหรือไม่?')) {
+                    return;
+                }
+
+                try {
+                    const originalText = fetchPrevLessonPlanBtn.innerHTML;
+                    fetchPrevLessonPlanBtn.innerHTML = 'กำลังโหลด...';
+                    fetchPrevLessonPlanBtn.disabled = true;
+
+                    const response = await fetch(`/get-previous-lesson-plan?CC_id=${CC_id}&year=${year}&term=${term}`);
+                    const result = await response.json();
+
+                    if (result.success && result.data && result.data.length > 0) {
+                        
+                        // อัปเดตความจำในระบบด้วยข้อมูลเก่าที่ได้มา
+                        PAGE_DATA.planData = result.data; 
+
+                        // สั่งวาดตารางใหม่จากข้อมูลความจำ
+                        generateTableLesson(true);
+
+                        // สั่ง Save ข้อมูลทั้งตารางลง Database ทันที
+                        const section7JSON = getSection7Data();
+                        saveData('section7_data', section7JSON, document.getElementById('planTable'));
+
+                    } else {
+                        alert(result.message || 'ไม่พบข้อมูลเก่า');
+                    }
+
+                    fetchPrevLessonPlanBtn.innerHTML = originalText;
+                    fetchPrevLessonPlanBtn.disabled = false;
+
+                } catch (error) {
+                    console.error('Error fetching previous lesson plan:', error);
+                    alert('เกิดข้อผิดพลาดในการดึงข้อมูลจากเซิร์ฟเวอร์');
+                    fetchPrevLessonPlanBtn.innerText = 'ดึงข้อมูลเก่า';
+                    fetchPrevLessonPlanBtn.disabled = false;
+                }
+            });
+        }
+
+        // ดักจับและ Auto-save อัตโนมัติเวลาพิมพ์เสร็จหรือเลือก Dropdown
+        const planTableBody = document.querySelector("#planTable tbody");
+        if (planTableBody) {
+            // เมื่อมีการเลือก Dropdown (CLO)
+            planTableBody.addEventListener('change', (event) => {
+                if (event.target.tagName === 'SELECT' || event.target.tagName === 'INPUT') {
+                    const section7JSON = getSection7Data();
+                    PAGE_DATA.planData = section7JSON;
+                    saveData('section7_data', section7JSON, event.target);
+                }
+            });
+
+            // เมื่อพิมพ์ช่อง Textarea เสร็จแล้วกดคลิกที่อื่น (Blur)
+            planTableBody.addEventListener('blur', (event) => {
+                if (event.target.tagName === 'TEXTAREA') {
+                    const section7JSON = getSection7Data();
+                    PAGE_DATA.planData = section7JSON;
+                    saveData('section7_data', section7JSON, event.target);
+                }
+            }, true);
+        }
+
     } catch (e) {
         console.error("Error initializing Section 7 (Lesson Plan):", e);
     }
     
-    // Section 8.1
+    // --- Section 8.1 Logic ---
     try {
         function getSection8_1Data() {
             const assessmentData = [];
@@ -897,7 +1104,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const rows = tableBody.querySelectorAll('tr');
             rows.forEach((row, index) => {
-                // Find inputs by index-based name
                 const rowData = {
                     method: row.querySelector(`textarea[name="assess_method_${index}"]`)?.value || '',
                     tool: row.querySelector(`textarea[name="assess_tool_${index}"]`)?.value || '',
@@ -913,18 +1119,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function createCloOptions_S8(cloKeys, selectedClo) {
             let optionsHtml = '<option value="">--เลือก--</option>';
-            
             if (!Array.isArray(cloKeys) || cloKeys.length === 0) {
-                console.warn("S8: No CLO keys from ai_text, using default fallback.");
-                // Fallback ถ้า ai_text ว่าง
                 optionsHtml += '<option value="CLO1" ' + (selectedClo === 'CLO1' ? 'selected' : '') + '>CLO 1</option>';
                 optionsHtml += '<option value="CLO2" ' + (selectedClo === 'CLO2' ? 'selected' : '') + '>CLO 2</option>';
                 optionsHtml += '<option value="CLO3" ' + (selectedClo === 'CLO3' ? 'selected' : '') + '>CLO 3</option>';
             } else {
-                // วน Loop สร้าง <option> จาก Keys ที่ได้
-                cloKeys.forEach(cloKey => { // cloKey is "CLO1"
+                cloKeys.forEach(cloKey => { 
                     const isSelected = (selectedClo === cloKey) ? 'selected' : '';
-                    // "CLO1" -> "CLO 1" (สำหรับแสดงผล)
                     const cleanKey = cloKey.replace(/(\d+)$/, ' $1'); 
                     optionsHtml += `<option value="${cloKey}" ${isSelected}>${cleanKey}</option>`; 
                 });
@@ -934,20 +1135,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         function generateTableAssessment(forceInputCount = false) {
             const tbody = document.querySelector("#assessmentTable tbody");
-            if(!tbody) { console.warn("Assessment table body not found."); return; }
+            if(!tbody) return;
             tbody.innerHTML = "";
             const assessmentCountInput = document.getElementById("AssessmentCount");
             
-            // Load data *first*
             const loadedAssessmentData = PAGE_DATA.assessmentData || [];
-
-            // Find the last item that actually has data
             let lastItemWithData = 0;
             if (Array.isArray(loadedAssessmentData) && loadedAssessmentData.length > 0) {
                 for (let i = loadedAssessmentData.length - 1; i >= 0; i--) {
                     const itemData = loadedAssessmentData[i] || {};
                     const isEmpty = !(itemData.method || itemData.tool || itemData.percent || itemData.clo || itemData.clo_desc);
-                    
                     if (!isEmpty) {
                         lastItemWithData = i + 1; 
                         break; 
@@ -955,26 +1152,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
             
-            // Determine minimum required items
             const minItemFromData = lastItemWithData > 0 ? lastItemWithData : 0; 
-            
-            // Get count from input field
-            const inputCount = (assessmentCountInput && !isNaN(parseInt(assessmentCountInput.value))) ? parseInt(assessmentCountInput.value) : 3; // Default 3
+            const inputCount = (assessmentCountInput && !isNaN(parseInt(assessmentCountInput.value))) ? parseInt(assessmentCountInput.value) : 3; 
 
-            // Determine final itemCount
-            let assessmentCount;
-            if (forceInputCount) {
-                    // If button clicked (Req 3: Cannot go below data)
-                    assessmentCount = Math.max(inputCount, minItemFromData);
-            } else {
-                    // On initial load (Req 2: Start at input default OR data max)
-                    assessmentCount = Math.max(inputCount, minItemFromData);
-            }
-
-            // Enforce limits
+            let assessmentCount = Math.max(inputCount, minItemFromData);
             if (assessmentCount > 20) assessmentCount = 20;
             if (assessmentCount < 1) assessmentCount = 1;
-            if (assessmentCountInput) assessmentCountInput.value = assessmentCount; // Sync input
+            if (assessmentCountInput) assessmentCountInput.value = assessmentCount; 
 
             let cloKeysFromAI = [];
             try {
@@ -990,56 +1174,114 @@ document.addEventListener('DOMContentLoaded', () => {
                     Object.keys(aiTextData).forEach(key => {
                         const details = aiTextData[key];
                         if (details && typeof details === 'object' && details.CLO) {
-                            cloKeysFromAI.push(key.replace(/\s/g, '')); // "CLO 1" -> "CLO1"
+                            cloKeysFromAI.push(key.replace(/\s/g, '')); 
                         }
                     });
-                    cloKeysFromAI.sort((a, b) => {
-                        const numA = parseInt(a.replace('CLO', '')) || 0;
-                        const numB = parseInt(b.replace('CLO', '')) || 0;
-                        return numA - numB;
-                    });
+                    cloKeysFromAI.sort((a, b) => (parseInt(a.replace('CLO', '')) || 0) - (parseInt(b.replace('CLO', '')) || 0));
                 }
-            } catch (e) {
-                console.error("Error parsing ai_text for S8:", e, PAGE_DATA.aiText || '{}');
-            }
+            } catch (e) { }
 
             for (let i = 0; i < assessmentCount; i++) {
-                    const rowData = loadedAssessmentData[i] || {};
-                    const row = document.createElement("tr");
-                    
-                    // Call the helper function
-                    const cloOptions = createCloOptions_S8(cloKeysFromAI, rowData.clo || '');
-                    
-                    row.innerHTML = `
+                const rowData = loadedAssessmentData[i] || {};
+                const row = document.createElement("tr");
+                const cloOptions = createCloOptions_S8(cloKeysFromAI, rowData.clo || '');
+                
+                row.innerHTML = `
                     <td class="border border-black p-1 align-top"><textarea name="assess_method_${i}" placeholder="เช่น แบบฝึกหัด, Quiz, สอบกลางภาค" class="w-full h-16 border border-gray-300 rounded p-1">${rowData.method || ''}</textarea></td>
                     <td class="border border-black p-1 align-top"><textarea name="assess_tool_${i}" placeholder="เช่น Lab, การนำเสนอ, โครงการ, รายงาน" class="w-full h-16 border border-gray-300 rounded p-1">${rowData.tool || ''}</textarea></td>
                     <td class="border border-black p-1 align-top"><input type="number" name="assess_percent_${i}" min="0" max="100" placeholder="%" class="w-full text-center border border-gray-300 rounded p-1" value="${rowData.percent || ''}"></td>
                     <td class="border border-black p-1 align-top">
-                        <select name="assess_clo_${i}" class="w-full mb-1 p-1 border rounded">
-                            ${cloOptions}
-                        </select>
+                        <select name="assess_clo_${i}" class="w-full mb-1 p-1 border rounded">${cloOptions}</select>
                         <textarea name="assess_clo_desc_${i}" placeholder="ระบุรายละเอียดความสอดคล้อง" class="w-full h-12 border border-gray-300 rounded p-1">${rowData.clo_desc || ''}</textarea>
                     </td>
                 `;
                 tbody.appendChild(row);
             }
-            }
+        }
+
         const assessmentBtn = document.getElementById('generateAssessmentTableBtn');
         if(assessmentBtn) {
-            assessmentBtn.addEventListener('click', () => {
+            assessmentBtn.addEventListener('click', (event) => {
+                // อัปเดตความจำก่อนสร้างตารางใหม่
+                PAGE_DATA.assessmentData = getSection8_1Data();
                 generateTableAssessment(true);
                 const section8_1JSON = getSection8_1Data();
-                saveData('section8_1_data', section8_1JSON);
+                saveData('section8_1_data', section8_1JSON, event.target);
             });
-            generateTableAssessment(false);
-        } else {
-            console.warn("Generate assessment table button not found.");
         }
-    } catch (e) {
-        console.error("Error initializing Section 8.1 (Assessment Strategy):", e);
-    }
+        generateTableAssessment(false);
 
-    // Section 8.2
+        // เพิ่ม Auto-save สำหรับหมวด 8.1
+        const assessmentTableBody = document.querySelector("#assessmentTable tbody");
+        if (assessmentTableBody) {
+            assessmentTableBody.addEventListener('change', (event) => {
+                if (event.target.tagName === 'SELECT' || event.target.tagName === 'INPUT') {
+                    const section8_1JSON = getSection8_1Data();
+                    PAGE_DATA.assessmentData = section8_1JSON; 
+                    saveData('section8_1_data', section8_1JSON, event.target);
+                }
+            });
+            assessmentTableBody.addEventListener('blur', (event) => {
+                if (event.target.tagName === 'TEXTAREA') {
+                    const section8_1JSON = getSection8_1Data();
+                    PAGE_DATA.assessmentData = section8_1JSON; 
+                    saveData('section8_1_data', section8_1JSON, event.target);
+                }
+            }, true);
+        }
+
+        // ปุ่มดึงข้อมูลและบันทึกอัตโนมัติ หมวด 8.1
+        const fetchPrevAssessmentBtn = document.getElementById('fetchPrevAssessmentBtn');
+        if (fetchPrevAssessmentBtn) {
+            fetchPrevAssessmentBtn.addEventListener('click', async () => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const CC_id = urlParams.get('CC_id'); 
+                const year = urlParams.get('year');
+                const term = urlParams.get('term');
+
+                if (!confirm('ข้อมูลตารางกลยุทธ์การประเมินเดิมจะถูกแทนที่ด้วยข้อมูลจากเทอมก่อนหน้า ต้องการทำต่อหรือไม่?')) {
+                    return;
+                }
+
+                try {
+                    const originalText = fetchPrevAssessmentBtn.innerHTML;
+                    fetchPrevAssessmentBtn.innerHTML = 'กำลังโหลด...';
+                    fetchPrevAssessmentBtn.disabled = true;
+
+                    const response = await fetch(`/get-previous-assessment-data?CC_id=${CC_id}&year=${year}&term=${term}`);
+                    const result = await response.json();
+
+                    if (result.success && result.data && result.data.length > 0) {
+                        
+                        // อัปเดตความจำในระบบด้วยข้อมูลเก่าที่ได้มา
+                        PAGE_DATA.assessmentData = result.data; 
+
+                        // สั่งวาดตารางใหม่จากข้อมูลความจำ
+                        generateTableAssessment(true);
+
+                        // สั่ง Save ข้อมูลทั้งตารางลง Database ทันที
+                        const section8_1JSON = getSection8_1Data();
+                        saveData('section8_1_data', section8_1JSON, document.getElementById('assessmentTable'));
+
+                    } else {
+                        alert(result.message || 'ไม่พบข้อมูลเก่า');
+                    }
+
+                    fetchPrevAssessmentBtn.innerHTML = originalText;
+                    fetchPrevAssessmentBtn.disabled = false;
+
+                } catch (error) {
+                    console.error('Error fetching previous assessment data:', error);
+                    alert('เกิดข้อผิดพลาดในการดึงข้อมูลจากเซิร์ฟเวอร์');
+                    fetchPrevAssessmentBtn.innerText = 'ดึงข้อมูลเก่า';
+                    fetchPrevAssessmentBtn.disabled = false;
+                }
+            });
+        }
+
+    } catch (e) { console.error("Error initializing Section 8.1:", e); }
+
+    // --- Section 8.2 Logic ---
     try {
         function getSection8_2Data() {
             const rubricsData = [];
@@ -1054,31 +1296,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 const rubric = {
                     title: titleElement ? titleElement.textContent.trim().replace(/^[ก-ฮ]\.\s*/, '') : '',
                     header: headerElement ? headerElement.textContent.trim() : '',
-                    // Initialize rows as an Array
                     rows: []
                 };
 
                 if (tableBody) {
-                    // Create a temporary array to hold descriptions, indexed by level
-                    let descriptions = new Array(6).fill(''); // Array[6] (for levels 0-5)
-                    
-                    tableBody.querySelectorAll('tr').forEach((row, rowIndex) => {
+                    let descriptions = new Array(6).fill(''); 
+                    tableBody.querySelectorAll('tr').forEach((row) => {
                         const levelCell = row.querySelector('.level-cell');
                         const descCell = row.querySelector('.description-cell');
                         if (levelCell && descCell) {
                             const level = parseInt(levelCell.textContent.trim(), 10);
                             const description = descCell.textContent.trim();
-                            if (level >= 0 && level <= 5) {
-                                descriptions[level] = description; 
-                            }
+                            if (level >= 0 && level <= 5) { descriptions[level] = description; }
                         }
                     });
-                    // Assign the sequential array (index 0 = level 0, index 5 = level 5)
                     rubric.rows = descriptions;
                 }
                 rubricsData.push(rubric);
             });
-            console.log("Prepared Section 8.2 Data:", rubricsData);
             return rubricsData;
         }
 
@@ -1091,8 +1326,8 @@ document.addEventListener('DOMContentLoaded', () => {
         function createRubricRow(rubricIndex, rowIndex, level, description) {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-            <td class="level-cell border border-gray-400 p-1 text-center align-top font-semibold" contenteditable="true" data-field="rubric_${rubricIndex}_r${rowIndex}_level">${level}</td>
-            <td class="description-cell border border-gray-400 p-1 align-top hover:bg-yellow-50" contenteditable="true" data-field="rubric_${rubricIndex}_r${rowIndex}_desc">${description || (level === 0 ? 'ไม่ส่งผลงาน' : '[ใส่คำอธิบาย]') }</td>
+            <td class="level-cell border border-gray-400 bg-gray-100 p-1 text-center align-top font-semibold" data-field="rubric_${rubricIndex}_r${rowIndex}_level">${level}</td>
+            <td class="description-cell border border-gray-400 p-1 align-top hover:bg-yellow-50" contenteditable="true" data-field="rubric_${rubricIndex}_r${rowIndex}_desc">${description || (level === 0 ? '' : '') }</td>
         `;
             return tr;
         }
@@ -1106,40 +1341,23 @@ document.addEventListener('DOMContentLoaded', () => {
             const titleElement = newRubric.querySelector('.rubric-title');
             const headerElement = newRubric.querySelector('.rubric-header');
             const tableBody = newRubric.querySelector('.rubric-tbody');
-            const table = newRubric.querySelector('.rubric-table');
-            table.id = `rubricTable_${rubricIndex}`;
 
             const letter = String.fromCharCode(0x0E01 + rubricIndex);
             titleElement.textContent = rubricData?.title ? `${letter}. ${rubricData.title}` : `${letter}. [หัวข้อเกณฑ์ใหม่]`;
-            titleElement.dataset.field = `rubric_${rubricIndex}_title`;
-            headerElement.textContent = rubricData?.header || `คำอธิบายเกณฑ์ฯ ${letter}`;
-            headerElement.dataset.field = `rubric_${rubricIndex}_header`;
+            headerElement.textContent = rubricData?.header || `คำอธิบายเกณฑ์ฯ`;
 
-            tableBody.innerHTML = '';
             let rowsData = rubricData?.rows || {};
-            
-            // ตรวจสอบว่าเป็น Format เก่า (Array of strings) หรือไม่
             if (Array.isArray(rowsData) && (rowsData.length === 0 || typeof rowsData[0] === 'string')) {
-                // นี่คือ Format เก่า: ["Desc 0", "Desc 1", ..., "Desc 5"]
                 const tempRows = {};
-                // แปลงให้เป็น Format ใหม่ (Object): { "0": "Desc 0", "1": "Desc 1", ... }
-                rowsData.forEach((description, level) => {
-                    tempRows[String(level)] = description;
-                });
-                rowsData = tempRows; // ตอนนี้ rowsData เป็น Object แล้ว
-            
-            } 
-            // ตรวจสอบว่าเป็น Format เก่ามากๆ (Array of Objects) หรือไม่
-            else if (Array.isArray(rowsData)) {
+                rowsData.forEach((desc, lvl) => { tempRows[String(lvl)] = desc; });
+                rowsData = tempRows;
+            } else if (Array.isArray(rowsData)) {
                 const tempRows = {}; 
                 rowsData.forEach(r => { if(r && r.level !== undefined) tempRows[r.level] = r.description ?? ''; });
                 rowsData = tempRows;
-            } 
-            // ถ้าไม่ใช่ทั้งสองแบบ หรือเป็น null ให้ใช้ Object ว่าง
-            else if (typeof rowsData !== 'object' || rowsData === null) { 
-                rowsData = {}; // ทำให้เป็น Object ว่าง
+            } else if (typeof rowsData !== 'object' || rowsData === null) { 
+                rowsData = {}; 
             }
-
 
             rubricLevels.forEach((level, rowIndex) => { 
                 const currentDescription = rowsData[String(level)] ?? '';
@@ -1149,7 +1367,6 @@ document.addEventListener('DOMContentLoaded', () => {
             rubricContainer.appendChild(newRubric);
         }
 
-        // Load existing rubrics
         rubricContainer.innerHTML = '';
         if (Array.isArray(loadedRubricsData) && loadedRubricsData.length > 0) {
             loadedRubricsData.forEach((rubric, index) => addOrLoadRubric(rubric, index));
@@ -1158,20 +1375,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         updateRubricLetters();
 
-        // Add/Delete Buttons
         if (addRubricBtn) {
-            addRubricBtn.addEventListener('click', () => { addOrLoadRubric(); updateRubricLetters(); const d = getSection8_2Data(); saveData('section8_2_data', d); });
+            addRubricBtn.addEventListener('click', () => { 
+                addOrLoadRubric(); 
+                updateRubricLetters(); 
+                const d = getSection8_2Data(); 
+                PAGE_DATA.rubricsData = d;
+                saveData('section8_2_data', d); 
+            });
         }
+        
         rubricContainer.addEventListener('click', (event) => {
             if (event.target.classList.contains('delete-rubric-btn')) {
                 const totalRubrics = rubricContainer.querySelectorAll('.rubric-section:not(.hidden)').length;
                 if (totalRubrics <= 1) { alert("อย่างน้อยต้องมี 1 หัวข้อ"); return; }
                 const rubricToRemove = event.target.closest('.rubric-section');
                 if (rubricToRemove && confirm('ต้องการลบหัวข้อนี้?')) {
-                    rubricToRemove.remove(); updateRubricLetters(); const d = getSection8_2Data(); saveData('section8_2_data', d);
+                    rubricToRemove.remove(); 
+                    updateRubricLetters(); 
+                    const d = getSection8_2Data(); 
+                    PAGE_DATA.rubricsData = d;
+                    saveData('section8_2_data', d);
                 }
             }
         });
+
+        // เพิ่ม Auto-save สำหรับหมวด 8.2 (แก้ไขข้อความ)
+        rubricContainer.addEventListener('blur', (event) => {
+            if (event.target.hasAttribute('contenteditable')) {
+                const section8_2JSON = getSection8_2Data();
+                PAGE_DATA.rubricsData = section8_2JSON;
+                saveData('section8_2_data', section8_2JSON, event.target);
+            }
+        }, true);
 
         function updateRubricLetters() {
             const allRubrics = rubricContainer.querySelectorAll('.rubric-section:not(.hidden)');
@@ -1179,13 +1415,61 @@ document.addEventListener('DOMContentLoaded', () => {
                 const letter = String.fromCharCode(0x0E01 + index);
                 const titleElement = rubric.querySelector('.rubric-title');
                 const headerElement = rubric.querySelector('.rubric-header');
-                if (titleElement) { let txt = titleElement.textContent.trim().replace(/^[ก-ฮ]\.\s*/, ''); titleElement.textContent = `${letter}. ${txt}`; titleElement.dataset.field = `rubric_${index}_title`; }
-                if (headerElement) { headerElement.dataset.field = `rubric_${index}_header`; }
-                rubric.querySelectorAll('.rubric-tbody tr').forEach((row, rowIndex) => {
-                    const levelCell = row.querySelector('.level-cell'); const descCell = row.querySelector('.description-cell');
-                    if(levelCell) levelCell.dataset.field = `rubric_${index}_r${rowIndex}_level`;
-                    if(descCell) descCell.dataset.field = `rubric_${index}_r${rowIndex}_desc`;
-                });
+                if (titleElement) { let txt = titleElement.textContent.trim().replace(/^[ก-ฮ]\.\s*/, ''); titleElement.textContent = `${letter}. ${txt}`; }
+            });
+        }
+
+        // ปุ่มดึงข้อมูลและบันทึกอัตโนมัติ หมวด 8.2 
+        const fetchPrevRubricsBtn = document.getElementById('fetchPrevRubricsBtn');
+        if (fetchPrevRubricsBtn) {
+            fetchPrevRubricsBtn.addEventListener('click', async () => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const CC_id = urlParams.get('CC_id'); 
+                const year = urlParams.get('year');
+                const term = urlParams.get('term');
+
+                if (!confirm('ข้อมูลตารางรูบริคเดิมจะถูกลบทิ้งและแทนที่ด้วยข้อมูลจากเทอมก่อนหน้า ต้องการทำต่อหรือไม่?')) {
+                    return;
+                }
+
+                try {
+                    const originalText = fetchPrevRubricsBtn.innerHTML;
+                    fetchPrevRubricsBtn.innerHTML = 'กำลังโหลด...';
+                    fetchPrevRubricsBtn.disabled = true;
+
+                    const response = await fetch(`/get-previous-rubrics-data?CC_id=${CC_id}&year=${year}&term=${term}`);
+                    const result = await response.json();
+
+                    if (result.success && result.data && result.data.length > 0) {
+                        
+                        // อัปเดตความจำ
+                        PAGE_DATA.rubricsData = result.data;
+
+                        // ล้างตารางเดิมออก
+                        const container = document.getElementById('rubric-container');
+                        container.innerHTML = ''; 
+
+                        // วาดตารางใหม่จากข้อมูลที่ดึงมา
+                        result.data.forEach((rubric, index) => addOrLoadRubric(rubric, index));
+                        updateRubricLetters();
+
+                        // สั่ง Save ข้อมูลลง Database ทันที
+                        const section8_2JSON = getSection8_2Data();
+                        saveData('section8_2_data', section8_2JSON, container);
+
+                    } else {
+                        alert(result.message || 'ไม่พบข้อมูลเก่า');
+                    }
+
+                    fetchPrevRubricsBtn.innerHTML = originalText;
+                    fetchPrevRubricsBtn.disabled = false;
+
+                } catch (error) {
+                    console.error('Error fetching previous rubrics data:', error);
+                    alert('เกิดข้อผิดพลาดในการดึงข้อมูลจากเซิร์ฟเวอร์');
+                    fetchPrevRubricsBtn.innerText = 'ดึงข้อมูลเก่า';
+                    fetchPrevRubricsBtn.disabled = false;
+                }
             });
         }
 
@@ -1254,4 +1538,62 @@ document.addEventListener('DOMContentLoaded', () => {
             }, true);
         }
     } catch (e) { console.error("Error initializing Section 9.1 (Reference List):", e); }
+
+    // Section 10
+    // ปุ่มดึงข้อมูลและบันทึกอัตโนมัติ หมวด 10
+    const fetchPrevGradingBtn = document.getElementById('fetchPrevGradingBtn');
+    if (fetchPrevGradingBtn) {
+        fetchPrevGradingBtn.addEventListener('click', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const CC_id = urlParams.get('CC_id'); 
+            const year = urlParams.get('year');
+            const term = urlParams.get('term');
+
+            if (!confirm('ข้อมูลเกณฑ์การประเมินเดิมจะถูกแทนที่ด้วยข้อมูลจากเทอมก่อนหน้า ต้องการทำต่อหรือไม่?')) {
+                return;
+            }
+
+            try {
+                const originalText = fetchPrevGradingBtn.innerHTML;
+                fetchPrevGradingBtn.innerHTML = 'กำลังโหลด...';
+                fetchPrevGradingBtn.disabled = true;
+
+                const response = await fetch(`/get-previous-grading-criteria?CC_id=${CC_id}&year=${year}&term=${term}`);
+                const result = await response.json();
+
+                if (result.success && result.data) {
+                    const gradingData = result.data;
+                    
+                    // นำข้อมูลไปหยอดใส่ตารางหน้าเว็บ
+                    const grades = ['A', 'Bp', 'B', 'Cp', 'C', 'Dp', 'D', 'F'];
+                    grades.forEach(grade => {
+                        const levelCell = document.querySelector(`[data-field="grade_${grade}_level"]`);
+                        const criteriaCell = document.querySelector(`[data-field="grade_${grade}_criteria"]`);
+                        
+                        if (levelCell && gradingData[`grade_${grade}_level`] !== undefined) {
+                            levelCell.textContent = gradingData[`grade_${grade}_level`];
+                        }
+                        if (criteriaCell && gradingData[`grade_${grade}_criteria`] !== undefined) {
+                            criteriaCell.textContent = gradingData[`grade_${grade}_criteria`];
+                        }
+                    });
+
+                    // สั่ง Save ข้อมูลแบบรวดเดียวลงตาราง plans ทันที
+                    saveData('grading_criteria_all', gradingData, document.getElementById('gradeTable'));
+
+                } else {
+                    alert(result.message || 'ไม่พบข้อมูลเก่า');
+                }
+
+                fetchPrevGradingBtn.innerHTML = originalText;
+                fetchPrevGradingBtn.disabled = false;
+
+            } catch (error) {
+                console.error('Error fetching previous grading criteria:', error);
+                alert('เกิดข้อผิดพลาดในการดึงข้อมูลจากเซิร์ฟเวอร์');
+                fetchPrevGradingBtn.innerText = 'ดึงข้อมูลเก่า';
+                fetchPrevGradingBtn.disabled = false;
+            }
+        });
+    }
 });

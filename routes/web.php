@@ -49,6 +49,12 @@ Route::middleware('web')->group(function () {
         })->name('TQF');
 
         Route::get('/editdoc', [DocumentController::class, 'editdoc'])->name('editdoc');
+        Route::get('/get-previous-agreement', [DocumentController::class, 'getPreviousAgreement']);
+        Route::get('/get-previous-curriculum-map', [DocumentController::class, 'getPreviousCurriculumMap']);
+        Route::get('/get-previous-lesson-plan', [DocumentController::class, 'getPreviousLessonPlan']);
+        Route::get('/get-previous-assessment-data', [DocumentController::class, 'getPreviousAssessmentData']);
+        Route::get('/get-previous-rubrics-data', [DocumentController::class, 'getPreviousRubricsData']);
+        Route::get('/get-previous-grading-criteria', [DocumentController::class, 'getPreviousGradingCriteria']);
 
         Route::get('/export-docx', [DocumentController::class, 'exportdocx'])->name('export.docx');
 

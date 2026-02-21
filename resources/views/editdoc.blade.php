@@ -7,7 +7,6 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <script>
         tailwind.config = {
             theme: {
@@ -290,13 +289,22 @@
                     </tbody>
                 </table>
                 {{-- =========================================================================================================================================================================================================================== --}}
-                <h3 class="text-center font-bold text-[#003366] mt-6 bg-blue-200 inline-block px-4 py-1.5 rounded text-gray-900">
-                    หมวดที่ 4: ข้อตกลงร่วมกันระหว่างผู้สอนและผู้เรียน 
-                </h3><br>
+                <div class="flex items-center gap-4 mt-6 mb-2">
+                    <h3 class="font-bold text-[#003366] bg-blue-200 px-4 py-1.5 rounded text-gray-900 m-0">
+                        หมวดที่ 4: ข้อตกลงร่วมกันระหว่างผู้สอนและผู้เรียน 
+                    </h3>
+                    
+                    @if(!empty($data->has_previous_agreement))
+                        <button type="button" id="fetchPrevAgreementBtn" class="ml-auto px-3 py-1.5 bg-green-500 text-white text-sm font-semibold rounded hover:bg-green-600 shadow-sm transition-colors flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                            ดึงข้อมูลเก่า
+                        </button>
+                    @endif
+                </div>
+
                 <textarea
                     name="agreement"
-                    class="w-[90%] h-36 p-4 text-base border border-gray-300 rounded-lg bg-white resize-vertical shadow-sm transition-all mt-2 mb-6
-                        focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
+                    class="w-[100%] h-36 p-4 text-base border border-gray-300 rounded-lg bg-white resize-vertical shadow-sm transition-all mb-6 focus:border-blue-500 focus:ring-2 focus:ring-blue-300 focus:outline-none"
                     placeholder='พิมพ์รายละเอียด'
                 >{{ $data->agreement ?? '' }}</textarea>
                 {{-- =========================================================================================================================================================================================================================== --}}
@@ -356,7 +364,15 @@
                 <p class="text-s mb-2 text-gray-600">Type : K-Knowledge, S-Skill, AR-Application and Responsibility </p>
                 
                 <div id="section-5-2">
-                    <h3 class="font-bold text-lg">5.2 มาตรฐานผลการเรียนรู้รายวิชา (Curriculum Mapping)</h3>
+                    <div class="flex items-center gap-4 mb-2">
+                        <h3 class="font-bold text-lg m-0">5.2 มาตรฐานผลการเรียนรู้รายวิชา (Curriculum Mapping)</h3>
+                        @if(!empty($data->has_previous_curriculum_map))
+                            <button type="button" id="fetchPrevMapBtn" class="ml-auto px-3 py-1 bg-green-500 text-white text-xs font-semibold rounded hover:bg-green-600 shadow-sm transition-colors flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                ดึงข้อมูลเก่า
+                            </button>
+                        @endif
+                    </div>
                     <p class="text-sm mb-2">หลักสูตรฯ วิทยาศาสตรบัณฑิต สาขาวิชาวิทยาการคอมพิวเตอร์</p>
                     <div class="overflow-x-auto">
                         <table class="min-w-full border-collapse border border-gray-400 text-sm" id="curriculum-mapping-table">
@@ -437,9 +453,6 @@
                             {{-- Rows will be added by JavaScript --}}
                         </tbody>
                     </table>
-                    <button id="addCloBtn_S6" class="mt-4 px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700">
-                        + เพิ่ม CLO ใหม่
-                    </button>
 
                     <template id="cloRowTemplate_S6">
                         <tr class="bg-white clo-row">
@@ -454,11 +467,21 @@
                     <h3 class="text-center font-bold text-[#003366] mt-6 bg-blue-200 inline-block px-4 py-1.5 rounded text-gray-900">
                         หมวดที่ 7: แผนการสอน
                     </h3>
-                    <h3 class="mt-6 font-bold">7.1 แผนการสอน</h3>
-                    <div class="mb-4">
+                    
+                    <div class="flex items-center gap-4 mt-6 mb-4">
+                        <h3 class="font-bold m-0">7.1 แผนการสอน</h3>
+                    </div>
+
+                    <div class="mb-4 flex items-center gap-2">
                         จำนวนสัปดาห์:
                         <input type="number" id="weekCount" value="10" min="1" max="20" class="w-[70px] border border-gray-300 rounded px-2 py-1">
                         <button id="generateLessonTableBtn" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">สร้างตาราง</button>
+                        @if(!empty($data->has_previous_lesson_plan))
+                            <button type="button" id="fetchPrevLessonPlanBtn" class="ml-auto px-3 py-1.5 bg-green-500 text-white text-xs font-semibold rounded hover:bg-green-600 shadow-sm transition-colors flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                ดึงข้อมูลเก่า
+                            </button>
+                        @endif
                     </div>
                     <table id="planTable" class="w-full border-collapse border border-black text-sm">
                         <thead>
@@ -482,19 +505,24 @@
                     <h2 class="text-center font-bold text-[#003366] mt-6 bg-blue-200 inline-block px-4 py-1.5 rounded text-gray-900">
                         หมวดที่ 8 : การประเมินการบรรลุผลลัพธ์การเรียนรู้รายวิชา (CLOs) </h2>
                     <h3 class="mt-6 font-bold">8.1 กลยุทธ์การประเมิน</h3>
-                    <div class="mb-4">
+                    <div class="mb-4 flex gap-2">
                         จำนวนรายการประเมิน:
-                        {{-- Changed default value to 3 --}}
                         <input type="number" id="AssessmentCount" value="3" min="1" max="20" class="w-[70px] border border-gray-300 rounded px-2 py-1">
                         <button id="generateAssessmentTableBtn" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">สร้างตาราง</button>
+                         @if(!empty($data->has_previous_assessment_data))
+                            <button type="button" id="fetchPrevAssessmentBtn" class="ml-auto px-3 py-1.5 bg-green-500 text-white text-xs font-semibold rounded hover:bg-green-600 shadow-sm transition-colors flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                ดึงข้อมูลเก่า
+                            </button>
+                        @endif
                     </div>
                     <table id="assessmentTable" class="w-full border-collapse border border-black text-sm">
                         <thead>
                             <tr>
                                 <th class="w-[25%] border border-black p-2.5 align-top bg-blue-100 text-center">วิธีการประเมิน</th>
-                                <th class="w-[35%] border border-black p-2.5 align-top bg-blue-100 text-center">เครื่องมือ / รายละเอียด</th> {{-- Adjusted width --}}
+                                <th class="w-[35%] border border-black p-2.5 align-top bg-blue-100 text-center">เครื่องมือ / รายละเอียด</th>
                                 <th class="w-[10%] border border-black p-2.5 align-top bg-blue-100 text-center">สัดส่วน (%)</th>
-                                <th class="w-[30%] border border-black p-2.5 align-top bg-blue-100 text-center">ความสอดคล้องกับ CLOs</th> {{-- Adjusted width --}}
+                                <th class="w-[30%] border border-black p-2.5 align-top bg-blue-100 text-center">ความสอดคล้องกับ CLOs</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -502,7 +530,16 @@
                         </tbody>
                     </table>
 
-                    <h3 class="mt-6 font-bold">8.2 วิธีการประเมิน แบบรูบริค (Rubric) หรือ อื่นๆ (ถ้ามี) </h3>
+                    <div class="flex items-center gap-4 mt-6 mb-4">
+                        <h3 class="font-bold m-0">8.2 วิธีการประเมิน แบบรูบริค (Rubric) หรือ อื่นๆ (ถ้ามี)</h3>
+                        
+                        @if(!empty($data->has_previous_rubrics_data))
+                            <button type="button" id="fetchPrevRubricsBtn" class="ml-auto px-3 py-1.5 bg-green-500 text-white text-xs font-semibold rounded hover:bg-green-600 shadow-sm transition-colors flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                ดึงข้อมูลเก่า
+                            </button>
+                        @endif
+                    </div>
                     <div id="rubric-container" class="max-w-4xl mx-auto space-y-8">
                         <div class="rubric-section hidden" id="rubric-template">
                             <div class="flex items-center justify-between mb-2">
@@ -575,9 +612,17 @@
                 </div>
                 {{-- =========================================================================================================================================================================================================================== --}}
                 <div class="mt-8">
-                    <h2 class="w-full bg-blue-100 text-gray-800 font-semibold text-left p-2 border border-gray-400">
-                        หมวดที่ 10 : เกณฑ์การประเมิน
-                    </h2>
+                    <div class="flex items-center justify-between bg-blue-100 border border-gray-400 p-2">
+                        <h2 class="text-gray-800 font-semibold m-0">
+                            หมวดที่ 10 : เกณฑ์การประเมิน
+                        </h2>
+                        @if(!empty($data->has_previous_grading_criteria))
+                            <button type="button" id="fetchPrevGradingBtn" class="px-3 py-1 bg-green-500 text-white text-xs font-semibold rounded hover:bg-green-600 shadow-sm transition-colors flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                                ดึงข้อมูลเก่า
+                            </button>
+                        @endif
+                    </div>
                     <table id="gradeTable" class="w-full border-collapse border border-gray-400 text-sm">
                         <thead class="bg-gray-200 font-semibold text-center">
                             <tr>
@@ -590,66 +635,66 @@
                                 $gradingCriteria = (object) ($data->grading_criteria ?? []);
                             @endphp
                             <tr>
-                                <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true" data-field="grade_A_level">
-                                    {{ $gradingCriteria->grade_A_level ?? 'A' }}
+                                <td class="border border-gray-400 p-2 align-middle text-center bg-gray-200" data-field="grade_A_level">
+                                    {{ $gradingCriteria->grade_A_level ?? '' }}
                                 </td>
                                 <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true" data-field="grade_A_criteria">
-                                    {{ $gradingCriteria->grade_A_criteria ?? '80.00% ขึ้นไป' }}
+                                    {{ $gradingCriteria->grade_A_criteria ?? '' }}
                                 </td>
                             </tr>
                             <tr>
-                                <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true" data-field="grade_Bp_level">
-                                    {{ $gradingCriteria->grade_Bp_level ?? 'B+' }}
+                                <td class="border border-gray-400 p-2 align-middle text-center bg-gray-200" data-field="grade_Bp_level">
+                                    {{ $gradingCriteria->grade_Bp_level ?? '' }}
                                 </td>
                                 <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true" data-field="grade_Bp_criteria">
-                                    {{ $gradingCriteria->grade_Bp_criteria ?? '75.00% - 79.99%' }}
+                                    {{ $gradingCriteria->grade_Bp_criteria ?? '' }}
                                 </td>
                             </tr>
                             <tr>
-                                <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true" data-field="grade_B_level">
-                                    {{ $gradingCriteria->grade_B_level ?? 'B' }}
+                                <td class="border border-gray-400 p-2 align-middle text-center bg-gray-200" data-field="grade_B_level">
+                                    {{ $gradingCriteria->grade_B_level ?? '' }}
                                 </td>
                                 <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true" data-field="grade_B_criteria">
-                                    {{ $gradingCriteria->grade_B_criteria ?? '70.00% - 74.99%' }}
+                                    {{ $gradingCriteria->grade_B_criteria ?? '' }}
                                 </td>
                             </tr>
                             <tr>
-                                <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true" data-field="grade_Cp_level">
-                                    {{ $gradingCriteria->grade_Cp_level ?? 'C+' }}
+                                <td class="border border-gray-400 p-2 align-middle text-center bg-gray-200" data-field="grade_Cp_level">
+                                    {{ $gradingCriteria->grade_Cp_level ?? '' }}
                                 </td>
                                 <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true" data-field="grade_Cp_criteria">
-                                    {{ $gradingCriteria->grade_Cp_criteria ?? '65.00% - 69.99%' }}
+                                    {{ $gradingCriteria->grade_Cp_criteria ?? '' }}
                                 </td>
                             </tr>
                             <tr>
-                                <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true" data-field="grade_C_level">
-                                    {{ $gradingCriteria->grade_C_level ?? 'C' }}
+                                <td class="border border-gray-400 p-2 align-middle text-center bg-gray-200" data-field="grade_C_level">
+                                    {{ $gradingCriteria->grade_C_level ?? '' }}
                                 </td>
                                 <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true" data-field="grade_C_criteria">
-                                   {{ $gradingCriteria->grade_C_criteria ?? '60.00% - 64.99%' }}
+                                   {{ $gradingCriteria->grade_C_criteria ?? '' }}
                                 </td>
                             </tr>
                             <tr>
-                                <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true" data-field="grade_Dp_level">
-                                    {{ $gradingCriteria->grade_Dp_level ?? 'D+' }}
+                                <td class="border border-gray-400 p-2 align-middle text-center bg-gray-200" data-field="grade_Dp_level">
+                                    {{ $gradingCriteria->grade_Dp_level ?? '' }}
                                 </td>
                                 <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true" data-field="grade_Dp_criteria">
-                                    {{ $gradingCriteria->grade_Dp_criteria ?? '55.00% - 59.99%' }}
+                                    {{ $gradingCriteria->grade_Dp_criteria ?? '' }}
                                 </td>
                             </tr>
                             <tr>
-                                <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true" data-field="grade_D_level">
-                                    {{ $gradingCriteria->grade_D_level ?? 'D' }}
+                                <td class="border border-gray-400 p-2 align-middle text-center bg-gray-200" data-field="grade_D_level">
+                                    {{ $gradingCriteria->grade_D_level ?? '' }}
                                 </td>
                                 <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true" data-field="grade_D_criteria">
-                                    {{ $gradingCriteria->grade_D_criteria ?? '50.00% - 54.99%' }}
+                                    {{ $gradingCriteria->grade_D_criteria ?? '' }}
                                 </td>
                             </tr>
                             <tr>
-                                <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true" data-field="grade_F_level">
-                                    {{ $gradingCriteria->grade_F_level ?? 'F' }}</td>
+                                <td class="border border-gray-400 p-2 align-middle text-center bg-gray-200" data-field="grade_F_level">
+                                    {{ $gradingCriteria->grade_F_level ?? '' }}</td>
                                 <td class="border border-gray-400 p-2 align-middle text-center hover:bg-yellow-50 focus:outline-none focus:ring-1 focus:ring-blue-500" contenteditable="true" data-field="grade_F_criteria">
-                                   {{ $gradingCriteria->grade_F_criteria ?? 'ต่ำกว่า 50.00%' }}
+                                   {{ $gradingCriteria->grade_F_criteria ?? '' }}
                                 </td>
                             </tr>
                         </tbody>
