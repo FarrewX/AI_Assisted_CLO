@@ -24,11 +24,9 @@
 <body>
   <div x-data="{ ploOpen: false }">
   <div class="fixed top-4 left-4 flex gap-3 z-50">
-      <button type="button" onclick="window.history.back()"
-          class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md shadow">
-          ← back
+      <button type="button" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md shadow">
+        <a href="/">← หน้าหลัก</a>
       </button>
-
       <button @click="ploOpen = true"
           class="px-4 py-2 bg-green-600 text-white hover:bg-green-700 rounded-md shadow">
           เปิด PLO

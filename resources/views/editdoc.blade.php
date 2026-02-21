@@ -25,10 +25,17 @@
 </head>
 <body>
     <div id="tqf-form-container" class="flex justify-center py-6 bg-gray-100 font-sans text-bases">
+        <div class="fixed top-4 left-5 flex gap-3 z-50">
+            <button type="button" class="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-900 rounded-md shadow">
+                <a href="/form?CC_id={{ $data->CC_id ?? '' }}&year={{ $data->year ?? '' }}&term={{ $data->term ?? '' }}&TQF={{ $data->TQF ?? '' }}">
+                    ← กลับไปหน้าพร้อมท์
+                </a>
+            </button>
+        </div>
         <div class="fixed top-4 right-4 flex gap-3 z-50">
             <button type="button" onclick="window.history.back()"
                 class="px-4 py-2 bg-blue-300 hover:bg-blue-400 text-gray-900 rounded-md shadow">
-                <a href="/export-docx?course_code={{ $data->course_code ?? '' }}&year={{ $data->year ?? '' }}&term={{ $data->term ?? '' }}&TQF={{ $data->TQF ?? 3 }}" class="download-button">
+                <a href="/export-docx?CC_id={{ $data->CC_id ?? '' }}&year={{ $data->year ?? '' }}&term={{ $data->term ?? '' }}&TQF={{ $data->TQF ?? '' }}" class="download-button">
                     ดาวน์โหลดไฟล์ .docx 
                 </a>
             </button>
