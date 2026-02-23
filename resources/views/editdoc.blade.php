@@ -26,11 +26,19 @@
 <body>
     <div id="tqf-form-container" class="flex justify-center py-6 bg-gray-100 font-sans text-bases">
         <div class="fixed top-4 left-5 flex gap-3 z-50">
-            <button type="button" class="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-900 rounded-md shadow">
-                <a href="/form?CC_id={{ $data->CC_id ?? '' }}&year={{ $data->year ?? '' }}&term={{ $data->term ?? '' }}&TQF={{ $data->TQF ?? '' }}">
-                    ← กลับไปหน้าพร้อมท์
-                </a>
-            </button>
+            <a href="/" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-900 rounded-md shadow transform transition-all duration-200 ease-in-out hover:-translate-y-0.5">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                </svg>
+                หน้าหลัก
+            </a>
+            <a href="/form?CC_id={{ $data->CC_id ?? '' }}&year={{ $data->year ?? '' }}&term={{ $data->term ?? '' }}&TQF={{ $data->TQF ?? '' }}"
+            class="inline-flex items-center gap-2 px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-900 rounded-md shadow transform transition-all duration-200 ease-in-out hover:-translate-y-0.5">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                </svg>
+                กลับไปหน้าพร้อมท์
+            </a>
         </div>
         <div class="fixed top-4 right-4 flex gap-3 z-50">
             <button type="button" onclick="window.history.back()"
