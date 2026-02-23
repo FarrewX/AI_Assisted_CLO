@@ -17,6 +17,7 @@ export default defineConfig({
                 'resources/js/register.js',
                 'resources/js/management/users.js',
                 'resources/js/editdoc.js',
+                'resources/js/email.js',
             ],
             refresh: true,
         }),

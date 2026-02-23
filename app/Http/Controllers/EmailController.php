@@ -87,7 +87,7 @@ class EmailController extends Controller
 
             // ถ้าทำไม่ครบ 3 steps ให้ส่งเมลหา
             return $completedSteps < 3;
-        })->unique('email'); // <--- เพิ่มตรงนี้เพื่อให้ 1 อีเมล ได้รับแค่ 1 ฉบับ
+        })->unique('email');
 
         // 4. ส่งอีเมลให้แต่ละคน (Unique Email)
         try {
@@ -98,6 +98,27 @@ class EmailController extends Controller
         } catch (\Exception $e) {
             return back()->with('error', 'เกิดข้อผิดพลาดในการส่ง: ' . $e->getMessage());
         }
+    }
+
+    // ดึงข้อมูลมาโชว์ใน Popup
+    public function previewRecipients()
+    {
+        $courses = DB::table('courseyears as cy')
+            ->join('users as u', 'cy.user_id', '=', 'u.user_id')
+            ->leftJoin('statuses as s', 'cy.id', '=', 's.courseyear_id_ref')
+            ->select('u.email', 'u.name', 's.startprompt', 's.generated', 's.success')
+            ->whereNotNull('u.email')
+            ->get();
+
+        $filtered = $courses->filter(function ($item) {
+            $steps = [$item->startprompt, $item->generated, $item->success];
+            return collect($steps)->filter()->count() < 3;
+        })->unique('email')->values();
+
+        return response()->json([
+            'count' => $filtered->count(),
+            'recipients' => $filtered
+        ]);
     }
 
 }

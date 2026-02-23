@@ -239,41 +239,16 @@
                             </td>
                         </tr>
                         <tr>
-                            <td class="p-4 border border-gray-300">
-                                <b>2.2 ผลลัพธ์การเรียนรู้ระดับรายวิชา (Course learning Outcome) CLOs </b>
-                                <br>
-                                <div id="clo-input-container" class="mt-2 space-y-2">
-                                    @php
-                                        $aiTextRaw = $data->ai_text ?? '{}';
-                                        $closArray = json_decode($aiTextRaw, true);
-                                        
-                                        if (is_array($closArray) && json_last_error() === JSON_ERROR_NONE) {
-                                            // เรียงลำดับ CLO
-                                            uksort($closArray, function($a, $b) {
-                                                preg_match('/(\d+)/', $a, $matchesA);
-                                                preg_match('/(\d+)/', $b, $matchesB);
-                                                return ((int)($matchesA[1] ?? 9999)) <=> ((int)($matchesB[1] ?? 9999));
-                                            });
-                                        } else {
-                                            $closArray = [];
-                                        }
-                                    @endphp
-
-                                    @foreach ($closArray as $key => $details)
-                                        <div class="flex gap-2 clo-item-row">
-                                            <input type="text" 
-                                                class="w-20 p-2 text-sm font-bold border border-gray-300 rounded bg-gray-100 clo-key" 
-                                                value="{{ str_replace(' ', '', $key) }}" readonly>
-                                            
-                                            <input type="text"
-                                                class="clo-edit-input flex-1 p-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 clo-description"
-                                                data-original-key="{{ $key }}"
-                                                value="{{ $details['CLO'] ?? '' }}">
-                                        </div>
-                                    @endforeach
+                        <td class="p-4 border border-gray-300">
+                            <b>2.2 ผลลัพธ์การเรียนรู้ระดับรายวิชา (Course learning Outcome) CLOs </b>
+                            <br>
+                            <div id="clo-input-container" class="mt-2 space-y-2">
+                                <div class="text-sm text-gray-500 py-2">
+                                    <i class="fa-solid fa-spinner fa-spin mr-2 text-blue-500"></i> กำลังโหลดข้อมูล CLO...
                                 </div>
-                            </td>
-                        </tr>
+                            </div>
+                        </td>
+                    </tr>
                     </tbody>
                 </table>
                 {{-- =========================================================================================================================================================================================================================== --}}

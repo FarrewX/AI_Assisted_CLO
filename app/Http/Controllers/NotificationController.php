@@ -20,7 +20,7 @@ class NotificationController extends Controller
 
     $notStarted = $courses->filter(function ($item) {
         $s = $item->status;
-        return (!$s) || (!$s->startprompt && !$s->generated && !$s->success);
+        return (!$s) || (!$s->startprompt || !$s->generated || !$s->success);
     });
 
     return view('notification', ['courses' => $notStarted]);

@@ -116,7 +116,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function getFieldName(element) {
-
         // ดักจับช่องแก้ไขเนื้อหา CLO (หมวด 2.2)
         if (element.classList.contains('clo-description')) {
             const row = element.closest('.clo-item-row');
@@ -239,6 +238,123 @@ document.addEventListener('DOMContentLoaded', () => {
     if (formContainer) {
         formContainer.addEventListener('change', handleFormChange);
         formContainer.addEventListener('blur', handleFormBlur, true);
+    }
+
+    window.SHARED_CLO_DATA = {};
+
+    try {
+        let rawText = PAGE_DATA.aiText;
+        
+        // กรณีที่ Blade แปลงมาเป็น Object ให้แล้ว
+        if (typeof rawText === 'object') {
+            window.SHARED_CLO_DATA = rawText;
+        } 
+        // กรณีเป็นก้อนตัวหนังสือจาก Database
+        else if (typeof rawText === 'string') {
+            // ตัด Markdown (```json) และช่องว่างที่มองไม่เห็นทิ้งไปก่อน
+            rawText = rawText.replace(/```json/ig, '').replace(/```/g, '').trim();
+            
+            if (rawText !== '') {
+                window.SHARED_CLO_DATA = JSON.parse(rawText);
+            }
+        }
+
+        // ถ้าแปลงแล้วหลุดมาเป็นค่าประหลาด ให้บังคับเป็น Object
+        if (!window.SHARED_CLO_DATA || typeof window.SHARED_CLO_DATA !== 'object') {
+            window.SHARED_CLO_DATA = {};
+        }
+        
+        // ถ้ารอดมาถึงตรงนี้ แสดงว่า JSON สมบูรณ์ร้อยเปอร์เซ็นต์
+        if (Object.keys(window.SHARED_CLO_DATA).length > 0) {
+            console.log("✅ โหลดข้อมูล CLO สำเร็จ:", window.SHARED_CLO_DATA);
+        }
+
+    } catch (e) {
+        console.warn("⚠️ พบ JSON ใน Database ผิดรูปแบบ!");
+        
+        // ถ้า JSON พังจนแปลงไม่ได้ ให้สกัดเฉพาะคำว่า CLO ออกมา
+        let finalData = {};
+        const rawString = String(PAGE_DATA.aiText || '');
+        
+        // ค้นหา Block ที่มีคำอธิบาย CLO อยู่ข้างใน
+        const blocks = rawString.match(/\{\s*"CLO"[\s\S]*?\}/g) || rawString.match(/\{\s*CLO[\s\S]*?\}/g);
+        
+        if (blocks) {
+            blocks.forEach((block, index) => {
+                const cloKey = `CLO ${index + 1}`;
+                // ดึงข้อความในช่อง CLO ออกมา
+                const cloMatch = block.match(/"?CLO"?\s*:\s*"([^"]+)"/i) || block.match(/"?CLO"?\s*:\s*([^,\n}]+)/i);
+                if (cloMatch) {
+                    finalData[cloKey] = { "CLO": cloMatch[1].trim() };
+                }
+            });
+            window.SHARED_CLO_DATA = finalData;
+            console.log("🛠️ ซ่อมแซมข้อมูลสำเร็จ! กู้คืนมาได้:", window.SHARED_CLO_DATA);
+        } else {
+            console.error("❌ ข้อมูลพังเกินเยียวยา สกัดไม่ได้:", rawString);
+            window.SHARED_CLO_DATA = {};
+        }
+    }
+
+    // --- Section 2.2 ---
+    function renderSection2_2() {
+        const container = document.getElementById('clo-input-container');
+        if (!container) return;
+
+        container.innerHTML = ''; 
+        
+        // ถ้าเป็น null ให้มองเป็น Object ว่างๆ {}
+        const safeData = window.SHARED_CLO_DATA || {};
+        const cloKeys = Object.keys(safeData);
+
+        if (cloKeys.length === 0) {
+            container.innerHTML = `<div class="text-sm text-red-500 italic p-3 bg-red-50 rounded">⚠️ ไม่มีข้อมูล CLO</div>`;
+            return;
+        }
+
+        cloKeys.sort((a, b) => (parseInt(a.replace(/\D/g, '')) || 0) - (parseInt(b.replace(/\D/g, '')) || 0));
+
+        cloKeys.forEach(key => {
+            const details = safeData[key];
+            const row = document.createElement('div');
+            row.className = 'flex gap-2 clo-item-row';
+            
+            row.innerHTML = `
+                <input type="text" class="w-20 p-2 text-sm font-bold border rounded bg-gray-100 text-center clo-key" value="${key.replace(/\s/g, '')}" readonly>
+                <input type="text" 
+                    class="flex-1 p-2 text-sm border rounded focus:ring-1 focus:ring-blue-500 clo-description" 
+                    data-original-key="${key}"
+                    name="ignore_auto"
+                    value="${details.CLO || ''}">
+            `;
+            container.appendChild(row);
+        });
+    }
+
+    renderSection2_2();
+    const container = document.getElementById('clo-input-container');
+    if (container) {
+        // เมื่อมีการพิมพ์และคลิกออกนอกกล่อง (change/blur)
+        container.addEventListener('change', function(e) {
+            if (e.target.classList.contains('clo-description')) {
+                const cloKey = e.target.getAttribute('data-original-key');
+                const newValue = e.target.value;
+
+                // อัปเดตข้อความใหม่เข้าไปในตัวแปร JSON ส่วนกลาง
+                if (window.SHARED_CLO_DATA[cloKey]) {
+                    window.SHARED_CLO_DATA[cloKey].CLO = newValue;
+                }
+
+                // แพ็คข้อมูลทั้งหมดกลับเป็น JSON String
+                const updatedJSON = JSON.stringify(window.SHARED_CLO_DATA);
+
+                // สั่งเซฟข้อมูลทั้งก้อนลงฐานข้อมูล (คอลัมน์ ai_text)
+                if (typeof saveData === 'function') {
+                    console.log(`💾 กำลังบันทึกการแก้ไขของ ${cloKey}...`);
+                    saveData('ai_text', updatedJSON, e.target);
+                }
+            }
+        });
     }
 
     // --- ปุ่มดึงข้อมูล หมวด 4 ---
@@ -440,65 +556,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Section 5.3 Logic ---
     try {
-        const aiTextJson = PAGE_DATA.aiText || '{}';
-        let aiTextData = {};
+        const aiTextData = window.SHARED_CLO_DATA;
         let cloData = [];
-
-        // ตัวช่วย: ดึงข้อมูลข้าม Error JSON
-        function extractCloDataFromBadJson(rawText) {
-            let finalData = {};
-            if (typeof rawText !== 'string') return finalData;
-
-            // ค้นหา Block ที่มีคำว่า "CLO" อยู่ข้างใน
-            const blocks = rawText.match(/\{\s*"CLO"[\s\S]*?\}/g) || rawText.match(/\{\s*CLO[\s\S]*?\}/g);
-            if (!blocks) return finalData;
-
-            blocks.forEach((block, index) => {
-                const cloKey = `CLO ${index + 1}`;
-                
-                // ดึงค่าด้วย Regex (หยุดดึงเมื่อเจอการขึ้นบรรทัดใหม่)
-                const extractValue = (keyword) => {
-                    const regex = new RegExp(`"?${keyword}"?\\s*:\\s*"?([^\\n\\}]+)"?`, 'i');
-                    const match = block.match(regex);
-                    if (match) {
-                        let val = match[1].trim();
-                        if (val.endsWith(',')) val = val.slice(0, -1).trim();
-                        if (val.endsWith('"')) val = val.slice(0, -1).trim();
-                        return val;
-                    }
-                    return '';
-                };
-
-                const cloMatch = block.match(/"?CLO"?\s*:\s*"([^"]+)"/i) || block.match(/"?CLO"?\s*:\s*([^,\n}]+)/i);
-                const cloText = cloMatch ? cloMatch[1].trim() : '';
-                
-                // รองรับชื่อ Key หลายๆ แบบที่ AI ชอบสุ่มมา
-                const ploRaw = extractValue('PLO ที่รองรับ') || extractValue('PLO ต่อ ร้องรับ') || extractValue('PLO'); 
-                const domainRaw = extractValue('Domain');
-                const levelRaw = extractValue('Learning[’\']s Level') || extractValue('Learning');
-
-                finalData[cloKey] = {
-                    "CLO": cloText,
-                    "PLO ต่อ ร้องรับ": ploRaw,
-                    "Domain": domainRaw,
-                    "Learning's Level": levelRaw
-                };
-            });
-            console.log("🛠️ สกัดข้อมูลจาก JSON ที่พังสำเร็จ:", finalData);
-            return finalData;
-        }
-
-        // พยายาม Parse JSON ตามปกติก่อน ถ้าพังให้สลับไปใช้ตัวสกัดข้อมูล
-        try {
-            if (typeof aiTextJson === 'string' && aiTextJson.trim() !== '') {
-                aiTextData = JSON.parse(aiTextJson);
-            } else if (typeof aiTextJson === 'object' && aiTextJson !== null) {
-                aiTextData = aiTextJson;
-            }
-        } catch (err) {
-            console.warn("⚠️ JSON Parse พัง! ระบบกำลังเปลี่ยนไปใช้วิธีสกัดข้อมูลแทน...");
-            aiTextData = extractCloDataFromBadJson(aiTextJson);
-        }
 
         // แปลง Domain เป็นคำย่อ (K, S, AR)
         function getDomainAbbr(domainText) {
@@ -731,7 +790,7 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const jsonDataString = PAGE_DATA.teachingMethods || null;
                 if (typeof jsonDataString === 'string' && jsonDataString.length > 0 && jsonDataString !== 'null') {
-                    section6Data = JSON.parse(jsonDataString);
+                    section6Data = parseAIJSON(jsonDataString);
                 } else if (typeof jsonDataString === 'object' && jsonDataString !== null) {
                     section6Data = jsonDataString;
                 }
@@ -741,34 +800,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 section6Data = {};
             }
 
-            let cloKeysFromAI = [];
-            try {
-                const aiTextJson = PAGE_DATA.aiText || '{}';
-                let aiTextData = {};
-                
-                if (typeof aiTextJson === 'string' && aiTextJson.trim() !== '') {
-                    aiTextData = JSON.parse(aiTextJson);
-                } else if (typeof aiTextJson === 'object' && aiTextData !== null) {
-                    aiTextData = aiTextJson;
-                }
-                
-                if (Object.keys(aiTextData).length > 0) {
-                    Object.keys(aiTextData).forEach(key => {
-                        const details = aiTextData[key];
-                        if (details && typeof details === 'object' && details.CLO) {
-                            cloKeysFromAI.push(key.replace(/\s/g, ''));
-                        }
-                    });
-                    
-                    cloKeysFromAI.sort((a, b) => {
-                        const numA = parseInt(a.replace('CLO', '')) || 0;
-                        const numB = parseInt(b.replace('CLO', '')) || 0;
-                        return numA - numB;
-                    });
-                }
-            } catch (e) {
-                console.error("Error parsing ai_text for S6:", e);
-            }
+            let cloKeysFromAI = Object.keys(window.SHARED_CLO_DATA).map(key => key.replace(/\s/g, '').toUpperCase());
+            cloKeysFromAI.sort((a, b) => (parseInt(a.replace(/\D/g, '')) || 0) - (parseInt(b.replace(/\D/g, '')) || 0));
 
             // สร้าง Checkbox รองรับการอ่านทั้ง Format เก่าและใหม่
             function _s6_createCheckboxHtml(optionsObject, type, rowData) {
@@ -957,32 +990,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 weekCountInput.value = weekCount;
             }
 
-            let cloKeysFromAI = [];
-            try {
-                const aiTextJson = PAGE_DATA.aiText || '{}';
-                let aiTextData = {};
-                if (typeof aiTextJson === 'string' && aiTextJson.trim() !== '') {
-                    aiTextData = JSON.parse(aiTextJson);
-                } else if (typeof aiTextJson === 'object' && aiTextJson !== null) {
-                    aiTextData = aiTextJson;
-                }
-                
-                if (Object.keys(aiTextData).length > 0) {
-                    Object.keys(aiTextData).forEach(key => {
-                        const details = aiTextData[key];
-                        if (details && typeof details === 'object' && details.CLO) {
-                            cloKeysFromAI.push(key.replace(/\s/g, '')); 
-                        }
-                    });
-                    cloKeysFromAI.sort((a, b) => {
-                        const numA = parseInt(a.replace('CLO', '')) || 0;
-                        const numB = parseInt(b.replace('CLO', '')) || 0;
-                        return numA - numB;
-                    });
-                }
-            } catch (e) {
-                console.error("Error parsing ai_text for S7:", e);
-            }
+            let cloKeysFromAI = Object.keys(window.SHARED_CLO_DATA).map(key => key.replace(/\s/g, '').toUpperCase());
+            cloKeysFromAI.sort((a, b) => (parseInt(a.replace(/\D/g, '')) || 0) - (parseInt(b.replace(/\D/g, '')) || 0));
 
             for (let i = 1; i <= weekCount; i++) {
                 const weekData = loadedPlanData.find(item => parseInt(item.week) === i) || {};

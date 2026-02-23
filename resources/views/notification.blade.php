@@ -42,9 +42,19 @@
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     @forelse($courses as $item)
+                        @php
+                            $stepCount = collect([$item->status?->startprompt, $item->status?->generated, $item->status?->success])->filter()->count();
+                            
+                            $statusConfig = match($stepCount) {
+                                0 => ['text' => 'ยังไม่เริ่ม', 'badge_text' => 'text-gray-800', 'badge_bg' => 'bg-gray-200', 'border' => 'border-gray-200', 'dot' => 'bg-gray-500', 'pulse' => 'animate-pulse',],
+                                1 => ['text' => 'เริ่มทำแล้ว', 'badge_text' => 'text-red-800', 'badge_bg' => 'bg-red-200', 'border' => 'border-red-200', 'dot' => 'bg-red-500', 'pulse' => 'animate-pulse',],
+                                2 => ['text' => 'อยู่ระหว่างการสร้าง', 'badge_text' => 'text-orange-800', 'badge_bg' => 'bg-orange-200', 'border' => 'border-orange-200', 'dot' => 'bg-orange-500', 'pulse' => 'animate-pulse',],
+                                3 => ['text' => 'เสร็จสมบูรณ์', 'badge_text' => 'text-green-800', 'badge_bg' => 'bg-green-200', 'border' => 'border-green-200', 'dot' => 'bg-green-500', 'pulse' => 'animate-pulse',],
+                            };
+                        @endphp
+
                         <tr class="hover:bg-blue-50 transition duration-150">
                             <td class="px-6 py-4 font-medium text-gray-700">
-                                {{-- เรียกจาก curriculum_course ทะลุไปหา course แล้วค่อยเอา course_code --}}
                                 {{ $item->curriculum_course->course->course_code }}
                             </td>
                             
@@ -64,10 +74,12 @@
                                 <span class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold border border-blue-200">{{ $item->TQF }}</span>
                             </td>
                             <td class="px-6 py-4 text-center">
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700 border border-red-200">
-                                    <span class="h-2 w-2 mr-2 rounded-full bg-red-500 animate-pulse"></span>
-                                    ยังไม่เริ่มดำเนินการ
-                                </span>
+                                <div class="flex flex-col items-center justify-center gap-2">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold {{ $statusConfig['badge_bg'] }} {{ $statusConfig['badge_text'] }} {{ $statusConfig['border'] }} shadow-sm">
+                                        <span class="h-2 w-2 mr-2 rounded-full {{ $statusConfig['dot'] }} {{ $statusConfig['pulse'] }}"></span>
+                                        {{ $statusConfig['text'] }}
+                                    </span>
+                                </div>
                             </td>
                         </tr>
                     @empty

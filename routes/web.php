@@ -40,10 +40,6 @@ Route::middleware('web')->group(function () {
         // Route::get('/generate/show', [GenerateController::class, 'showGenerated'])->name('show.generated');
         Route::post('/generate/save', [GenerateController::class, 'saveGeneratedText'])->name('save.generate');
 
-        Route::get('/message', function () {
-            return view('message');
-        })->name('message');
-
         Route::get('/TQF', function () {
             return view('TQF');
         })->name('TQF');
@@ -78,6 +74,7 @@ Route::middleware('web')->group(function () {
 
         Route::get('/send-email', [EmailController::class, 'showForm'])->name('email.form');
         Route::post('/send-email', [EmailController::class, 'send'])->name('send.email');
+        Route::get('/email/preview-recipients', [EmailController::class, 'previewRecipients']);
         Route::get('/management/email', [EmailController::class, 'index'])->name('management.gmail');
         Route::post('/management/email', [EmailController::class, 'save'])->name('email.save');
 

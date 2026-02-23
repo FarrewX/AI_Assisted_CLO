@@ -241,14 +241,14 @@ class DocumentController extends Controller
         }
 
         //================================================ ดึงข้อมูลเก่า =======================================================================================
-        // ดึงข้อมูล S4 agreement ปัจจุบันมาแสดงก่อน ถ้าไม่มีค่อยไปค้นหาอดีต
+        // ดึงข้อมูล S4 agreement
         $agreementText = $evaluations->agreement ?? '';
 
         $user = Auth::user();
         $hasPreviousAgreement = DB::table('courseyears')
             ->join('course_evaluations', 'courseyears.id', '=', 'course_evaluations.courseyear_id_ref')
-            ->where('courseyears.CC_id', $context->CC_id) // ต้องเป็นวิชาเดียวกัน
-            ->where('courseyears.user_id', $user->user_id) // ของอาจารย์ท่านเดียวกัน
+            ->where('courseyears.CC_id', $context->CC_id)
+            // ->where('courseyears.user_id', $user->user_id)
             ->where(function ($query) use ($context) {
                 // เงื่อนไข: ปีก่อนหน้าทั้งหมด OR (ปีเดียวกัน แต่เทอมน้อยกว่า)
                 $query->where('courseyears.year', '<', $context->year)
@@ -266,7 +266,7 @@ class DocumentController extends Controller
         $hasPreviousAgreement = DB::table('courseyears')
             ->join('course_evaluations', 'courseyears.id', '=', 'course_evaluations.courseyear_id_ref')
             ->where('courseyears.CC_id', $context->CC_id)
-            ->where('courseyears.user_id', $user->user_id)
+            // ->where('courseyears.user_id', $user->user_id)
             ->where(function ($query) use ($context) {
                 $query->where('courseyears.year', '<', $context->year)
                       ->orWhere(function ($q) use ($context) {
@@ -282,7 +282,7 @@ class DocumentController extends Controller
         $hasPrevCurriculumMap = DB::table('courseyears')
             ->join('course_evaluations', 'courseyears.id', '=', 'course_evaluations.courseyear_id_ref')
             ->where('courseyears.CC_id', $context->CC_id)
-            ->where('courseyears.user_id', Auth::user()->user_id)
+            // ->where('courseyears.user_id', Auth::user()->user_id)
             ->where(function ($query) use ($context) {
                 $query->where('courseyears.year', '<', $context->year)
                       ->orWhere(function ($q) use ($context) {
@@ -299,7 +299,7 @@ class DocumentController extends Controller
         $hasPrevLessonPlan = DB::table('courseyears')
             ->join('plans', 'courseyears.id', '=', 'plans.courseyear_id_ref')
             ->where('courseyears.CC_id', $context->CC_id)
-            ->where('courseyears.user_id', Auth::user()->user_id)
+            // ->where('courseyears.user_id', Auth::user()->user_id)
             ->where(function ($query) use ($context) {
                 $query->where('courseyears.year', '<', $context->year)
                       ->orWhere(function ($q) use ($context) {
@@ -317,7 +317,7 @@ class DocumentController extends Controller
         $hasPrevAssessment = DB::table('courseyears')
             ->join('plans', 'courseyears.id', '=', 'plans.courseyear_id_ref')
             ->where('courseyears.CC_id', $context->CC_id)
-            ->where('courseyears.user_id', Auth::user()->user_id)
+            // ->where('courseyears.user_id', Auth::user()->user_id)
             ->where(function ($query) use ($context) {
                 $query->where('courseyears.year', '<', $context->year)
                       ->orWhere(function ($q) use ($context) {
@@ -335,7 +335,7 @@ class DocumentController extends Controller
         $hasPrevRubrics = DB::table('courseyears')
             ->join('plans', 'courseyears.id', '=', 'plans.courseyear_id_ref')
             ->where('courseyears.CC_id', $context->CC_id)
-            ->where('courseyears.user_id', Auth::user()->user_id)
+            // ->where('courseyears.user_id', Auth::user()->user_id)
             ->where(function ($query) use ($context) {
                 $query->where('courseyears.year', '<', $context->year)
                       ->orWhere(function ($q) use ($context) {
@@ -353,7 +353,7 @@ class DocumentController extends Controller
         $hasPrevGrading = DB::table('courseyears')
             ->join('plans', 'courseyears.id', '=', 'plans.courseyear_id_ref')
             ->where('courseyears.CC_id', $context->CC_id)
-            ->where('courseyears.user_id', Auth::user()->user_id)
+            // ->where('courseyears.user_id', Auth::user()->user_id)
             ->where(function ($query) use ($context) {
                 $query->where('courseyears.year', '<', $context->year)
                       ->orWhere(function ($q) use ($context) {
@@ -742,15 +742,11 @@ class DocumentController extends Controller
         $year = (int) $request->input('year');
         $term = (int) $request->input('term');
 
-        if (!$user || !$CC_id || !$year || !$term) {
-            return response()->json(['success' => false, 'message' => 'ข้อมูลไม่ครบถ้วน']);
-        }
-
         // ค้นหาข้อมูลจากปีและเทอมก่อนหน้า
         $previousAgreement = DB::table('courseyears')
             ->join('course_evaluations', 'courseyears.id', '=', 'course_evaluations.courseyear_id_ref')
             ->where('courseyears.CC_id', $CC_id)
-            ->where('courseyears.user_id', $user->user_id) // ดึงเฉพาะของอาจารย์ท่านนี้
+            // ->where('courseyears.user_id', $user->user_id) // ดึงเฉพาะของอาจารย์ท่านนี้
             ->where(function ($query) use ($year, $term) {
                 $query->where('courseyears.year', '<', $year)
                       ->orWhere(function ($q) use ($year, $term) {
@@ -781,7 +777,7 @@ class DocumentController extends Controller
         $previousMap = DB::table('courseyears')
             ->join('course_evaluations', 'courseyears.id', '=', 'course_evaluations.courseyear_id_ref')
             ->where('courseyears.CC_id', $CC_id)
-            ->where('courseyears.user_id', $user->user_id)
+            // ->where('courseyears.user_id', $user->user_id)
             ->where(function ($query) use ($year, $term) {
                 $query->where('courseyears.year', '<', $year)
                       ->orWhere(function ($q) use ($year, $term) {
@@ -812,7 +808,7 @@ class DocumentController extends Controller
         $previousPlan = DB::table('courseyears')
             ->join('plans', 'courseyears.id', '=', 'plans.courseyear_id_ref')
             ->where('courseyears.CC_id', $CC_id)
-            ->where('courseyears.user_id', $user->user_id)
+            // ->where('courseyears.user_id', $user->user_id)
             ->where(function ($query) use ($year, $term) {
                 $query->where('courseyears.year', '<', $year)
                       ->orWhere(function ($q) use ($year, $term) {
@@ -844,7 +840,7 @@ class DocumentController extends Controller
         $previousAssessment = DB::table('courseyears')
             ->join('plans', 'courseyears.id', '=', 'plans.courseyear_id_ref')
             ->where('courseyears.CC_id', $CC_id)
-            ->where('courseyears.user_id', $user->user_id)
+            // ->where('courseyears.user_id', $user->user_id)
             ->where(function ($query) use ($year, $term) {
                 $query->where('courseyears.year', '<', $year)
                       ->orWhere(function ($q) use ($year, $term) {
@@ -876,7 +872,7 @@ class DocumentController extends Controller
         $previousRubrics = DB::table('courseyears')
             ->join('plans', 'courseyears.id', '=', 'plans.courseyear_id_ref')
             ->where('courseyears.CC_id', $CC_id)
-            ->where('courseyears.user_id', $user->user_id)
+            // ->where('courseyears.user_id', $user->user_id)
             ->where(function ($query) use ($year, $term) {
                 $query->where('courseyears.year', '<', $year)
                       ->orWhere(function ($q) use ($year, $term) {
@@ -908,7 +904,7 @@ class DocumentController extends Controller
         $previousGrading = DB::table('courseyears')
             ->join('plans', 'courseyears.id', '=', 'plans.courseyear_id_ref')
             ->where('courseyears.CC_id', $CC_id)
-            ->where('courseyears.user_id', $user->user_id)
+            // ->where('courseyears.user_id', $user->user_id)
             ->where(function ($query) use ($year, $term) {
                 $query->where('courseyears.year', '<', $year)
                       ->orWhere(function ($q) use ($year, $term) {
