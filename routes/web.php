@@ -37,7 +37,6 @@ Route::middleware('web')->group(function () {
         Route::get('/form', [CourseController::class, 'formdata'])->name('form');
 
         Route::post('/generate', [OllamaController::class, 'generateText']);
-        // Route::get('/generate/show', [GenerateController::class, 'showGenerated'])->name('show.generated');
         Route::post('/generate/save', [GenerateController::class, 'saveGeneratedText'])->name('save.generate');
 
         Route::get('/TQF', function () {
@@ -51,6 +50,7 @@ Route::middleware('web')->group(function () {
         Route::get('/get-previous-assessment-data', [DocumentController::class, 'getPreviousAssessmentData']);
         Route::get('/get-previous-rubrics-data', [DocumentController::class, 'getPreviousRubricsData']);
         Route::get('/get-previous-grading-criteria', [DocumentController::class, 'getPreviousGradingCriteria']);
+        Route::post('/generate-lesson-plan-ai', [OllamaController::class, 'generateLessonPlanAI'])->name('generate.lesson.plan.ai');
 
         Route::get('/export-docx', [DocumentController::class, 'exportdocx'])->name('export.docx');
 

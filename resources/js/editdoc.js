@@ -955,7 +955,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return optionsHtml;
         }
 
-        function generateTableLesson(forceInputCount = false) {
+        function addTableLesson(forceInputCount = false) {
             const tbody = document.querySelector("#planTable tbody");
             if (!tbody) { console.warn("Table body for lesson plan (#planTable tbody) not found."); return; }
             tbody.innerHTML = "";
@@ -1025,17 +1025,157 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        const lessonBtn = document.getElementById('generateLessonTableBtn');
-        if (lessonBtn) {
-            lessonBtn.addEventListener('click', (event) => {
+        const addlessonBtn = document.getElementById('addTableLesson');
+        if (addlessonBtn) {
+            addlessonBtn.addEventListener('click', (event) => {
                 PAGE_DATA.planData = getSection7Data(); 
-                generateTableLesson(true);
+                addTableLesson(true);
                 const section7JSON = getSection7Data();
                 saveData('section7_data', section7JSON, event.target);
             });
         }
+        addTableLesson(false);
 
+        function generateTableLesson(forceInputCount = false) {
+            const tbody = document.querySelector("#planTable tbody");
+            if (!tbody) return;
+            tbody.innerHTML = "";
+            const weekCountInput = document.getElementById("weekCount");
+            
+            const loadedPlanData = PAGE_DATA.planData || [];
+            let lastWeekWithData = 0;
+            if (Array.isArray(loadedPlanData) && loadedPlanData.length > 0) {
+                for (let i = loadedPlanData.length - 1; i >= 0; i--) {
+                    const weekData = loadedPlanData[i] || {};
+                    const isEmpty = !(weekData.topic || weekData.objective || weekData.activity || weekData.tool || weekData.assessment || weekData.clo);
+                    if (!isEmpty) {
+                        lastWeekWithData = parseInt(weekData.week || 0);
+                        break; 
+                    }
+                }
+            }
+            
+            const minWeekFromData = lastWeekWithData > 0 ? lastWeekWithData : 0; 
+            const inputWeekCount = (weekCountInput && !isNaN(parseInt(weekCountInput.value))) ? parseInt(weekCountInput.value) : 10; 
+
+            let weekCount = forceInputCount ? Math.max(inputWeekCount, minWeekFromData) : Math.max(inputWeekCount, minWeekFromData);
+            if (weekCount > 20) weekCount = 20;
+            if (weekCount < 1) weekCount = 1;
+            if (weekCountInput && parseInt(weekCountInput.value) !== weekCount) { 
+                weekCountInput.value = weekCount;
+            }
+
+            let cloKeysFromAI = Object.keys(window.SHARED_CLO_DATA || {}).map(key => key.replace(/\s/g, '').toUpperCase());
+            cloKeysFromAI.sort((a, b) => (parseInt(a.replace(/\D/g, '')) || 0) - (parseInt(b.replace(/\D/g, '')) || 0));
+
+            for (let i = 1; i <= weekCount; i++) {
+                const weekData = loadedPlanData.find(item => parseInt(item.week) === i) || {};
+                const row = document.createElement("tr");
+                const cloOptions = createCloOptions(cloKeysFromAI, weekData.clo || '');
+
+                row.innerHTML = `
+                    <td class="border border-black p-2.5 align-top text-center font-bold">${i}</td>
+                    <td class="border border-black p-1 align-top"><textarea name="plan_topic_${i}" class="w-full h-24 border border-gray-300 rounded p-1 text-sm">${weekData.topic || ''}</textarea></td>
+                    <td class="border border-black p-1 align-top"><textarea name="plan_objective_${i}" class="w-full h-24 border border-gray-300 rounded p-1 text-sm">${weekData.objective || ''}</textarea></td>
+                    <td class="border border-black p-1 align-top"><textarea name="plan_activity_${i}" class="w-full h-24 border border-gray-300 rounded p-1 text-sm">${weekData.activity || ''}</textarea></td>
+                    <td class="border border-black p-1 align-top"><textarea name="plan_tool_${i}" class="w-full h-24 border border-gray-300 rounded p-1 text-sm">${weekData.tool || ''}</textarea></td>
+                    <td class="border border-black p-1 align-top"><textarea name="plan_assessment_${i}" class="w-full h-24 border border-gray-300 rounded p-1 text-sm">${weekData.assessment || ''}</textarea></td>
+                    <td class="border border-black p-2.5 align-top text-center"><select name="plan_clo_${i}" class="w-full border rounded px-1 py-1 text-sm bg-white">${cloOptions}</select></td>
+                `;
+                tbody.appendChild(row);
+            }
+        }
         generateTableLesson(false);
+
+        const lessonBtn = document.getElementById('generateLessonTableBtn');
+        if (lessonBtn) {
+            lessonBtn.addEventListener('click', async (event) => {
+                const weekCount = document.getElementById("weekCount").value || 10;
+                const conf = await AppConfirm(`ต้องการให้ AI สร้างแผนการสอน ${weekCount} สัปดาห์อัตโนมัติหรือไม่?\n(ข้อมูลในตารางปัจจุบันจะถูกแทนที่)`);
+                if (!conf.isConfirmed) return;
+
+                const originalText = lessonBtn.innerHTML;
+
+                const loadingOverlay = document.createElement('div');
+                loadingOverlay.id = 'ai-loading-overlay';
+                loadingOverlay.innerHTML = `
+                    <div class="fixed inset-0 bg-gray-900 bg-opacity-80 flex flex-col items-center justify-center z-[9999] backdrop-blur-sm transition-opacity">
+                        <i class="fa-solid fa-robot fa-bounce text-orange-500 text-6xl mb-6"></i>
+                        <h2 class="text-white text-2xl font-bold tracking-wider mb-2">กำลังให้ AI วิเคราะห์และสร้างแผนการสอน...</h2>
+                        <p class="text-gray-300 text-lg">ขั้นตอนนี้อาจใช้เวลา 3-6 นาที กรุณารอสักครู่ ☕</p>
+                        <div class="mt-6 flex gap-3">
+                            <div class="w-3 h-3 bg-orange-500 rounded-full animate-bounce" style="animation-delay: -0.3s"></div>
+                            <div class="w-3 h-3 bg-orange-500 rounded-full animate-bounce" style="animation-delay: -0.15s"></div>
+                            <div class="w-3 h-3 bg-orange-500 rounded-full animate-bounce" style="animation-delay: -0.0s"></div>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(loadingOverlay);
+                
+                try {
+                    lessonBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>กำลังให้ AI คิด...';
+                    lessonBtn.disabled = true;
+
+                    // ดึงข้อมูลวิธีการสอนหมวด 6
+                    const s6Data = {};
+                    const s6Rows = document.querySelectorAll('#cloTableBody_S6 tr.clo-row');
+                    if (s6Rows.length > 0) {
+                        s6Rows.forEach((row, idx) => {
+                            const cloCell = row.querySelector('.clo-cell-s6');
+                            const cloKey = cloCell ? cloCell.textContent.trim().replace(/ \[คลิกเพื่อแก้ไข\]$/, '').replace(/\s/g, '') : `CLO ${idx + 1}`;
+                            const teach = Array.from(row.querySelectorAll('.teaching-cell-s6 input[type="checkbox"]:checked')).map(cb => cb.value);
+                            const assess = Array.from(row.querySelectorAll('.assessment-cell-s6 input[type="checkbox"]:checked')).map(cb => cb.value);
+                            s6Data[cloKey] = { "วิธีการสอน": teach, "การประเมินผล": assess };
+                        });
+                    }
+
+                    const payload = {
+                        CC_id: new URLSearchParams(window.location.search).get('CC_id'),
+                        year: new URLSearchParams(window.location.search).get('year'),
+                        term: new URLSearchParams(window.location.search).get('term'),
+                        weekCount: parseInt(weekCount),
+                        cloData: window.SHARED_CLO_DATA || {},
+                        section6Data: s6Data
+                    };
+
+                    const response = await fetch('/generate-lesson-plan-ai', {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    const result = await response.json();
+                    console.log(result.prompt_debug);
+
+                    if (result.success && result.data) {
+                        PAGE_DATA.planData = result.data; 
+                        generateTableLesson(true);
+                        
+                        const section7JSON = getSection7Data();
+                        saveData('section7_data', section7JSON, document.getElementById('planTable'));
+                        AppAlert('AI สร้างแผนการสอนสำเร็จ!', 'success');
+                    } else {
+                        throw new Error(result.message || 'AI ตอบกลับมาผิดรูปแบบ');
+                    }
+
+                } catch (error) {
+                    console.error("AI Lesson Plan Error:", error);
+                    AppAlert('เกิดข้อผิดพลาดในการสร้างด้วย AI: ' + error.message, 'error');
+                } finally {
+                    const overlayToRemove = document.getElementById('ai-loading-overlay');
+                    if (overlayToRemove) {
+                        overlayToRemove.remove();
+                    }
+
+                    lessonBtn.innerHTML = originalText;
+                    lessonBtn.disabled = false;
+                }
+            });
+        }
 
         // ปุ่มดึงข้อมูล หมวด 7
         const fetchPrevLessonPlanBtn = document.getElementById('fetchPrevLessonPlanBtn');
@@ -1063,7 +1203,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         PAGE_DATA.planData = result.data; 
 
                         // สั่งวาดตารางใหม่จากข้อมูลความจำ
-                        generateTableLesson(true);
+                        addTableLesson(true);
 
                         // สั่ง Save ข้อมูลทั้งตารางลง Database ทันที
                         const section7JSON = getSection7Data();
