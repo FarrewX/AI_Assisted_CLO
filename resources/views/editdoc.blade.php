@@ -41,12 +41,10 @@
             </a>
         </div>
         <div class="fixed top-4 right-4 flex gap-3 z-50">
-            <button type="button" onclick="window.history.back()"
-                class="px-4 py-2 bg-blue-300 hover:bg-blue-400 text-gray-900 rounded-md shadow">
-                <a href="/export-docx?CC_id={{ $data->CC_id ?? '' }}&year={{ $data->year ?? '' }}&term={{ $data->term ?? '' }}&TQF={{ $data->TQF ?? '' }}" class="download-button">
-                    ดาวน์โหลดไฟล์ .docx 
-                </a>
-            </button>
+            <a href="/export-docx?CC_id={{ $data->CC_id ?? request('CC_id') }}&year={{ $data->year ?? request('year') }}&term={{ $data->term ?? request('term') }}&TQF={{ $data->TQF ?? request('TQF', 3) }}" 
+            class="inline-block px-4 py-2 bg-blue-300 hover:bg-blue-400 text-gray-900 rounded-md shadow download-button">
+                ดาวน์โหลดไฟล์ .docx 
+            </a>
         </div>
         <div class="bg-white w-[210mm] min-h-[297mm] p-[25mm] shadow-md mb-5 mx-auto">
             <div class="flex justify-center mb-4">
@@ -132,14 +130,18 @@
                         </tr>
                         <tr>
                             <th class="border border-black p-2.5 align-top bg-blue-100 text-center">5. ประเภทของรายวิชา</th>
-                            <td colspan="3" class="border border-black p-2.5 align-top" id="course_type_section">
+                            <td colspan="3" class="border border-black p-2.5 align-top text-l text-center" id="course_type_section">
                                 <label class="inline-flex items-center">
                                     <input type="checkbox" name="is_specific" class="mr-1.5 scale-125" value="1"
                                         @if(!empty($data->is_specific)) checked @endif> วิชาเฉพาะ
                                 </label>
+                                <label class="inline-flex items-center ml-5">
+                                    <input type="checkbox" class="mr-1.5 scale-125 hidden" disabled aria-hidden="true">
+                                    <span class="inline-block transform -translate-y-0.5">กลุ่มวิชา</span>
+                                </label>
                                 <label class="inline-flex items-center ml-4">
                                     <input type="checkbox" name="is_core" class="mr-1.5 scale-125" value="1"
-                                        @if(!empty($data->is_core)) checked @endif> กลุ่มวิชาแกน
+                                        @if(!empty($data->is_core)) checked @endif> แกน
                                 </label>
                                 <label class="inline-flex items-center ml-4">
                                     <input type="checkbox" name="is_major_required" class="mr-1.5 scale-125" value="1"
