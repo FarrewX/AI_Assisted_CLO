@@ -1042,14 +1042,49 @@ document.addEventListener('DOMContentLoaded', () => {
             tbody.innerHTML = "";
             const weekCountInput = document.getElementById("weekCount");
             
-            const loadedPlanData = PAGE_DATA.planData || [];
+            // ดึงและทำความสะอาดข้อมูล
+            let rawPlanData = PAGE_DATA.planData || [];
+            
+            if (typeof rawPlanData === 'string') {
+                try { rawPlanData = JSON.parse(rawPlanData); } catch (e) { rawPlanData = []; }
+            }
+            
+            // ดักจับกรณี AI แอบเอา Array ไปซ่อนใน Object
+            if (rawPlanData && typeof rawPlanData === 'object' && !Array.isArray(rawPlanData)) {
+                let foundArray = Object.values(rawPlanData).find(val => Array.isArray(val));
+                rawPlanData = foundArray ? foundArray : Object.values(rawPlanData);
+            }
+            
+            const loadedPlanData = Array.isArray(rawPlanData) ? rawPlanData : [];
+
+            // ดึงค่าแบบยืดหยุ่น (ไม่สนตัวพิมพ์เล็ก/ใหญ่ และหาคำใกล้เคียง)
+            const getValue = (obj, possibleKeys) => {
+                if (!obj || typeof obj !== 'object') return '';
+                const lowerObj = Object.keys(obj).reduce((acc, key) => {
+                    acc[key.toLowerCase()] = obj[key];
+                    return acc;
+                }, {});
+                
+                // วนหาคีย์ที่เป็นไปได้
+                for (let key of possibleKeys) {
+                    if (lowerObj[key.toLowerCase()] !== undefined && lowerObj[key.toLowerCase()] !== null) {
+                        return lowerObj[key.toLowerCase()];
+                    }
+                }
+                return '';
+            };
+
+            // คำนวณจำนวนสัปดาห์
             let lastWeekWithData = 0;
-            if (Array.isArray(loadedPlanData) && loadedPlanData.length > 0) {
+            if (loadedPlanData.length > 0) {
                 for (let i = loadedPlanData.length - 1; i >= 0; i--) {
                     const weekData = loadedPlanData[i] || {};
-                    const isEmpty = !(weekData.topic || weekData.objective || weekData.activity || weekData.tool || weekData.assessment || weekData.clo);
-                    if (!isEmpty) {
-                        lastWeekWithData = parseInt(weekData.week || 0);
+                    const t = getValue(weekData, ['topic', 'หัวข้อ']);
+                    const o = getValue(weekData, ['objective', 'วัตถุประสงค์']);
+                    const a = getValue(weekData, ['activity', 'กิจกรรม']);
+                    if (t || o || a) {
+                        let w = getValue(weekData, ['week', 'สัปดาห์', 'สัปดาห์ที่']);
+                        lastWeekWithData = parseInt(w) || 0;
                         break; 
                     }
                 }
@@ -1068,18 +1103,30 @@ document.addEventListener('DOMContentLoaded', () => {
             let cloKeysFromAI = Object.keys(window.SHARED_CLO_DATA || {}).map(key => key.replace(/\s/g, '').toUpperCase());
             cloKeysFromAI.sort((a, b) => (parseInt(a.replace(/\D/g, '')) || 0) - (parseInt(b.replace(/\D/g, '')) || 0));
 
+            // วาดตาราง
             for (let i = 1; i <= weekCount; i++) {
-                const weekData = loadedPlanData.find(item => parseInt(item.week) === i) || {};
+                const weekData = loadedPlanData.find(item => {
+                    let w = getValue(item, ['week', 'สัปดาห์', 'สัปดาห์ที่']);
+                    return parseInt(w) === i;
+                }) || {};
+
+                const valTopic = getValue(weekData, ['topic', 'หัวข้อ', 'เนื้อหา']);
+                const valObjective = getValue(weekData, ['objective', 'วัตถุประสงค์']);
+                const valActivity = getValue(weekData, ['activity', 'กิจกรรม', 'วิธีการสอน']);
+                const valTool = getValue(weekData, ['tool', 'สื่อ', 'อุปกรณ์']);
+                const valAssessment = getValue(weekData, ['assessment', 'ประเมิน', 'การประเมินผล']);
+                const valClo = getValue(weekData, ['clo', 'clos']);
+
                 const row = document.createElement("tr");
-                const cloOptions = createCloOptions(cloKeysFromAI, weekData.clo || '');
+                const cloOptions = createCloOptions(cloKeysFromAI, valClo);
 
                 row.innerHTML = `
                     <td class="border border-black p-2.5 align-top text-center font-bold">${i}</td>
-                    <td class="border border-black p-1 align-top"><textarea name="plan_topic_${i}" class="w-full h-24 border border-gray-300 rounded p-1 text-sm">${weekData.topic || ''}</textarea></td>
-                    <td class="border border-black p-1 align-top"><textarea name="plan_objective_${i}" class="w-full h-24 border border-gray-300 rounded p-1 text-sm">${weekData.objective || ''}</textarea></td>
-                    <td class="border border-black p-1 align-top"><textarea name="plan_activity_${i}" class="w-full h-24 border border-gray-300 rounded p-1 text-sm">${weekData.activity || ''}</textarea></td>
-                    <td class="border border-black p-1 align-top"><textarea name="plan_tool_${i}" class="w-full h-24 border border-gray-300 rounded p-1 text-sm">${weekData.tool || ''}</textarea></td>
-                    <td class="border border-black p-1 align-top"><textarea name="plan_assessment_${i}" class="w-full h-24 border border-gray-300 rounded p-1 text-sm">${weekData.assessment || ''}</textarea></td>
+                    <td class="border border-black p-1 align-top"><textarea name="plan_topic_${i}" class="w-full h-24 border border-gray-300 rounded p-1 text-sm">${valTopic}</textarea></td>
+                    <td class="border border-black p-1 align-top"><textarea name="plan_objective_${i}" class="w-full h-24 border border-gray-300 rounded p-1 text-sm">${valObjective}</textarea></td>
+                    <td class="border border-black p-1 align-top"><textarea name="plan_activity_${i}" class="w-full h-24 border border-gray-300 rounded p-1 text-sm">${valActivity}</textarea></td>
+                    <td class="border border-black p-1 align-top"><textarea name="plan_tool_${i}" class="w-full h-24 border border-gray-300 rounded p-1 text-sm">${valTool}</textarea></td>
+                    <td class="border border-black p-1 align-top"><textarea name="plan_assessment_${i}" class="w-full h-24 border border-gray-300 rounded p-1 text-sm">${valAssessment}</textarea></td>
                     <td class="border border-black p-2.5 align-top text-center"><select name="plan_clo_${i}" class="w-full border rounded px-1 py-1 text-sm bg-white">${cloOptions}</select></td>
                 `;
                 tbody.appendChild(row);
