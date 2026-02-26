@@ -52,6 +52,7 @@ Route::middleware('web')->group(function () {
         Route::get('/get-previous-grading-criteria', [DocumentController::class, 'getPreviousGradingCriteria']);
         Route::post('/generate-lesson-plan-ai', [OllamaController::class, 'generateLessonPlanAI'])->name('generate.lesson.plan.ai');
 
+        Route::get('/preview-docx', [DocumentController::class, 'previewDocx'])->name('preview.docx');
         Route::get('/export-docx', [DocumentController::class, 'exportdocx'])->name('export.docx');
 
         Route::post('/updatestartprompt', [CourseController::class, 'updateStartPrompt']);

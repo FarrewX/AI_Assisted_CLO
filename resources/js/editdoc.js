@@ -1804,3 +1804,42 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+window.openPreviewModal = function() {
+    const modal = document.getElementById('previewModal');
+    const iframe = document.getElementById('previewIframe');
+    const loading = document.getElementById('previewLoading');
+    
+    if(modal) modal.classList.remove('hidden');
+    
+    // ดึงพารามิเตอร์ทั้งหมดจาก URL ของหน้าเว็บปัจจุบัน
+    const urlParams = new URLSearchParams(window.location.search);
+    const CC_id = urlParams.get('CC_id') || '';
+    const year = urlParams.get('year') || '';
+    const term = urlParams.get('term') || '';
+    const TQF = urlParams.get('TQF') || '';
+    
+    // ประกอบ URL ใหม่ด้วย JavaScript Template Literal (ใช้เครื่องหมาย ` ` และ ${})
+    if(iframe) {
+        iframe.src = `/preview-docx?CC_id=${CC_id}&year=${year}&term=${term}&TQF=${TQF}`;
+    }
+    
+    if(iframe && loading) {
+        iframe.onload = function() {
+            loading.classList.add('hidden');
+        };
+    }
+};
+
+window.closePreviewModal = function() {
+    const modal = document.getElementById('previewModal');
+    const iframe = document.getElementById('previewIframe');
+    const loading = document.getElementById('previewLoading');
+    
+    if(modal) modal.classList.add('hidden');
+    
+    setTimeout(() => {
+        if(iframe) iframe.src = "";
+        if(loading) loading.classList.remove('hidden');
+    }, 300);
+};

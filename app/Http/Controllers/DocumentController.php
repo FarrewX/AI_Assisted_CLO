@@ -930,26 +930,21 @@ class DocumentController extends Controller
     public function exportdocx(Request $request)
     {
         try {
-            // 🌟 1. ดึงข้อมูลจากฟังก์ชันหลักของคุณ (รับรองว่าโครงสร้างตรงกันเป๊ะ!)
             $context = $this->getBaseContext($request);
             $dataObj = $this->getAggregatedData($context);
         } catch (\Exception $e) {
             abort(404, 'ไม่สามารถโหลดข้อมูลรายวิชาได้: ' . $e->getMessage());
         }
 
-        // แปลง Object ให้เป็น Array เพื่อง่ายต่อการดึงค่า
         $data = (array) $dataObj;
-
-        // ฟังก์ชันช่วยดึงค่า (ถ้าไม่มีให้ใส่ค่า Default)
         $get = function($key, $default = '') use ($data) {
             return isset($data[$key]) && $data[$key] !== '' && $data[$key] !== null ? $data[$key] : $default;
         };
-        // ฟังก์ชันสำหรับดึงค่าที่เป็น Array 
         $getArray = function($key, $default = []) use ($data) {
             return (!empty($data[$key]) && is_array($data[$key])) ? $data[$key] : $default;
         };
 
-        // 🌟 2. ดึงคำอธิบาย CLO/LLL พ่วงเตรียมไว้
+        // ดึงคำอธิบาย CLO/LLL พ่วงเตรียมไว้
         $cloLllDescriptions = [];
         $aiTextJson = $get('ai_text');
         $aiTextData = $aiTextJson ? json_decode($aiTextJson, true) : [];
@@ -967,7 +962,6 @@ class DocumentController extends Controller
         $lllDataArray = json_decode($get('lll_data', '[]'), true) ?: [];
         $cloLllDescriptions = array_merge($cloLllDescriptions, $lllDataArray);
 
-        // 🌟 3. แมปตัวแปรหลัก (Header และ ข้อมูลทั่วไป)
         $docxData = [
             'logo_path' => public_path('image/mjulogo.jpg'),
             'title' => 'มหาวิทยาลัยแม่โจ้',
@@ -1032,7 +1026,7 @@ class DocumentController extends Controller
         ];
         
         // =========================================================
-        // 🌟 4. ดึงข้อมูล JSON ลงตาราง (ปรับให้ตรงกับ JS เป๊ะๆ)
+        // ดึงข้อมูล JSON ลงตาราง
         // =========================================================
 
         // --- 5.1 PLOs ---
@@ -1141,7 +1135,7 @@ class DocumentController extends Controller
                             $savedCellData['level'] = $aiDomainAbbr;
                         }
                         
-                        // 🔥 แยกการแสดงผลระหว่าง CLO กับ LLL 
+                        // แยกการแสดงผลระหว่าง CLO กับ LLL 
                         if ($savedCellData['check']) {
                             if ($isLLL) {
                                 // ถ้าเป็น LLL ให้แสดงเครื่องหมายติ๊กถูก (✓)
@@ -1162,7 +1156,7 @@ class DocumentController extends Controller
         // --- 6. Teaching Methods (แสดงทุกหัวข้อ และติ๊กถูกเฉพาะอันที่มีใน DB) ---
         $teachingMethodsData = $getArray('teaching_methods');
         
-        // 🌟 1. จำลองข้อมูล Options ให้เหมือนกับหน้าเว็บ (JS)
+        // จำลองข้อมูล Options ให้เหมือนกับหน้าเว็บ
         $teachingOptions = [
             "On-site โดยมีการเรียนการสอนแบบ" => [
                 "บรรยาย (Lecture)", "ฝึกปฏิบัติ (Laboratory Model)", "เรียนรู้จากการลงมือทำ (Learning by Doing)",
@@ -1195,7 +1189,6 @@ class DocumentController extends Controller
         $docxData['s6_clos_teaching'] = [];
 
         if(!empty($teachingMethodsData)) {
-            // เรียงลำดับ CLO1, CLO2, ...
             uksort($teachingMethodsData, function ($a, $b) {
                 preg_match('/(\d+)/', $a, $matchesA); preg_match('/(\d+)/', $b, $matchesB);
                 return (intval($matchesA[1] ?? 999)) <=> (intval($matchesB[1] ?? 999));
@@ -1207,20 +1200,20 @@ class DocumentController extends Controller
                 $teachingRaw = $dataT[0]['วิธีการสอน'] ?? [];
                 $assessmentRaw = $dataT[1]['การประเมินผล'] ?? [];
 
-                // 🌟 2. ฟังก์ชันตรวจสอบว่าหัวข้อนี้ถูกบันทึกไว้ใน DB หรือไม่ (รองรับทั้งฟอร์แมตเก่าและใหม่)
+                // ตรวจสอบว่าหัวข้อนี้ถูกบันทึกไว้ใน DB หรือไม่ (รองรับทั้งฟอร์แมตเก่าและใหม่)
                 $isChecked = function($categoryLabel, $itemText, $rawData) {
                     if (!is_array($rawData)) return false;
                     
                     $target = trim($itemText);
 
-                    // 2.1 ตรวจสอบข้อมูลแบบใหม่ (แยกตาม Category จากหน้าเว็บล่าสุด)
+                    // ตรวจสอบข้อมูลแบบใหม่ (แยกตาม Category จากหน้าเว็บล่าสุด)
                     if (isset($rawData[$categoryLabel]) && is_array($rawData[$categoryLabel])) {
                         foreach ($rawData[$categoryLabel] as $val) {
                             if (is_string($val) && trim($val) === $target) return true;
                         }
                     }
 
-                    // 2.2 ตรวจสอบข้อมูลแบบเก่า (ค้นหาแบบเหวี่ยงแห ป้องกัน Database ผสมกัน)
+                    // ตรวจสอบข้อมูลแบบเก่า (ค้นหาแบบเหวี่ยงแห ป้องกัน Database ผสมกัน)
                     foreach ($rawData as $val) {
                         if (is_string($val)) {
                             if (trim($val) === $target) return true;
@@ -1235,7 +1228,7 @@ class DocumentController extends Controller
                     return false;
                 };
 
-                // 🌟 3. สร้างข้อความ "วิธีการสอน"
+                // สร้างข้อความ "วิธีการสอน"
                 $teachingFlat = [];
                 foreach ($teachingOptions as $catLabel => $items) {
                     $teachingFlat[] = $catLabel; // ใส่ชื่อหมวดหมู่
@@ -1245,7 +1238,7 @@ class DocumentController extends Controller
                     }
                 }
 
-                // 🌟 4. สร้างข้อความ "การประเมินผล"
+                // สร้างข้อความ "การประเมินผล"
                 $assessmentFlat = [];
                 foreach ($assessmentOptions as $catLabel => $items) {
                     $assessmentFlat[] = $catLabel; // ใส่ชื่อหมวดหมู่
@@ -1342,7 +1335,7 @@ class DocumentController extends Controller
 
 
         // ==========================================================
-        // 🌟 5. DOCX GENERATION (สร้างไฟล์ Word)
+        // DOCX GENERATION (สร้างไฟล์ Word)
         // ==========================================================
         try {
             $phpWord = new \PhpOffice\PhpWord\PhpWord();
@@ -1592,23 +1585,23 @@ class DocumentController extends Controller
             $table4Head->addRow();
             $table4Head->addCell(10000, ['bgColor' => 'DBEAFE', 'valign' => 'center'])->addText('หมวดที่ 4: ข้อตกลงร่วมกันระหว่างผู้สอนและผู้เรียน', array_merge($boldFont, $head), ['alignment' => \PhpOffice\PhpWord\SimpleType\Jc::CENTER, 'spaceAfter' => 0, 'spaceBefore' => 0]);
             
-            // 🌟 2. ดึงข้อมูลจาก Database
+            // ดึงข้อมูลจาก Database
             $agreementRaw = $docxData['agreement'] ?? '';
             $agreementRaw = strip_tags(html_entity_decode($agreementRaw, ENT_QUOTES, 'UTF-8'));
             
-            // 🔥 2.1 ป้องกันปัญหาประโยคขาดกลาง: เปลี่ยน Enter ทุกชนิดให้เป็นช่องว่าง (รวมข้อความทั้งหมดเป็น 1 ก้อนยาวๆ)
+            // ป้องกันปัญหาประโยคขาดกลาง: เปลี่ยน Enter ทุกชนิดให้เป็นช่องว่าง (รวมข้อความทั้งหมดเป็น 1 ก้อนยาวๆ)
             $agreementRaw = preg_replace('/[\r\n]+/', ' ', $agreementRaw);
             
-            // 2.2 จัดระเบียบช่องว่าง: ถอดช่องว่างที่เคาะติดกันหลายอันให้เหลือ 1 เคาะ (เช่น "ได้รับการ   ประเมิน" -> "ได้รับการ ประเมิน")
+            // จัดระเบียบช่องว่าง: ถอดช่องว่างที่เคาะติดกันหลายอันให้เหลือ 1 เคาะ (เช่น "ได้รับการ   ประเมิน" -> "ได้รับการ ประเมิน")
             $agreementRaw = preg_replace('/[ \t]+/u', ' ', $agreementRaw);
 
-            // 🔥 2.3 หั่นประโยคใหม่: สั่งให้เว้นบรรทัด (\n) "เฉพาะตอนที่เจอเลข 4.1, 4.2, 4.3..." เท่านั้น!
+            // หั่นประโยคใหม่: สั่งให้เว้นบรรทัด (\n) "เฉพาะตอนที่เจอเลข 4.1, 4.2, 4.3..." เท่านั้น!
             $agreementRaw = preg_replace('/ (4\.\d+)/', "\n$1", trim($agreementRaw));
 
             // แยกข้อความแต่ละข้อออกจากกัน กลายเป็น Array [ "4.1 ...", "4.2 ..." ]
             $agreementParagraphs = array_filter(array_map('trim', explode("\n", $agreementRaw)));
 
-            // 🌟 3. วาดข้อความลง Word ด้วยสไตล์ "Hanging Indent" (ย่อหน้าแบบแขวน)
+            // วาดข้อความลง Word ด้วยสไตล์ "Hanging Indent" (ย่อหน้าแบบแขวน)
             foreach ($agreementParagraphs as $p) {
                 $section->addText(htmlspecialchars($p), null, [
                     'indentation' => [
@@ -1661,7 +1654,7 @@ class DocumentController extends Controller
                 $table5_3->addRow(); 
                 $table5_3->addCell(1000, $vAlignCenter)->addText($map['clo_id'], null, $cellCenter); 
                 
-                // 🔥 ท่าไม้ตาย: คลีนข้อความ ลบ Enter ที่แอบซ่อนอยู่ออกให้หมด เพื่อให้ประโยคต่อกัน
+                // คลีนข้อความ ลบ Enter ที่แอบซ่อนอยู่ออกให้หมด เพื่อให้ประโยคต่อกัน
                 $cleanDesc = $map['clo_desc'];
                 $cleanDesc = preg_replace('/[\r\n]+/', ' ', $cleanDesc); // แปลง Enter ทุกชนิดให้เป็นช่องว่าง 1 เคาะ
                 $cleanDesc = preg_replace('/[ \t]+/u', ' ', $cleanDesc); // ยุบช่องว่างที่เกินให้เหลือแค่อันเดียว
@@ -1778,4 +1771,11 @@ class DocumentController extends Controller
         }
     }
 
+    public function previewDocx(Request $request)
+    {
+        $context = $this->getBaseContext($request);
+        $data = $this->getAggregatedData($context);
+
+        return view('preview-docx', compact('data'));
+    }
 }

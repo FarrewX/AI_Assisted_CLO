@@ -41,11 +41,55 @@
             </a>
         </div>
         <div class="fixed top-4 right-4 flex gap-3 z-50">
-            <a href="/export-docx?CC_id={{ $data->CC_id ?? request('CC_id') }}&year={{ $data->year ?? request('year') }}&term={{ $data->term ?? request('term') }}&TQF={{ $data->TQF ?? request('TQF', 3) }}" 
-            class="inline-block px-4 py-2 bg-blue-300 hover:bg-blue-400 text-gray-900 rounded-md shadow download-button">
+            <button onclick="openPreviewModal()" 
+                    class="inline-block px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white font-medium rounded-md shadow-lg transition-all flex items-center  transform transition-all duration-200 ease-in-out hover:-translate-y-0.5">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
                 ดาวน์โหลดไฟล์ .docx 
-            </a>
+            </button>
         </div>
+        <div id="previewModal" class="fixed inset-0 bg-gray-900 bg-opacity-60 hidden z-[100] flex items-center justify-center backdrop-blur-sm transition-opacity">
+            <div class="bg-white w-11/12 md:w-4/5 lg:w-3/4 h-[90vh] rounded-xl shadow-2xl flex flex-col overflow-hidden animate-fade-in-up">
+                
+                <div class="flex justify-between items-center p-4 border-b bg-gray-50">
+                    <h3 class="text-lg font-bold text-gray-800">
+                        📄 ตัวอย่างเอกสาร (มคอ. {{ $data->TQF ?? request('TQF', 3) }})
+                    </h3>
+                    <button onclick="closePreviewModal()" class="text-gray-400 hover:text-red-500 transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <div class="flex-grow p-4 bg-gray-200 overflow-hidden relative">
+                    <iframe id="previewIframe" src="" class="w-full h-full border-0 bg-white shadow-sm rounded-md" title="Document Preview"></iframe>
+                    
+                    <div id="previewLoading" class="absolute inset-0 flex items-center justify-center bg-white bg-opacity-80 pointer-events-none">
+                        <div class="flex flex-col items-center text-gray-500">
+                            <svg class="animate-spin h-8 w-8 mb-3 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            <span>กำลังโหลดตัวอย่าง...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-4 border-t flex justify-end gap-3 bg-white">
+                    <button onclick="closePreviewModal()" class="px-5 py-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md font-medium transition-colors">
+                        ยกเลิก
+                    </button>
+                    
+                    <a href="/export-docx?CC_id={{ request('CC_id') ?? $data->CC_id ?? '' }}&year={{ request('year') ?? $data->year ?? '' }}&term={{ request('term') ?? $data->term ?? '' }}&TQF={{ request('TQF') ?: ($data->TQF ?: '3') }}" 
+                    class="px-5 py-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-md shadow transition-colors flex items-center"
+                    onclick="closePreviewModal()">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        ยืนยีนการดาวน์โหลด
+                    </a>
+                </div>
+            </div>
+        </div>
+
         <div class="bg-white w-[210mm] min-h-[297mm] p-[25mm] shadow-md mb-5 mx-auto">
             <div class="flex justify-center mb-4">
                 <img src="/image/mjulogo.jpg" 

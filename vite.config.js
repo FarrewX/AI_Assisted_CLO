@@ -18,6 +18,7 @@ export default defineConfig({
                 'resources/js/management/users.js',
                 'resources/js/editdoc.js',
                 'resources/js/email.js',
+                'resources/js/preview-docx.js'
             ],
             refresh: true,
         }),
