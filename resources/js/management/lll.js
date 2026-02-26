@@ -1,8 +1,8 @@
 import axios from 'axios';
 
 document.addEventListener('DOMContentLoaded', () => {
-    const csrfTokenMeta = document.querySelector('meta[name="csrf-token"]');
-    const csrfToken = csrfTokenMeta ? csrfTokenMeta.getAttribute('content') : '';
+    axios.defaults.headers.common['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+    axios.defaults.headers.common['Accept'] = 'application/json';
     
     // ==========================================
     // 1. Helper Functions (ฟังก์ชันช่วยเหลือ)
@@ -42,15 +42,11 @@ document.addEventListener('DOMContentLoaded', () => {
         popupCloseCallback = callback;
 
         if (isSuccess) {
-            if(popupTitle) {
-                popupTitle.textContent = "สำเร็จ!";
-            }
-            if(iconContainer) iconContainer.classList.add('bg-blue-100');
+            if(popupTitle) popupTitle.textContent = "สำเร็จ!";
+            if(iconContainer) iconContainer.classList.add('bg-green-100');
             if(iconSuccess) iconSuccess.classList.remove('hidden');
         } else {
-            if(popupTitle) {
-                popupTitle.textContent = "เกิดข้อผิดพลาด";
-            }
+            if(popupTitle) popupTitle.textContent = "เกิดข้อผิดพลาด";
             if(iconContainer) iconContainer.classList.add('bg-red-100');
             if(iconError) iconError.classList.remove('hidden');
         }
@@ -66,7 +62,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if(confirmMsg) confirmMsg.textContent = msg;
         confirmCallback = cb;
 
-        // บังคับให้ปุ่มเป็นสีแดงเสมอ (เพราะใช้เฉพาะกับการลบ)
         if (confirmBtn) {
             confirmBtn.className = 'flex-1 rounded-xl bg-red-600 hover:bg-red-700 px-4 py-3 text-sm font-bold text-white shadow-md transition-all duration-200';
             confirmBtn.innerHTML = 'ใช่, ลบเลย';
@@ -78,11 +73,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // 2. Setup Plugins & Close Buttons
     // ==========================================
-
     const closeButtons = [
         { id: 'confirm-cancel', modal: 'confirm-modal' },
-        { id: 'add-plo-cancel', modal: 'add-plo-modal' },
-        { id: 'edit-plo-cancel', modal: 'edit-plo-modal' }
+        { id: 'add-lll-cancel', modal: 'add-lll-modal' },
+        { id: 'edit-lll-cancel', modal: 'edit-lll-modal' }
     ];
 
     closeButtons.forEach(btn => {
@@ -114,23 +108,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     const currentYear = document.body.getAttribute('data-current-year');
 
-    // เพิ่ม PLO (ADD)
-    const addBtn = document.getElementById('add-plo-btn');
-    const addSave = document.getElementById('add-plo-save');
+    const addBtn = document.getElementById('add-lll-btn');
+    const addSave = document.getElementById('add-lll-save');
 
-    if(addBtn) addBtn.addEventListener('click', () => toggleModal('add-plo-modal', true));
+    if(addBtn) addBtn.addEventListener('click', () => toggleModal('add-lll-modal', true));
 
     if(addSave) {
         addSave.addEventListener('click', function() {
-            const ploNum = document.getElementById('new-plo')?.value || '';
+            const lllNum = document.getElementById('new-lll')?.value || '';
             const desc = document.getElementById('new-desc')?.value.trim() || '';
-            const domain = document.getElementById('new-domain')?.value.trim() || '';
-            const level = document.getElementById('new-level')?.value.trim() || '';
-            
-            const loTypeNode = document.querySelector('input[name="new_lo_type"]:checked');
-            const specificLo = loTypeNode ? (loTypeNode.value === '1' ? 1 : 0) : 1;
 
-            if(!desc) { showPopup('กรุณากรอกคำอธิบาย (Description)'); return; }
+            const checkedPlos = Array.from(document.querySelectorAll('input[name="add_check_plo[]"]:checked')).map(cb => cb.value);
+
+            if(!desc) { showPopup('กรุณากรอกชื่อทักษะ'); return; }
 
             const btn = this;
             const originalText = btn.innerHTML;
@@ -138,18 +128,15 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.classList.add('opacity-75', 'cursor-not-allowed');
             btn.innerHTML = 'กำลังบันทึก...';
 
-            axios.post('/management/plos/create', {
-                curriculum_year_ref: currentYear,
-                plo: ploNum,
-                description: desc,
-                domain: domain,
-                learning_level: level,
-                specific_lo: specificLo,
-                _token: csrfToken
+            axios.post('/management/llls', {
+                curriculum_year_ref: currentYear, 
+                num_LLL: lllNum,
+                name_LLL: desc,
+                check_LLL: checkedPlos
             })
             .then(res => {
-                toggleModal('add-plo-modal', false);
-                showPopup('เพิ่มข้อมูล PLO สำเร็จเรียบร้อย', true, () => location.reload());
+                toggleModal('add-lll-modal', false);
+                showPopup('เพิ่มข้อมูล LLL สำเร็จเรียบร้อย', true, () => location.reload());
             })
             .catch(err => {
                 console.error(err);
@@ -174,18 +161,23 @@ document.addEventListener('DOMContentLoaded', () => {
             if(!tr) return;
 
             document.getElementById('edit-id').value = tr.dataset.id;
-            document.getElementById('edit-plo-num').value = tr.dataset.ploNum;
-            document.getElementById('edit-desc').value = tr.dataset.desc; 
-            document.getElementById('edit-domain').value = tr.dataset.domain;
-            document.getElementById('edit-level').value = tr.dataset.level;
+            document.getElementById('edit-lll-num').value = tr.dataset.lllNum;
+            document.getElementById('edit-desc').value = tr.dataset.desc;
 
-            if (tr.dataset.specificLo === '1') {
-                document.getElementById('edit-specific-lo').checked = true;
-            } else {
-                document.getElementById('edit-generic-lo').checked = true;
-            }
+            const checkLllString = tr.dataset.checkLll || ''; 
+            const checkArray = checkLllString.split(',').map(item => item.trim());
 
-            toggleModal('edit-plo-modal', true);
+            // ล้าง Checkbox เก่าออกให้หมดก่อน
+            document.querySelectorAll('input[name="edit_check_plo[]"]').forEach(cb => cb.checked = false);
+            
+            // ติ๊ก Checkbox ให้ตรงกับข้อมูลในฐานข้อมูล
+            document.querySelectorAll('input[name="edit_check_plo[]"]').forEach(cb => {
+                if(checkArray.includes(cb.value)) {
+                    cb.checked = true;
+                }
+            });
+
+            toggleModal('edit-lll-modal', true);
         }
 
         // --- ส่วนของการลบ (DELETE) ---
@@ -194,18 +186,16 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const tr = deleteBtn.closest('tr');
             const id = tr.dataset.id;
-            const ploNum = tr.dataset.ploNum;
+            const lllNum = tr.dataset.lllNum;
 
-            showConfirmDelete(`คุณแน่ใจหรือไม่ที่จะลบ PLO ${ploNum} ?`, () => {
+            showConfirmDelete(`คุณแน่ใจหรือไม่ที่จะลบ LLL ${lllNum} ?`, () => {
                 const iconBtn = deleteBtn.innerHTML;
                 deleteBtn.disabled = true;
                 deleteBtn.innerHTML = '...';
 
-                axios.delete(`/management/plos/delete/${id}`, {
-                    headers: { 'X-CSRF-TOKEN': csrfToken }
-                })
+                axios.delete(`/management/llls/${id}`)
                 .then(res => {
-                    showPopup('ลบข้อมูล PLO สำเร็จ', true, () => location.reload());
+                    showPopup('ลบข้อมูล LLL สำเร็จ', true, () => location.reload());
                 })
                 .catch(err => {
                     console.error(err);
@@ -217,20 +207,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // บันทึกการแก้ไข (SAVE EDIT)
-    const editSave = document.getElementById('edit-plo-save');
+    // ทึกการแก้ไข (SAVE EDIT)
+    const editSave = document.getElementById('edit-lll-save');
     if(editSave) {
         editSave.addEventListener('click', function() {
             const id = document.getElementById('edit-id').value;
-            const ploNum = document.getElementById('edit-plo-num').value;
+            const lllNum = document.getElementById('edit-lll-num').value;
             const desc = document.getElementById('edit-desc').value.trim();
-            const domain = document.getElementById('edit-domain').value.trim();
-            const level = document.getElementById('edit-level').value.trim();
+
+            const checkedPlos = Array.from(document.querySelectorAll('input[name="edit_check_plo[]"]:checked')).map(cb => cb.value);
             
-            const loTypeNode = document.querySelector('input[name="edit_lo_type"]:checked');
-            const specificLo = loTypeNode ? (loTypeNode.value === '1' ? 1 : 0) : 1;
-            
-            if(!desc) { showPopup('กรุณากรอกคำอธิบาย (Description)'); return; }
+            if(!desc) { showPopup('กรุณากรอกชื่อทักษะ'); return; }
             
             const btn = editSave;
             const originalText = btn.innerHTML;
@@ -238,16 +225,14 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.classList.add('opacity-75', 'cursor-not-allowed');
             btn.innerHTML = 'กำลังบันทึก...';
 
-            axios.post(`/management/plos/update/${id}`, { 
-                plo: ploNum,
-                description: desc,
-                domain: domain,
-                learning_level: level,
-                specific_lo: specificLo,
-                _token: csrfToken
+            // ส่ง Payload ให้ตรงกับคอลัมน์ Database
+            axios.put(`/management/llls/${id}`, { 
+                num_LLL: lllNum,
+                name_LLL: desc,
+                check_LLL: checkedPlos
             })
             .then(res => {
-                toggleModal('edit-plo-modal', false);
+                toggleModal('edit-lll-modal', false);
                 showPopup('อัปเดตข้อมูลสำเร็จเรียบร้อย', true, () => location.reload());
             })
             .catch(err => {

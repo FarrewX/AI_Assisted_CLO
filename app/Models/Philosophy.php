@@ -9,6 +9,8 @@ class Philosophy extends Model
 {
     use HasFactory;
 
+    protected $table = 'philosophy';
+    
     protected $primaryKey = 'id';
     public $incrementing = true;
 

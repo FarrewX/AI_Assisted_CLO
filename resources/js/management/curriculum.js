@@ -92,4 +92,50 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target === modal) toggleModal('curriculum-modal', false);
         if (e.target === deleteModal) toggleModal('delete-modal', false);
     });
+
+    const subSettingsModal = document.getElementById('sub-settings-modal');
+    const btnCloseSubSettings = document.getElementById('btn-close-sub-settings');
+    
+    // Badge HTML
+    const badgeComplete = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">มีข้อมูลแล้ว</span>`;
+    const badgeMissing = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 animate-pulse">ยังไม่มีข้อมูล</span>`;
+
+    // เปิด Modal Settings ย่อย
+    document.querySelectorAll('.btn-sub-settings').forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            const year = this.getAttribute('data-year');
+            const name = this.getAttribute('data-name');
+            
+            // ดึงสถานะ
+            const hasPhilosophy = this.getAttribute('data-has-philosophy') === 'true';
+            const hasPlo = this.getAttribute('data-has-plo') === 'true';
+            const hasLlls = this.getAttribute('data-has-llls') === 'true';
+
+            document.getElementById('sub-settings-title').innerText = name;
+
+            document.getElementById('link-manage-philosophy').href = `/management/philosophy?year=${year}`;
+            document.getElementById('link-manage-plo').href = `/management/plos?year=${year}`;
+            document.getElementById('link-manage-llls').href = `/management/llls?year=${year}`;
+
+            // อัปเดต Badge แจ้งเตือน
+            document.getElementById('status-philosophy').innerHTML = hasPhilosophy ? badgeComplete : badgeMissing;
+            document.getElementById('status-plo').innerHTML = hasPlo ? badgeComplete : badgeMissing;
+            document.getElementById('status-llls').innerHTML = hasLlls ? badgeComplete : badgeMissing;
+
+            subSettingsModal.classList.remove('hidden');
+        });
+    });
+
+    // ปิด Modal Settings ย่อย
+    btnCloseSubSettings.addEventListener('click', () => {
+        subSettingsModal.classList.add('hidden');
+    });
+
+    // ปิดเมื่อคลิกพื้นที่พื้นหลัง
+    subSettingsModal.addEventListener('click', (e) => {
+        if (e.target === subSettingsModal) {
+            subSettingsModal.classList.add('hidden');
+        }
+    });
 });

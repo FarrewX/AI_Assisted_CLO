@@ -30,7 +30,7 @@
             </p>
         </div>
 
-        <div class="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="w-full max-w-6xl grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-6">
 
             <a href="{{ url('/management/curriculum') }}" 
             class="group bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-xl hover:border-blue-300 transition-all duration-300 transform hover:-translate-y-1 flex flex-col items-center text-center gap-4 cursor-pointer">
@@ -67,19 +67,6 @@
                 <div>
                     <h3 class="text-xl font-semibold text-gray-800 group-hover:text-amber-600">อาจารย์ผู้สอน</h3>
                     <p class="text-sm text-gray-500 mt-1">จัดการอาจารย์ในรายวิชา</p>
-                </div>
-            </a>
-
-            <a href="{{ url('/management/plos') }}" 
-            class="group bg-white p-6 rounded-2xl shadow-sm border border-gray-200 hover:shadow-xl hover:border-purple-300 transition-all duration-300 transform hover:-translate-y-1 flex flex-col items-center text-center gap-4 cursor-pointer">
-                <div class="p-4 bg-purple-50 text-purple-600 rounded-full group-hover:bg-purple-600 group-hover:text-white transition-colors duration-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                </div>
-                <div>
-                    <h3 class="text-xl font-semibold text-gray-800 group-hover:text-purple-600">PLOs</h3>
-                    <p class="text-sm text-gray-500 mt-1">ผลลัพธ์การเรียนรู้ระดับหลักสูตร</p>
                 </div>
             </a>
 

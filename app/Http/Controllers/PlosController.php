@@ -15,7 +15,7 @@ class PlosController extends Controller
     public function index(Request $request)
     {
         // ดึงรายชื่อหลักสูตรมาใส่ Dropdown (เรียงปีล่าสุดขึ้นก่อน)
-        $curriculum = \App\Models\Curriculum::orderBy('curriculum_year', 'desc')->get();
+        $curriculum = Curriculum::orderBy('curriculum_year', 'desc')->get();
 
         // รับค่า 'year' จาก Dropdown
         $selectedYear = $request->input('year'); 
@@ -23,7 +23,7 @@ class PlosController extends Controller
 
         if ($selectedYear) {
             // Query โดยใช้ curriculum_year_ref แทน curriculum_id
-            $plos = \App\Models\Plos::where('curriculum_year_ref', $selectedYear)
+            $plos = Plos::where('curriculum_year_ref', $selectedYear)
                         ->orderBy('plo', 'asc')
                         ->get();
         }

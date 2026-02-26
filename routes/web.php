@@ -18,6 +18,8 @@ use App\Http\Controllers\CourseManagementController;
 use App\Http\Controllers\CurriculumController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PhilosophyController;
+use App\Http\Controllers\Curriculum_lllsController;
 
 Route::middleware('web')->group(function () {
 
@@ -106,6 +108,13 @@ Route::middleware('web')->group(function () {
         Route::delete('/management/users/{id}', [UserController::class, 'destroy'])->name('management.users.destroy');
         Route::post('/management/users/{id}/restore', [UserController::class, 'restore'])->name('management.users.restore');
 
+        Route::get('/management/philosophy', [PhilosophyController::class, 'index'])->name('philosophy.index');
+        Route::post('/philosophy/update', [PhilosophyController::class, 'update'])->name('philosophy.update');
+
+        Route::get('/management/llls', [Curriculum_lllsController::class, 'index'])->name('llls.index');
+        Route::post('/management/llls', [Curriculum_lllsController::class, 'store'])->name('llls.store');
+        Route::put('/management/llls/{id}', [Curriculum_lllsController::class, 'update'])->name('llls.update');
+        Route::delete('/management/llls/{id}', [Curriculum_lllsController::class, 'destroy'])->name('llls.destroy');
     });
 
 });
