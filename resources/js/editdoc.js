@@ -559,17 +559,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const aiTextData = window.SHARED_CLO_DATA;
         let cloData = [];
 
-        // แปลง Domain เป็นคำย่อ (K, S, AR)
-        function getDomainAbbr(domainText) {
-            if (!domainText) return '';
-            const lower = String(domainText).toLowerCase();
-            let types = [];
-            if (lower.includes('knowledge')) types.push('K');
-            if (lower.includes('skill')) types.push('S');
-            if (lower.includes('application') || lower.includes('responsibility')) types.push('AR');
-            return types.join(', ');
-        }
-
         // ดึงเฉพาะตัวเลขออกจากข้อความ PLO
         function getPloNumbers(ploText) {
             if (!ploText) return [];
@@ -590,10 +579,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const lllData = PAGE_DATA.lllData || [];
         const cloLllData = [...cloData, ...lllData];
         const ploCount = PAGE_DATA.ploCount || 0;
-        const dynamicLevels = PAGE_DATA.levelOptions || [];
-        const levelOptions = ["", ...dynamicLevels];
         const courseAccordData = PAGE_DATA.courseAccord || {};
-        const tbody = document.querySelector("#ploTable tbody");
+        const table = document.querySelector("#ploTable");
+        const tbody = table ? table.querySelector("tbody") : null;
+        
+        // ดึงค่า Level จากหัวตารางมาเก็บไว้เป็น Array
+        const ploHeaders = table ? Array.from(table.querySelectorAll("thead th")).slice(2) : [];
+        const ploLevelsFromHeader = ploHeaders.map(th => {
+            const match = th.textContent.match(/\((.*?)\)/);
+            return match ? match[1].trim() : '';
+        });
 
         if (tbody) {
             tbody.innerHTML = '';
@@ -604,23 +599,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // ดึงข้อมูล AI ประจำแถว
                 let aiMappedPlos = [];
-                let aiDomainAbbr = '';
 
                 if (!isLLL) {
                     const originalKey = itemCode.replace('CLO', 'CLO ');
                     const aiDetails = aiTextData[originalKey] || aiTextData[itemCode] || {};
-                    
                     let ploRaw = '';
-                    let domainRaw = '';
                     
                     for (const k in aiDetails) {
                         const lowerK = k.toLowerCase();
                         if (lowerK.includes('plo')) ploRaw = aiDetails[k];
-                        if (lowerK.includes('domain')) domainRaw = aiDetails[k];
                     }
-                    
                     aiMappedPlos = getPloNumbers(ploRaw);
-                    aiDomainAbbr = getDomainAbbr(domainRaw);
                 }
 
                 tr.innerHTML = `
@@ -638,6 +627,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     let savedCellData = { check: false, level: '' };
                     let hasSavedData = false;
 
+                    const targetPloLevel = ploLevelsFromHeader[colIndex] || '';
+
                     if (courseAccordData && courseAccordData[itemCode] !== undefined) {
                         const rowData = courseAccordData[itemCode];
                         if (rowData && rowData[ploDbIndex] !== undefined) {
@@ -649,10 +640,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     }
 
-                    // ติ๊กถูกและใส่ Level อัตโนมัติ (ถ้ายังไม่เคยบันทึกค่า)
                     if (!hasSavedData && !isLLL && aiMappedPlos.includes(ploDbIndex)) {
                         savedCellData.check = true;
-                        savedCellData.level = aiDomainAbbr;
+                        savedCellData.level = targetPloLevel; 
                     }
 
                     if (isLLL) {
@@ -662,41 +652,48 @@ document.addEventListener('DOMContentLoaded', () => {
                                 td.innerHTML += `<div class="text-xs text-gray-500 mt-1">${savedCellData.level}</div>`;
                             }
                         } else {
-                            td.innerHTML = `<span class="text-gray-200">-</span>`;
+                            td.innerHTML = `<span class="text-gray-200"></span>`;
                         }
                     } else {
+                        // สร้าง Checkbox
                         const checkbox = document.createElement("input");
                         checkbox.type = "checkbox";
-                        checkbox.className = `mr-1.5 scale-125 plo-map-checkbox`;
+                        checkbox.className = `mr-1.5 scale-125 plo-map-checkbox cursor-pointer`;
                         checkbox.name = `plo_map_${itemCode}_c${colIndex}_check`; 
                         checkbox.checked = savedCellData.check;
                         
-                        const select = document.createElement("select");
-                        select.className = `w-[70px] p-1 border rounded plo-map-level text-xs`;
-                        select.name = `plo_map_${itemCode}_c${colIndex}_level`;
-                        
-                        let isLevelMatched = false;
-                        levelOptions.forEach(opt => {
-                            const op = document.createElement("option");
-                            op.value = opt;
-                            op.textContent = opt;
-                            if (savedCellData.level === opt) {
-                                op.selected = true;
-                                isLevelMatched = true;
+                        // สร้าง Hidden Input ไว้เก็บค่า Level ที่จะส่งไป Save
+                        const hiddenLevelInput = document.createElement("input");
+                        hiddenLevelInput.type = "hidden";
+                        hiddenLevelInput.name = `plo_map_${itemCode}_c${colIndex}_level`;
+                        hiddenLevelInput.value = savedCellData.check ? targetPloLevel : '';
+
+                        const levelDisplay = document.createElement("div");
+                        levelDisplay.className = "text-xs mt-1 text-gray-600 font-medium h-4"; // h-4 เผื่อที่ไว้ไม่ให้ตารางกระโดด
+                        levelDisplay.textContent = savedCellData.check ? targetPloLevel : '';
+
+                        // เมื่อคนคลิกเปลี่ยนค่า Checkbox
+                        checkbox.addEventListener('change', function() {
+                            if(this.checked) {
+                                levelDisplay.textContent = targetPloLevel;
+                                hiddenLevelInput.value = targetPloLevel;
+                                
+                                if (typeof saveData === 'function') {
+                                    saveData(hiddenLevelInput.name, targetPloLevel, this);
+                                }
+                            } else {
+                                levelDisplay.textContent = '';
+                                hiddenLevelInput.value = '';
+                                
+                                if (typeof saveData === 'function') {
+                                    saveData(hiddenLevelInput.name, '', this);
+                                }
                             }
-                            select.appendChild(op);
                         });
 
-                        if (!isLevelMatched && savedCellData.level) {
-                            const op = document.createElement("option");
-                            op.value = savedCellData.level;
-                            op.textContent = savedCellData.level;
-                            op.selected = true;
-                            select.appendChild(op);
-                        }
-
                         td.appendChild(checkbox);
-                        td.appendChild(select);
+                        td.appendChild(levelDisplay);
+                        td.appendChild(hiddenLevelInput);
                     }
                     
                     tr.appendChild(td);
