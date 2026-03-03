@@ -53,12 +53,11 @@ class PlosController extends Controller
     {
         // Validate ข้อมูล
         $request->validate([
-            'curriculum_year_ref' => 'required', // ต้องส่งปีมาด้วย
+            'curriculum_year_ref' => 'required',
             'description'         => 'required|string',
             'plo'                 => [
                 'required', 
                 'integer',
-                // เช็คว่า PLO นี้ซ้ำหรือไม่ "เฉพาะในหลักสูตรปีเดียวกัน"
                 Rule::unique('plos')->where(function ($query) use ($request) {
                     return $query->where('curriculum_year_ref', $request->curriculum_year_ref);
                 })

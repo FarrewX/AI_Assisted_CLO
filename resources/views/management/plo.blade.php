@@ -198,12 +198,32 @@
                         
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="block mb-1.5 text-sm font-semibold text-gray-700">Domain</label>
-                                <input type="text" id="new-domain" placeholder="เช่น K, S" class="border border-gray-300 px-4 py-2.5 w-full rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-colors">
+                                <label class="block mb-1.5 text-sm font-semibold text-gray-700">Domain (เลือกได้สูงสุด 2)</label>
+                                
+                                <select id="new-domain1" class="border border-gray-300 px-4 py-2.5 w-full rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-colors cursor-pointer mb-2">
+                                    <option value="" hidden>-- เลือก Domain ที่ 1 --</option>
+                                    <option value="Knowledge">Knowledge</option>
+                                    <option value="Application and Responsibility">Application and Responsibility</option>
+                                    <option value="Skill">Skill</option>
+                                    <option value="Ethics">Ethics</option>
+                                    <option value="Character">Character</option>
+                                </select>
+
+                                <select id="new-domain2" class="border border-gray-300 px-4 py-2.5 w-full rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-colors cursor-pointer">
+                                    <option value="">-- ไม่ระบุ (Domain ที่ 2) --</option>
+                                    <option value="Knowledge">Knowledge</option>
+                                    <option value="Application and Responsibility">Application and Responsibility</option>
+                                    <option value="Skill">Skill</option>
+                                    <option value="Ethics">Ethics</option>
+                                    <option value="Character">Character</option>
+                                </select>
                             </div>
+                            
                             <div>
                                 <label class="block mb-1.5 text-sm font-semibold text-gray-700">Level</label>
-                                <input type="text" id="new-level" placeholder="เช่น 1, 2, 3" class="border border-gray-300 px-4 py-2.5 w-full rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-colors">
+                                <select id="new-level" disabled class="border border-gray-300 px-4 py-2.5 w-full rounded-xl bg-gray-100 text-gray-500 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-colors cursor-not-allowed">
+                                    <option value="">-- กรุณาเลือก Domain ก่อน --</option>
+                                </select>
                             </div>
                         </div>
 
@@ -249,12 +269,32 @@
                         
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="block mb-1.5 text-sm font-semibold text-gray-700">Domain</label>
-                                <input type="text" id="edit-domain" class="border border-gray-300 px-4 py-2.5 w-full rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-amber-500 outline-none transition-colors">
+                                <label class="block mb-1.5 text-sm font-semibold text-gray-700">Domain (เลือกได้สูงสุด 2)</label>
+                                
+                                <select id="edit-domain1" class="border border-gray-300 px-4 py-2.5 w-full rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-amber-500 outline-none transition-colors cursor-pointer mb-2">
+                                    <option value="" hidden>-- เลือก Domain ที่ 1 --</option>
+                                    <option value="Knowledge">Knowledge</option>
+                                    <option value="Application and Responsibility">Application and Responsibility</option>
+                                    <option value="Skill">Skill</option>
+                                    <option value="Ethics">Ethics</option>
+                                    <option value="Character">Character</option>
+                                </select>
+
+                                <select id="edit-domain2" class="border border-gray-300 px-4 py-2.5 w-full rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-amber-500 outline-none transition-colors cursor-pointer">
+                                    <option value="">-- ไม่ระบุ (Domain ที่ 2) --</option>
+                                    <option value="Knowledge">Knowledge</option>
+                                    <option value="Application and Responsibility">Application and Responsibility</option>
+                                    <option value="Skill">Skill</option>
+                                    <option value="Ethics">Ethics</option>
+                                    <option value="Character">Character</option>
+                                </select>
                             </div>
+                            
                             <div>
                                 <label class="block mb-1.5 text-sm font-semibold text-gray-700">Level</label>
-                                <input type="text" id="edit-level" class="border border-gray-300 px-4 py-2.5 w-full rounded-xl bg-gray-50 focus:bg-white focus:ring-2 focus:ring-amber-500 outline-none transition-colors">
+                                <select id="edit-level" disabled class="border border-gray-300 px-4 py-2.5 w-full rounded-xl bg-gray-100 text-gray-500 focus:bg-white focus:ring-2 focus:ring-amber-500 outline-none transition-colors cursor-not-allowed">
+                                    <option value="">-- กรุณาเลือก Domain ก่อน --</option>
+                                </select>
                             </div>
                         </div>
 

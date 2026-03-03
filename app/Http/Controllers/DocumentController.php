@@ -215,7 +215,7 @@ class DocumentController extends Controller
             elseif (str_contains($lowerWord, 'analyze')) $lvl = 'AN';
             elseif (str_contains($lowerWord, 'evaluate')) $lvl = 'E';
             elseif (str_contains($lowerWord, 'create')) $lvl = 'C';
-            else $lvl = strtoupper(substr(trim($word), 0, 1)); // ถ้าไม่ตรงเงื่อนไขเลย ให้ดึงตัวอักษรแรกมาตัวใหญ่
+            else $lvl = strtoupper(substr(trim($word), 0, 1));
 
             // เก็บเฉพาะค่าที่ไม่ซ้ำลงในกล่อง
             if ($lvl && !in_array($lvl, $extractedLevels)) {

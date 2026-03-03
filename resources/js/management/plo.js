@@ -124,13 +124,20 @@ document.addEventListener('DOMContentLoaded', () => {
         addSave.addEventListener('click', function() {
             const ploNum = document.getElementById('new-plo')?.value || '';
             const desc = document.getElementById('new-desc')?.value.trim() || '';
-            const domain = document.getElementById('new-domain')?.value.trim() || '';
+            const dom1Value = document.getElementById('new-domain1').value;
+            const dom2Value = document.getElementById('new-domain2').value;
             const level = document.getElementById('new-level')?.value.trim() || '';
             
             const loTypeNode = document.querySelector('input[name="new_lo_type"]:checked');
             const specificLo = loTypeNode ? (loTypeNode.value === '1' ? 1 : 0) : 1;
 
             if(!desc) { showPopup('กรุณากรอกคำอธิบาย (Description)'); return; }
+
+            let domainArray = [];
+            if (dom1Value) domainArray.push(dom1Value);
+            if (dom2Value && dom2Value !== dom1Value) domainArray.push(dom2Value);
+
+            const finalDomainString = domainArray.join(', ');
 
             const btn = this;
             const originalText = btn.innerHTML;
@@ -142,7 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 curriculum_year_ref: currentYear,
                 plo: ploNum,
                 description: desc,
-                domain: domain,
+                domain: finalDomainString,
                 learning_level: level,
                 specific_lo: specificLo,
                 _token: csrfToken
@@ -175,17 +182,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
             document.getElementById('edit-id').value = tr.dataset.id;
             document.getElementById('edit-plo-num').value = tr.dataset.ploNum;
-            document.getElementById('edit-desc').value = tr.dataset.desc; 
-            document.getElementById('edit-domain').value = tr.dataset.domain;
-            document.getElementById('edit-level').value = tr.dataset.level;
+            document.getElementById('edit-desc').value = tr.dataset.desc;
 
+            const dbDomain = tr.dataset.domain || ''; 
+            const dbLevel = tr.dataset.level || '';   
+            
+            // แตกข้อความ Domain แยกเป็น 2 ช่อง
+            const domainArray = dbDomain ? dbDomain.split(',').map(d => d.trim()) : [];
+            const domain1Value = domainArray[0] || '';
+            const domain2Value = domainArray[1] || '';
+            
+            document.getElementById('edit-domain1').value = domain1Value;
+            document.getElementById('edit-domain2').value = domain2Value;
+
+            // Specific/Generic LO
             if (tr.dataset.specificLo === '1') {
                 document.getElementById('edit-specific-lo').checked = true;
             } else {
                 document.getElementById('edit-generic-lo').checked = true;
             }
 
+            // อัปเดตตัวเลือก Level ทันที แล้วยัดค่าเก่าเข้าไป
+            if (typeof updateEditLevels === 'function') {
+                updateEditLevels();
+                setTimeout(() => {
+                    document.getElementById('edit-level').value = dbLevel;
+                }, 10);
+            }
+
             toggleModal('edit-plo-modal', true);
+            return;
         }
 
         // --- ส่วนของการลบ (DELETE) ---
@@ -193,6 +219,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (deleteBtn) {
             e.preventDefault();
             const tr = deleteBtn.closest('tr');
+            if(!tr) return;
+            
             const id = tr.dataset.id;
             const ploNum = tr.dataset.ploNum;
 
@@ -224,13 +252,21 @@ document.addEventListener('DOMContentLoaded', () => {
             const id = document.getElementById('edit-id').value;
             const ploNum = document.getElementById('edit-plo-num').value;
             const desc = document.getElementById('edit-desc').value.trim();
-            const domain = document.getElementById('edit-domain').value.trim();
+            const dom1 = document.getElementById('edit-domain1').value;
+            const dom2 = document.getElementById('edit-domain2').value;
             const level = document.getElementById('edit-level').value.trim();
             
             const loTypeNode = document.querySelector('input[name="edit_lo_type"]:checked');
             const specificLo = loTypeNode ? (loTypeNode.value === '1' ? 1 : 0) : 1;
             
             if(!desc) { showPopup('กรุณากรอกคำอธิบาย (Description)'); return; }
+
+            // นำมารวมกันคั่นด้วยลูกน้ำ
+            let finalDomains = [];
+            if (dom1) finalDomains.push(dom1);
+            if (dom2 && dom2 !== dom1) finalDomains.push(dom2);
+
+            const domainToSave = finalDomains.join(', ');
             
             const btn = editSave;
             const originalText = btn.innerHTML;
@@ -241,7 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
             axios.post(`/management/plos/update/${id}`, { 
                 plo: ploNum,
                 description: desc,
-                domain: domain,
+                domain: domainToSave,
                 learning_level: level,
                 specific_lo: specificLo,
                 _token: csrfToken
@@ -261,4 +297,61 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
     }
+
+    const domainLevels = {
+        "Knowledge": ["Remember", "Understand", "Apply", "Analyz", "Evaluate", "Create"],
+        "Application and Responsibility": ["Remember", "Understand", "Apply", "Analyz", "Evaluate", "Create"],
+        "Skill": ["Perception", "Set", "Guided Response", "Mechanism", "Complex Over Response", "Adaptation", "Origination"],
+        "Ethics": ["Receiving Phenomena", "Responding to Phenomena", "Valuing", "Organization", "Internalizes Values"],
+        "Character": ["Receiving Phenomena", "Responding to Phenomena", "Valuing", "Organization", "Internalizes Values"],
+    };
+
+    function setupMultiDomainLevelSync(prefix) {
+        const dom1 = document.getElementById(`${prefix}-domain1`);
+        const dom2 = document.getElementById(`${prefix}-domain2`);
+        const levelSelect = document.getElementById(`${prefix}-level`);
+
+        if (!dom1 || !dom2 || !levelSelect) return;
+
+        const updateLevels = () => {
+            const val1 = dom1.value;
+            const val2 = dom2.value;
+            
+            // รวบรวม Level จาก Domain ที่ถูกเลือก
+            let availableLevels = [];
+            if (val1 && domainLevels[val1]) availableLevels.push(...domainLevels[val1]);
+            if (val2 && val2 !== val1 && domainLevels[val2]) availableLevels.push(...domainLevels[val2]);
+
+            // ล้างตัวเลือกเก่า
+            levelSelect.innerHTML = '<option value="" hidden>-- เลือก Level --</option>';
+
+            if (availableLevels.length > 0) {
+                levelSelect.disabled = false;
+                levelSelect.classList.remove('bg-gray-100', 'cursor-not-allowed', 'text-gray-500');
+                levelSelect.classList.add('bg-gray-50', 'cursor-pointer', 'text-gray-900');
+
+                // นำ Array มาสร้างเป็น <option>
+                availableLevels.forEach(level => {
+                    const option = document.createElement('option');
+                    option.value = level;
+                    option.textContent = level;
+                    levelSelect.appendChild(option);
+                });
+            } else {
+                // ล็อคการใช้งานถ้าไม่มี Level
+                levelSelect.disabled = true;
+                levelSelect.innerHTML = '<option value="">-- ไม่มี Level หรือยังไม่ได้เลือก Domain --</option>';
+                levelSelect.classList.add('bg-gray-100', 'cursor-not-allowed', 'text-gray-500');
+                levelSelect.classList.remove('bg-gray-50', 'cursor-pointer', 'text-gray-900');
+            }
+        };
+
+        dom1.addEventListener('change', updateLevels);
+        dom2.addEventListener('change', updateLevels);
+
+        return updateLevels;
+    }
+
+    setupMultiDomainLevelSync('new');
+    const updateEditLevels = setupMultiDomainLevelSync('edit');
 });
