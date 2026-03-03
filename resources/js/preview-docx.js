@@ -70,8 +70,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // ========================================================
     // เรนเดอร์ 5.3 CLO-PLO Mapping
     // ========================================================
-    const accordData = parseJsonSafe(PAGE_DATA.courseAccord);
-    
     let cloDataPreview = [];
     if (Object.keys(aiText).length > 0) {
         Object.keys(aiText).forEach(key => {
@@ -83,21 +81,43 @@ document.addEventListener('DOMContentLoaded', () => {
         cloDataPreview.sort((a, b) => (parseInt(a.code.replace('CLO', '')) || 0) - (parseInt(b.code.replace('CLO', '')) || 0));
     }
 
-    const lllDataPreview = PAGE_DATA.lllData || [];
-    const cloLllDataPreview = [...cloDataPreview, ...lllDataPreview];
-    
-    // นับจำนวน PLO เพื่อสร้างคอลัมน์ (สมมติว่าถ้าไม่มีให้ดึงจาก Database)
-    let maxPloCount = PAGE_DATA.ploCount || 6; // แก้ไขจำนวน PLO สูงสุดได้ตามจริง
+    let lllDataPreview = [];
+    try {
+        lllDataPreview = typeof PAGE_DATA.lllData === 'string' ? JSON.parse(PAGE_DATA.lllData) : (PAGE_DATA.lllData || []);
+    } catch(e) {
+        lllDataPreview = [];
+    }
 
-    // ฟังก์ชันช่วยสกัดตัวอักษร Domain
-    function getDomainAbbrSafe(domainText) {
-        if (!domainText) return '';
-        const lower = String(domainText).toLowerCase();
-        let types = [];
-        if (lower.includes('knowledge')) types.push('K');
-        if (lower.includes('skill')) types.push('S');
-        if (lower.includes('application') || lower.includes('responsibility')) types.push('AR');
-        return types.join(', ');
+    const cloLllDataPreview = [...cloDataPreview, ...lllDataPreview];
+    let maxPloCount = PAGE_DATA.ploCount || 6; 
+
+    // แปลงชื่อเต็มให้เป็นตัวย่อ
+    function getShortLevelName(fullText) {
+        if (!fullText) return '';
+        const lowerText = fullText.trim().toLowerCase();
+        
+        // ถ้าเป็นตัวย่ออยู่แล้วให้returnกลับไปเลยไม่ต้องหาเพิ่ม
+        if (lowerText.length <= 3 && lowerText !== 'set') {
+            return fullText.charAt(0).toUpperCase() + fullText.slice(1).toLowerCase();
+        }
+
+        const map = {
+            'remember': 'R', 'understand': 'U', 'apply': 'Ap',
+            'analyz': 'An', 'evaluate': 'E', 'create': 'C',
+            'perception': 'Pe', 'set': 'Se', 'guided response': 'GR',
+            'mechanism': 'Me', 'complex over response': 'COR', 'adaptation': 'Ad',
+            'origination': 'Or', 'organization': 'Or',
+            'receiving phenomena': 'RP', 'responding to phenomena': 'Rs',
+            'valuing': 'Va', 'internalizes values': 'IV'
+        };
+
+        for (let key in map) {
+            if (lowerText.includes(key)) {
+                return map[key];
+            }
+        }
+        
+        return fullText;
     }
 
     function getPloNumbersSafe(ploText) {
@@ -106,15 +126,33 @@ document.addEventListener('DOMContentLoaded', () => {
         return matches ? matches.map(Number) : [];
     }
 
+    // ดึง Level แบบย่อ เพื่อใช้ทำเป็นหัวตาราง (Header)
+    const ploLevelsList = [];
+    let outStatements = PAGE_DATA.outcome_statement || [];
+    if (!Array.isArray(outStatements)) {
+        outStatements = Object.values(outStatements);
+    }
+
+    for(let c = 0; c < maxPloCount; c++) {
+        let ploLevelAbbr = '';
+        if (outStatements[c] && outStatements[c].level) {
+            let fullLevel = outStatements[c].level || '';
+            ploLevelAbbr = fullLevel.split('-')[0].trim();
+        }
+        ploLevelsList.push(ploLevelAbbr);
+    }
+
     let html53 = `<table class="w-full border-collapse border border-gray-400 text-sm mt-4">
                     <thead class="bg-blue-100 text-center font-bold">
                         <tr>
                             <th class="border border-gray-400 p-2 w-[8%] align-middle">รหัส</th>
                             <th class="border border-gray-400 p-2 w-[40%] align-middle text-left">คำอธิบาย CLOs/LLLs</th>`;
     
-    // วาดหัวตารางคอลัมน์ PLO
+    // วาดหัวตาราง
     for(let c = 1; c <= maxPloCount; c++) {
-        html53 += `<th class="border border-gray-400 p-2 align-middle">PLO${c}</th>`;
+        let abbr = ploLevelsList[c-1]; 
+        let headerText = `PLO${c}` + (abbr ? `<br><span class="text-xs font-normal text-gray-600">(${abbr})</span>` : '');
+        html53 += `<th class="border border-gray-400 p-2 align-middle">${headerText}</th>`;
     }
     html53 += `</tr></thead><tbody class="bg-white">`;
 
@@ -123,21 +161,19 @@ document.addEventListener('DOMContentLoaded', () => {
         const isLLL = itemCode.startsWith('LLL');
 
         let aiMappedPlos = [];
-        let aiDomainAbbr = '';
+        let aiMappedLevels = '';
 
         if (!isLLL) {
             const originalKey = itemCode.replace('CLO', 'CLO ');
             const aiDetails = aiText[originalKey] || aiText[itemCode] || {};
             let ploRaw = '';
-            let domainRaw = '';
             
             for (const k in aiDetails) {
                 const lowerK = k.toLowerCase();
                 if (lowerK.includes('plo')) ploRaw = aiDetails[k];
-                if (lowerK.includes('domain')) domainRaw = aiDetails[k];
+                if (lowerK.includes('learning')) aiMappedLevels = aiDetails[k];
             }
             aiMappedPlos = getPloNumbersSafe(ploRaw);
-            aiDomainAbbr = getDomainAbbrSafe(domainRaw);
         }
 
         html53 += `<tr>
@@ -147,27 +183,36 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let colIndex = 0; colIndex < maxPloCount; colIndex++) {
             const ploDbIndex = colIndex + 1;
             let checkStatus = false;
-            let levelValue = '';
-
-            // ตรวจสอบจากข้อมูลที่เคยเซฟไว้
-            if (accordData && accordData[itemCode] && accordData[itemCode][ploDbIndex]) {
-                checkStatus = accordData[itemCode][ploDbIndex].check ?? false;
-                levelValue = accordData[itemCode][ploDbIndex].level ?? '';
-            } else {
-                // Auto-fill ถ้ายังไม่ได้เซฟ
-                if (!isLLL && aiMappedPlos.includes(ploDbIndex)) {
+            
+            let rawAbbr = ploLevelsList[colIndex] || '';
+            
+            if (isLLL) {
+                const mappedPlos = item.mapped_plos || [];
+                if (mappedPlos.includes(ploDbIndex)) {
                     checkStatus = true;
-                    levelValue = aiDomainAbbr;
+                }
+            } else {
+                if (aiMappedPlos.includes(ploDbIndex)) {
+                    checkStatus = true;
                 }
             }
 
-            // เลือกการแสดงผล: ถ้าเป็น LLL แสดง ✔, ถ้าเป็น CLO แสดง Level (K, S, AR)
             let cellContent = '';
             if (checkStatus) {
                 if (isLLL) {
-                    cellContent = `<span class="font-bold text-lg text-blue-700">✔</span><div class="text-xs text-gray-500">${levelValue}</div>`;
+                    cellContent = `<span class="font-bold text-lg text-blue-700">✔</span>`;
                 } else {
-                    cellContent = `<span class="font-bold text-blue-700">${levelValue}</span>`;
+                    // เอาค่าที่ดึงมาแปลงเป็นคำย่อ
+                    let rawLevel = '';
+                    if (aiMappedLevels && aiMappedLevels !== '-') {
+                        rawLevel = aiMappedLevels;
+                    } else if (rawAbbr) {
+                        rawLevel = rawAbbr.split(',')[0];
+                    }
+                    
+                    let displayLevel = getShortLevelName(rawLevel);
+                    
+                    cellContent = `<span class="font-bold text-blue-700">${displayLevel}</span>`;
                 }
             }
             
@@ -274,19 +319,35 @@ document.addEventListener('DOMContentLoaded', () => {
     // ========================================================
     // เรนเดอร์ 7. Lesson Plan
     // ========================================================
-    let html7 = '<table class="min-w-full border-collapse border border-black text-sm text-left"><thead class="bg-blue-100 text-center"><tr><th class="border border-black p-2 w-[5%]">สัปดาห์</th><th class="border border-black p-2 w-[15%]">หัวข้อ</th><th class="border border-black p-2 w-[20%]">วัตถุประสงค์</th><th class="border border-black p-2 w-[25%]">กิจกรรม</th><th class="border border-black p-2 w-[15%]">สื่อ</th><th class="border border-black p-2 w-[10%]">ประเมิน</th><th class="border border-black p-2 w-[10%]">CLO</th></tr></thead><tbody class="bg-white">';
+   let html7 = '<table class="min-w-full border-collapse border border-black text-sm text-left"><thead class="bg-blue-100 text-center"><tr><th class="border border-black p-2 w-[5%]">สัปดาห์</th><th class="border border-black p-2 w-[15%]">หัวข้อ</th><th class="border border-black p-2 w-[20%]">วัตถุประสงค์</th><th class="border border-black p-2 w-[25%]">กิจกรรม</th><th class="border border-black p-2 w-[15%]">สื่อ</th><th class="border border-black p-2 w-[10%]">ประเมิน</th><th class="border border-black p-2 w-[10%]">CLO</th></tr></thead><tbody class="bg-white">';
+    
+    // ตรวจจับ ค่าว่าง ของแผนการสอน
+    let hasValidPlanData = false;
+
     pData.forEach(r => {
-        html7 += `<tr><td class="border border-black p-2 text-center align-top font-bold bg-gray-50">${r.week || ''}</td>
-                  <td class="border border-black p-2 align-top whitespace-pre-wrap">${r.topic || ''}</td>
-                  <td class="border border-black p-2 align-top whitespace-pre-wrap">${r.objective || ''}</td>
-                  <td class="border border-black p-2 align-top whitespace-pre-wrap">${r.activity || ''}</td>
-                  <td class="border border-black p-2 align-top whitespace-pre-wrap">${r.tool || ''}</td>
-                  <td class="border border-black p-2 align-top whitespace-pre-wrap">${r.assessment || ''}</td>
-                  <td class="border border-black p-2 align-top text-center">${r.clo || ''}</td></tr>`;
+        // เช็กว่าอย่างน้อยต้องมี หัวข้อ, วัตถุประสงค์ หรือ กิจกรรม อย่างใดอย่างหนึ่ง ถึงจะถือว่ามีข้อมูล
+        const topic = (r.topic || '').trim();
+        const obj = (r.objective || '').trim();
+        const act = (r.activity || '').trim();
+
+        if (topic !== '' || obj !== '' || act !== '') {
+            hasValidPlanData = true; // เจอข้อมูลแล้ว!
+            html7 += `<tr><td class="border border-black p-2 text-center align-top font-bold bg-gray-50">${r.week || ''}</td>
+                      <td class="border border-black p-2 align-top whitespace-pre-wrap">${topic}</td>
+                      <td class="border border-black p-2 align-top whitespace-pre-wrap">${obj}</td>
+                      <td class="border border-black p-2 align-top whitespace-pre-wrap">${act}</td>
+                      <td class="border border-black p-2 align-top whitespace-pre-wrap">${(r.tool || '').trim()}</td>
+                      <td class="border border-black p-2 align-top whitespace-pre-wrap">${(r.assessment || '').trim()}</td>
+                      <td class="border border-black p-2 align-top text-center">${(r.clo || '').trim()}</td></tr>`;
+        }
     });
     html7 += '</tbody></table>';
+
     const el7 = document.getElementById('preview-s7');
-    if (el7) el7.innerHTML = pData.length ? html7 : '<div class="text-gray-500 italic p-2 bg-gray-100 border rounded">ไม่มีข้อมูลแผนการสอน</div>';
+    if (el7) {
+        // ถ้า Array ว่าง หรือมีแต่ Array เปล่าๆ ให้แสดงข้อความเตือน
+        el7.innerHTML = (pData.length > 0 && hasValidPlanData) ? html7 : '<div class="text-gray-500 italic p-2 bg-gray-100 border rounded">ไม่มีข้อมูลแผนการสอน</div>';
+    }
 
     // ========================================================
     // เรนเดอร์ 8.1 Assessment

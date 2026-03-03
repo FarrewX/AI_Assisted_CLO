@@ -556,8 +556,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Section 5.3 Logic ---
     try {
-        const aiTextData = window.SHARED_CLO_DATA;
+        const aiTextData = window.SHARED_CLO_DATA || {};
         let cloData = [];
+
+        // แปลงตัวย่อเป็นชื่อเต็ม
+        function getFullLevelName(abbr, domainStr = '') {
+            if (!abbr) return '';
+            const cleanAbbr = abbr.trim().toLowerCase();
+            
+            const map = {
+                'r': 'Remember', 'u': 'Understand', 'ap': 'Apply',
+                'an': 'Analyz', 'e': 'Evaluate', 'c': 'Create',
+                'pe': 'Perception', 'se': 'Set', 'gr': 'Guided Response',
+                'me': 'Mechanism', 'cor': 'Complex Over Response', 'ad': 'Adaptation',
+                'rp': 'Receiving Phenomena', 'rs': 'Responding to Phenomena',
+                'va': 'Valuing', 'iv': 'Internalizes Values'
+            };
+            
+            if (map[cleanAbbr]) return map[cleanAbbr];
+            
+            if (cleanAbbr === 'or') {
+                const lowerDomain = String(domainStr).toLowerCase();
+                if (lowerDomain.includes('skill')) return 'Origination';
+                if (lowerDomain.includes('ethic') || lowerDomain.includes('character')) return 'Organization';
+                return 'Origination'; 
+            }
+            return abbr; 
+        }
 
         // ดึงเฉพาะตัวเลขออกจากข้อความ PLO
         function getPloNumbers(ploText) {
@@ -579,7 +604,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const lllData = PAGE_DATA.lllData || [];
         const cloLllData = [...cloData, ...lllData];
         const ploCount = PAGE_DATA.ploCount || 0;
-        const courseAccordData = PAGE_DATA.courseAccord || {};
         const table = document.querySelector("#ploTable");
         const tbody = table ? table.querySelector("tbody") : null;
         
@@ -599,7 +623,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // ดึงข้อมูล AI ประจำแถว
                 let aiMappedPlos = [];
-
                 if (!isLLL) {
                     const originalKey = itemCode.replace('CLO', 'CLO ');
                     const aiDetails = aiTextData[originalKey] || aiTextData[itemCode] || {};
@@ -625,51 +648,44 @@ document.addEventListener('DOMContentLoaded', () => {
                     const ploDbIndex = colIndex + 1;
                     
                     let savedCellData = { check: false, level: '' };
-                    let hasSavedData = false;
-
                     const targetPloLevel = ploLevelsFromHeader[colIndex] || '';
 
-                    if (courseAccordData && courseAccordData[itemCode] !== undefined) {
-                        const rowData = courseAccordData[itemCode];
-                        if (rowData && rowData[ploDbIndex] !== undefined) {
-                            savedCellData = { 
-                                check: rowData[ploDbIndex].check ?? false, 
-                                level: rowData[ploDbIndex].level ?? '' 
-                            };
-                            hasSavedData = true; 
+                    if (isLLL) {
+                        const mappedPlos = item.mapped_plos || [];
+                        if (mappedPlos.includes(ploDbIndex)) {
+                            savedCellData.check = true;
+                            savedCellData.level = targetPloLevel;
+                        }
+                    } else {
+                        // สำหรับ CLO ดึงจาก AI
+                        if (aiMappedPlos.includes(ploDbIndex)) {
+                            savedCellData.check = true;
+                            savedCellData.level = targetPloLevel;
                         }
                     }
 
-                    if (!hasSavedData && !isLLL && aiMappedPlos.includes(ploDbIndex)) {
-                        savedCellData.check = true;
-                        savedCellData.level = targetPloLevel; 
-                    }
-
                     if (isLLL) {
+                        // โชว์ติ๊กถูกสำหรับ LLL
                         if (savedCellData.check) {
                             td.innerHTML = `<span class="font-bold text-lg">✔</span>`;
-                            if (savedCellData.level) {
-                                td.innerHTML += `<div class="text-xs text-gray-500 mt-1">${savedCellData.level}</div>`;
-                            }
                         } else {
                             td.innerHTML = `<span class="text-gray-200"></span>`;
                         }
                     } else {
-                        // สร้าง Checkbox
+                        // สร้าง Checkbox สำหรับแก้ไข CLO
                         const checkbox = document.createElement("input");
                         checkbox.type = "checkbox";
                         checkbox.className = `mr-1.5 scale-125 plo-map-checkbox cursor-pointer`;
                         checkbox.name = `plo_map_${itemCode}_c${colIndex}_check`; 
                         checkbox.checked = savedCellData.check;
                         
-                        // สร้าง Hidden Input ไว้เก็บค่า Level ที่จะส่งไป Save
                         const hiddenLevelInput = document.createElement("input");
                         hiddenLevelInput.type = "hidden";
                         hiddenLevelInput.name = `plo_map_${itemCode}_c${colIndex}_level`;
                         hiddenLevelInput.value = savedCellData.check ? targetPloLevel : '';
 
                         const levelDisplay = document.createElement("div");
-                        levelDisplay.className = "text-xs mt-1 text-gray-600 font-medium h-4"; // h-4 เผื่อที่ไว้ไม่ให้ตารางกระโดด
+                        levelDisplay.className = "text-xs mt-1 text-gray-600 font-medium h-4"; 
                         levelDisplay.textContent = savedCellData.check ? targetPloLevel : '';
 
                         // เมื่อคนคลิกเปลี่ยนค่า Checkbox
@@ -677,16 +693,51 @@ document.addEventListener('DOMContentLoaded', () => {
                             if(this.checked) {
                                 levelDisplay.textContent = targetPloLevel;
                                 hiddenLevelInput.value = targetPloLevel;
-                                
-                                if (typeof saveData === 'function') {
-                                    saveData(hiddenLevelInput.name, targetPloLevel, this);
-                                }
                             } else {
                                 levelDisplay.textContent = '';
                                 hiddenLevelInput.value = '';
+                            }
+
+                            // เซฟลง JSON
+                            if (!isLLL && window.SHARED_CLO_DATA) {
+                                let targetKey = Object.keys(window.SHARED_CLO_DATA).find(k => k.replace(/\s/g, '') === itemCode);
                                 
-                                if (typeof saveData === 'function') {
-                                    saveData(hiddenLevelInput.name, '', this);
+                                if (targetKey) {
+                                    const rowCheckboxes = tr.querySelectorAll('input[type="checkbox"]:checked');
+                                    let selectedPlos = [];
+                                    let selectedLevels = [];
+                                    
+                                    const domainKey = window.SHARED_CLO_DATA[targetKey].hasOwnProperty('Domain') ? 'Domain' : 'Domain';
+                                    const domainStr = window.SHARED_CLO_DATA[targetKey][domainKey] || '';
+
+                                    rowCheckboxes.forEach(cb => {
+                                        const match = cb.name.match(/_c(\d+)_check/);
+                                        if (match) {
+                                            const colIdx = parseInt(match[1]);
+                                            const ploNum = colIdx + 1;
+                                            selectedPlos.push(`PLO${ploNum}`);
+                                            
+                                            const lvlAbbr = ploLevelsFromHeader[colIdx] || '';
+                                            if (lvlAbbr) {
+                                                lvlAbbr.split(',').forEach(abbr => {
+                                                    const fullLvl = getFullLevelName(abbr, domainStr);
+                                                    if (fullLvl && !selectedLevels.includes(fullLvl)) {
+                                                        selectedLevels.push(fullLvl);
+                                                    }
+                                                });
+                                            }
+                                        }
+                                    });
+
+                                    const ploKey = window.SHARED_CLO_DATA[targetKey].hasOwnProperty('PLO') ? 'PLO' : 'PLO ต่อ ร้องรับ';
+                                    const levelKey = window.SHARED_CLO_DATA[targetKey].hasOwnProperty('Learning Level') ? 'Learning Level' : "Learning's Level";
+
+                                    window.SHARED_CLO_DATA[targetKey][ploKey] = selectedPlos.length > 0 ? selectedPlos.join(', ') : '-';
+                                    window.SHARED_CLO_DATA[targetKey][levelKey] = selectedLevels.length > 0 ? selectedLevels.join(', ') : '-';
+
+                                    if (typeof saveData === 'function') {
+                                        saveData('ai_text', JSON.stringify(window.SHARED_CLO_DATA), this);
+                                    }
                                 }
                             }
                         });
@@ -918,7 +969,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const rows = tableBody.querySelectorAll('tr');
             rows.forEach((row, index) => {
-                const weekNumber = index + 1; // Get week number from row index
+                const weekNumber = index + 1;
                 const rowData = {
                     week: weekNumber,
                     topic: row.querySelector(`textarea[name="plan_topic_${weekNumber}"]`)?.value || '',
@@ -1021,67 +1072,51 @@ document.addEventListener('DOMContentLoaded', () => {
                 tbody.appendChild(row);
             }
         }
-        
-        const addlessonBtn = document.getElementById('addTableLesson');
-        if (addlessonBtn) {
-            addlessonBtn.addEventListener('click', (event) => {
-                PAGE_DATA.planData = getSection7Data(); 
-                addTableLesson(true);
-                const section7JSON = getSection7Data();
-                saveData('section7_data', section7JSON, event.target);
-            });
-        }
-        addTableLesson(false);
 
-        function generateTableLesson(forceInputCount = false) {
+        const getValueFlexible = (obj, possibleKeys) => {
+            if (!obj || typeof obj !== 'object') return '';
+            const lowerObj = Object.keys(obj).reduce((acc, key) => {
+                acc[key.toLowerCase()] = obj[key];
+                return acc;
+            }, {});
+            
+            for (let key of possibleKeys) {
+                if (lowerObj[key.toLowerCase()] !== undefined && lowerObj[key.toLowerCase()] !== null) {
+                    return lowerObj[key.toLowerCase()];
+                }
+            }
+            return '';
+        };
+
+        function generateTableLesson(dataToRender = null) {
             const tbody = document.querySelector("#planTable tbody");
             if (!tbody) return;
             tbody.innerHTML = "";
             const weekCountInput = document.getElementById("weekCount");
             
-            // ดึงและทำความสะอาดข้อมูล
-            let rawPlanData = PAGE_DATA.planData || [];
-            
-            if (typeof rawPlanData === 'string') {
-                try { rawPlanData = JSON.parse(rawPlanData); } catch (e) { rawPlanData = []; }
-            }
-            
-            // ดักจับกรณี AI แอบเอา Array ไปซ่อนใน Object
-            if (rawPlanData && typeof rawPlanData === 'object' && !Array.isArray(rawPlanData)) {
-                let foundArray = Object.values(rawPlanData).find(val => Array.isArray(val));
-                rawPlanData = foundArray ? foundArray : Object.values(rawPlanData);
-            }
-            
-            const loadedPlanData = Array.isArray(rawPlanData) ? rawPlanData : [];
-
-            // ดึงค่าแบบยืดหยุ่น (ไม่สนตัวพิมพ์เล็ก/ใหญ่ และหาคำใกล้เคียง)
-            const getValue = (obj, possibleKeys) => {
-                if (!obj || typeof obj !== 'object') return '';
-                const lowerObj = Object.keys(obj).reduce((acc, key) => {
-                    acc[key.toLowerCase()] = obj[key];
-                    return acc;
-                }, {});
-                
-                // วนหาคีย์ที่เป็นไปได้
-                for (let key of possibleKeys) {
-                    if (lowerObj[key.toLowerCase()] !== undefined && lowerObj[key.toLowerCase()] !== null) {
-                        return lowerObj[key.toLowerCase()];
-                    }
+            // เลือก Data
+            let loadedPlanData = [];
+            if (dataToRender && Array.isArray(dataToRender)) {
+                loadedPlanData = dataToRender;
+            } else {
+                let rawPlanData = PAGE_DATA.planData || [];
+                if (typeof rawPlanData === 'string') {
+                    try { rawPlanData = JSON.parse(rawPlanData); } catch (e) { rawPlanData = []; }
                 }
-                return '';
-            };
+                if (rawPlanData && typeof rawPlanData === 'object' && !Array.isArray(rawPlanData)) {
+                    let foundArray = Object.values(rawPlanData).find(val => Array.isArray(val));
+                    rawPlanData = foundArray ? foundArray : Object.values(rawPlanData);
+                }
+                loadedPlanData = Array.isArray(rawPlanData) ? rawPlanData : [];
+            }
 
             // คำนวณจำนวนสัปดาห์
             let lastWeekWithData = 0;
             if (loadedPlanData.length > 0) {
                 for (let i = loadedPlanData.length - 1; i >= 0; i--) {
                     const weekData = loadedPlanData[i] || {};
-                    const t = getValue(weekData, ['topic', 'หัวข้อ']);
-                    const o = getValue(weekData, ['objective', 'วัตถุประสงค์']);
-                    const a = getValue(weekData, ['activity', 'กิจกรรม']);
-                    if (t || o || a) {
-                        let w = getValue(weekData, ['week', 'สัปดาห์', 'สัปดาห์ที่']);
-                        lastWeekWithData = parseInt(w) || 0;
+                    if (getValueFlexible(weekData, ['topic', 'หัวข้อ']) || getValueFlexible(weekData, ['objective', 'วัตถุประสงค์'])) {
+                        lastWeekWithData = parseInt(getValueFlexible(weekData, ['week', 'สัปดาห์', 'สัปดาห์ที่'])) || 0;
                         break; 
                     }
                 }
@@ -1090,7 +1125,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const minWeekFromData = lastWeekWithData > 0 ? lastWeekWithData : 0; 
             const inputWeekCount = (weekCountInput && !isNaN(parseInt(weekCountInput.value))) ? parseInt(weekCountInput.value) : 10; 
 
-            let weekCount = forceInputCount ? Math.max(inputWeekCount, minWeekFromData) : Math.max(inputWeekCount, minWeekFromData);
+            let weekCount = dataToRender ? dataToRender.length : Math.max(inputWeekCount, minWeekFromData);
             if (weekCount > 20) weekCount = 20;
             if (weekCount < 1) weekCount = 1;
             if (weekCountInput && parseInt(weekCountInput.value) !== weekCount) { 
@@ -1100,19 +1135,16 @@ document.addEventListener('DOMContentLoaded', () => {
             let cloKeysFromAI = Object.keys(window.SHARED_CLO_DATA || {}).map(key => key.replace(/\s/g, '').toUpperCase());
             cloKeysFromAI.sort((a, b) => (parseInt(a.replace(/\D/g, '')) || 0) - (parseInt(b.replace(/\D/g, '')) || 0));
 
-            // วาดตาราง
+            // วาดตารางตามข้อมูล
             for (let i = 1; i <= weekCount; i++) {
-                const weekData = loadedPlanData.find(item => {
-                    let w = getValue(item, ['week', 'สัปดาห์', 'สัปดาห์ที่']);
-                    return parseInt(w) === i;
-                }) || {};
+                const weekData = loadedPlanData.find(item => parseInt(getValueFlexible(item, ['week', 'สัปดาห์', 'สัปดาห์ที่'])) === i) || {};
 
-                const valTopic = getValue(weekData, ['topic', 'หัวข้อ', 'เนื้อหา']);
-                const valObjective = getValue(weekData, ['objective', 'วัตถุประสงค์']);
-                const valActivity = getValue(weekData, ['activity', 'กิจกรรม', 'วิธีการสอน']);
-                const valTool = getValue(weekData, ['tool', 'สื่อ', 'อุปกรณ์']);
-                const valAssessment = getValue(weekData, ['assessment', 'ประเมิน', 'การประเมินผล']);
-                const valClo = getValue(weekData, ['clo', 'clos']);
+                const valTopic = getValueFlexible(weekData, ['topic', 'หัวข้อ', 'เนื้อหา']);
+                const valObjective = getValueFlexible(weekData, ['objective', 'วัตถุประสงค์']);
+                const valActivity = getValueFlexible(weekData, ['activity', 'กิจกรรม', 'วิธีการสอน']);
+                const valTool = getValueFlexible(weekData, ['tool', 'สื่อ', 'อุปกรณ์']);
+                const valAssessment = getValueFlexible(weekData, ['assessment', 'ประเมิน', 'การประเมินผล']);
+                const valClo = getValueFlexible(weekData, ['clo', 'clos']);
 
                 const row = document.createElement("tr");
                 const cloOptions = createCloOptions(cloKeysFromAI, valClo);
@@ -1129,7 +1161,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 tbody.appendChild(row);
             }
         }
-        generateTableLesson(false);
+        
+        // วาดตารางครั้งแรกตอนโหลดหน้าเว็บ
+        generateTableLesson();
+
+        const addlessonBtn = document.getElementById('addTableLesson');
+        if (addlessonBtn) {
+            addlessonBtn.addEventListener('click', (event) => {
+                PAGE_DATA.planData = getSection7Data(); 
+                generateTableLesson();
+                const section7JSON = getSection7Data();
+                saveData('section7_data', section7JSON, event.target);
+            });
+        }
 
         const lessonBtn = document.getElementById('generateLessonTableBtn');
         if (lessonBtn) {
@@ -1146,7 +1190,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="fixed inset-0 bg-gray-900 bg-opacity-80 flex flex-col items-center justify-center z-[9999] backdrop-blur-sm transition-opacity">
                         <i class="fa-solid fa-robot fa-bounce text-orange-500 text-6xl mb-6"></i>
                         <h2 class="text-white text-2xl font-bold tracking-wider mb-2">กำลังให้ AI วิเคราะห์และสร้างแผนการสอน...</h2>
-                        <p class="text-gray-300 text-lg">ขั้นตอนนี้อาจใช้เวลา 3-6 นาที กรุณารอสักครู่ ☕</p>
+                        <p class="text-gray-300 text-lg">กำลังสร้างเนื้อหา ${weekCount} สัปดาห์ กรุณารอสักครู่ ☕</p>
                         <div class="mt-6 flex gap-3">
                             <div class="w-3 h-3 bg-orange-500 rounded-full animate-bounce" style="animation-delay: -0.3s"></div>
                             <div class="w-3 h-3 bg-orange-500 rounded-full animate-bounce" style="animation-delay: -0.15s"></div>
@@ -1162,16 +1206,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // ดึงข้อมูลวิธีการสอนหมวด 6
                     const s6Data = {};
-                    const s6Rows = document.querySelectorAll('#cloTableBody_S6 tr.clo-row');
-                    if (s6Rows.length > 0) {
-                        s6Rows.forEach((row, idx) => {
-                            const cloCell = row.querySelector('.clo-cell-s6');
-                            const cloKey = cloCell ? cloCell.textContent.trim().replace(/ \[คลิกเพื่อแก้ไข\]$/, '').replace(/\s/g, '') : `CLO ${idx + 1}`;
-                            const teach = Array.from(row.querySelectorAll('.teaching-cell-s6 input[type="checkbox"]:checked')).map(cb => cb.value);
-                            const assess = Array.from(row.querySelectorAll('.assessment-cell-s6 input[type="checkbox"]:checked')).map(cb => cb.value);
-                            s6Data[cloKey] = { "วิธีการสอน": teach, "การประเมินผล": assess };
-                        });
-                    }
+                    const cloKeysData = Object.keys(window.SHARED_CLO_DATA || {});
+                    
+                    // ถ้าดึงจาก DOM ไม่ได้ ให้ลองจำลองค่าเริ่มต้น
+                    cloKeysData.forEach(key => {
+                        const cleanKey = key.replace(/\s/g, '');
+                        // ลองดึงจาก DOM
+                        const row = document.querySelector(`#cloTableBody_S6 tr[data-code="${cleanKey}"]`);
+                        let teach = [];
+                        let assess = [];
+                        
+                        if (row) {
+                            teach = Array.from(row.querySelectorAll('.teaching-cell-s6 input[type="checkbox"]:checked')).map(cb => cb.value);
+                            assess = Array.from(row.querySelectorAll('.assessment-cell-s6 input[type="checkbox"]:checked')).map(cb => cb.value);
+                        }
+                        
+                        // ถ้าไม่มีข้อมูลเลย ให้ยัดข้อความเปล่าๆ
+                        s6Data[cleanKey] = { 
+                            "วิธีการสอน": teach.length > 0 ? teach : ["ให้ AI แนะนำ"], 
+                            "การประเมินผล": assess.length > 0 ? assess : ["ให้ AI แนะนำ"]
+                        };
+                    });
 
                     const payload = {
                         CC_id: new URLSearchParams(window.location.search).get('CC_id'),
@@ -1193,27 +1248,49 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
 
                     const result = await response.json();
-                    console.log(result.prompt_debug);
+                    
+                    console.log("Prompt Debug:", result.prompt_debug || 'No Prompt'); 
+                    console.log("AI Raw Output:", result.raw_output || 'No Raw Output');  
 
-                    if (result.success && result.data) {
-                        PAGE_DATA.planData = result.data; 
-                        generateTableLesson(true);
+                    // ถ้า Backend ตอบว่า success = false ให้โยน Error เลย
+                    if (!result.success) {
+                        throw new Error(result.message || 'AI เกิดข้อผิดพลาดในการสร้างเนื้อหา');
+                    }
+
+                    // ถ้าผ่านเงื่อนไข success ค่อยมาเช็ก Data
+                    let finalData = [];
+                    if (result.data) {
+                        if (typeof result.data === 'string') {
+                            let cleanedStr = result.data.replace(/```json/gi, '').replace(/```/g, '').trim();
+                            try {
+                                finalData = JSON.parse(cleanedStr);
+                            } catch(e) {
+                                throw new Error("ไม่สามารถอ่านข้อมูล JSON จาก AI ได้");
+                            }
+                        } else if (Array.isArray(result.data)) {
+                            finalData = result.data;
+                        }
+
+                        if (!Array.isArray(finalData) || finalData.length === 0) {
+                            throw new Error("AI ส่งตารางเปล่ากลับมา (ไม่มีข้อมูล)");
+                        }
+
+                        PAGE_DATA.planData = finalData; 
+                        generateTableLesson(finalData); 
                         
                         const section7JSON = getSection7Data();
                         saveData('section7_data', section7JSON, document.getElementById('planTable'));
                         AppAlert('AI สร้างแผนการสอนสำเร็จ!', 'success');
                     } else {
-                        throw new Error(result.message || 'AI ตอบกลับมาผิดรูปแบบ');
+                        throw new Error('ไม่พบข้อมูล (Data) ในการตอบกลับจาก AI');
                     }
 
                 } catch (error) {
                     console.error("AI Lesson Plan Error:", error);
-                    AppAlert('เกิดข้อผิดพลาดในการสร้างด้วย AI: ' + error.message, 'error');
+                    AppAlert(error.message, 'error');
                 } finally {
                     const overlayToRemove = document.getElementById('ai-loading-overlay');
-                    if (overlayToRemove) {
-                        overlayToRemove.remove();
-                    }
+                    if (overlayToRemove) overlayToRemove.remove();
 
                     lessonBtn.innerHTML = originalText;
                     lessonBtn.disabled = false;

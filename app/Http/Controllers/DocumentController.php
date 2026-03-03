@@ -125,7 +125,6 @@ class DocumentController extends Controller
             ->where('curriculum_courses.id', $CC_id)
             ->first();
         $evaluations = DB::table('course_evaluations')->where('courseyear_id_ref', $cyId)->first();
-        $learningMaps = DB::table('course_learning_maps')->where('courseyear_id_ref', $cyId)->first();
         $resources = DB::table('course_resources')->where('courseyear_id_ref', $cyId)->first();
         $plans = DB::table('plans')->where('courseyear_id_ref', $cyId)->first();
         $generates = DB::table('generates')->where('courseyear_id_ref', $cyId)->orderBy('created_at', 'desc')->first();
@@ -150,53 +149,18 @@ class DocumentController extends Controller
         foreach ($dbLlls as $lll) {
             $lllKey = 'LLL' . $lll->num_LLL;
             
-            // เตรียม Array สำหรับส่งให้ JS โชว์ชื่อ LLL
+            // หั่นตัวเลข PLO ที่ติ๊กถูก (เช่น "1,3,4" -> [1, 3, 4])
+            $mappedPlos = [];
+            if (!empty($lll->check_LLL)) {
+                $mappedPlos = array_map('intval', explode(',', $lll->check_LLL));
+            }
+            
+            // ส่งไปให้ JavaScript ใช้งานตรงๆ ได้เลย
             $lllDataArray[] = [
                 'code' => $lllKey,
-                'description' => $lll->name_LLL
+                'description' => $lll->name_LLL,
+                'mapped_plos' => $mappedPlos 
             ];
-
-            // แปลง check_LLL เป็น JSON Format ตามที่ต้องการ
-            if (!isset($courseAccordArray[$lllKey])) {
-                $courseAccordArray[$lllKey] = [];
-            }
-
-            if (!empty($lll->check_LLL)) {
-                // หั่นด้วยลูกน้ำ เช่น "2,3,5,6" -> ["2", "3", "5", "6"]
-                $checkedPlos = array_map('trim', explode(',', $lll->check_LLL));
-
-                foreach ($checkedPlos as $ploNum) {
-                    if (empty($ploNum)) continue;
-
-                    // ถ้าใน course_accord ยังไม่มีค่านี้ ให้เพิ่มเข้าไปเป็น true
-                    if (!isset($courseAccordArray[$lllKey][$ploNum])) {
-                        $courseAccordArray[$lllKey][$ploNum] = [
-                            'check' => true,
-                            'level' => ''
-                        ];
-                        $hasLllUpdates = true; // ตั้งสถานะว่ามีการอัปเดตใหม่
-                    }
-                }
-            }
-        }
-
-        // ถ้าพบว่ามีการดึง LLL ใหม่เข้ามา ให้ Auto-save กลับลงไปใน Database เลย
-        if ($hasLllUpdates) {
-            $updatedCourseAccordJson = json_encode($courseAccordArray, JSON_UNESCAPED_UNICODE);
-            if ($learningMaps) {
-                DB::table('course_learning_maps')
-                    ->where('courseyear_id_ref', $cyId)
-                    ->update(['course_accord' => $updatedCourseAccordJson, 'updated_at' => now()]);
-            } else {
-                DB::table('course_learning_maps')->insert([
-                    'courseyear_id_ref' => $cyId,
-                    'course_accord' => $updatedCourseAccordJson,
-                    'created_at' => now(),
-                    'updated_at' => now()
-                ]);
-            }
-            // อัปเดตตัวแปรเพื่อให้ส่งไปหน้าเว็บได้ถูกต้อง
-            $learningMaps = (object)['course_accord' => $updatedCourseAccordJson];
         }
 
         $dbPlos = DB::table('plos')->get(['learning_level']);
@@ -525,25 +489,6 @@ class DocumentController extends Controller
                 
                 $dataToUpdate = ['curriculum_map_data' => json_encode($jsonData, JSON_UNESCAPED_UNICODE)];
             }
-        }
-        
-        // หมวด Course Learning Maps (PLO/CLO Mappings)
-        else if (Str::startsWith($field, 'plo_map_')) {
-            $targetTable = 'course_learning_maps';
-            $currentData = DB::table($targetTable)->where($conditions)->first();
-            $jsonData = $this->safeJsonDecode($currentData ? $currentData->course_accord : '{}');
-
-            if (preg_match('/plo_map_([a-zA-Z0-9]+)_c(\d+)_(\w+)/', $field, $matches)) {
-                $cloCode = $matches[1]; $colIndex = (int)$matches[2]; $attribute = $matches[3];
-                $ploDbIndex = $colIndex + 1;
-                
-                $processedValue = in_array($attribute, ['check']) ? filter_var($value, FILTER_VALIDATE_BOOLEAN) : $value;
-
-                if (!isset($jsonData[$cloCode])) $jsonData[$cloCode] = [];
-                if (!isset($jsonData[$cloCode][$ploDbIndex])) $jsonData[$cloCode][$ploDbIndex] = ['check' => false, 'level' => ''];
-                $jsonData[$cloCode][$ploDbIndex][$attribute] = $processedValue;
-            }
-            $dataToUpdate = ['course_accord' => json_encode($jsonData, JSON_UNESCAPED_UNICODE)];
         }
 
         // หมวด Course Resources
@@ -1063,57 +1008,78 @@ class DocumentController extends Controller
         }
 
         // --- 5.3 CLO-PLO Mapping ---
-        $courseAccordData = $getArray('course_accord');
         
-        // ฟังก์ชันช่วยแปลง Domain เป็นคำย่อ
-        $getDomainAbbr = function($domainText) {
-            if (empty($domainText)) return '';
-            $lower = strtolower((string)$domainText);
-            $types = [];
-            if (strpos($lower, 'knowledge') !== false) $types[] = 'K';
-            if (strpos($lower, 'skill') !== false) $types[] = 'S';
-            if (strpos($lower, 'application') !== false || strpos($lower, 'responsibility') !== false) $types[] = 'AR';
-            return implode(', ', $types);
+        $getShortLevelName = function($fullText) {
+            if (empty($fullText)) return '';
+            $lowerText = strtolower(trim($fullText));
+            
+            // ถ้าเป็นตัวย่ออยู่แล้ว (1-3 ตัวอักษร) ยกเว้นคำว่า 'set' ให้คืนค่าเลย
+            if (strlen($lowerText) <= 3 && $lowerText !== 'set') {
+                return ucfirst($lowerText);
+            }
+
+            $map = [
+                'remember' => 'Re', 'understand' => 'Un', 'apply' => 'Ap',
+                'analyz' => 'An', 'evaluate' => 'Ev', 'create' => 'Cr',
+                'perception' => 'Pe', 'set' => 'Se', 'guided response' => 'GR',
+                'mechanism' => 'Me', 'complex over response' => 'COR', 'adaptation' => 'Ad',
+                'origination' => 'Or', 'organization' => 'Or',
+                'receiving phenomena' => 'RP', 'responding to phenomena' => 'Rs',
+                'valuing' => 'Va', 'internalizes values' => 'IV'
+            ];
+
+            foreach ($map as $key => $short) {
+                if (strpos($lowerText, $key) !== false) {
+                    return $short;
+                }
+            }
+            return $fullText; 
         };
 
-        // ฟังก์ชันช่วยดึงเฉพาะตัวเลข PLO
+        // ดึงเฉพาะตัวเลข PLO
         $getPloNumbers = function($ploText) {
             if (empty($ploText)) return [];
             preg_match_all('/\d+/', (string)$ploText, $matches);
             return !empty($matches[0]) ? array_map('intval', $matches[0]) : [];
         };
 
+        // ดึงข้อมูล JSON ai_text มาเตรียมไว้
         $aiTextData = json_decode($get('ai_text'), true) ?: [];
+
+        // ดึงข้อมูล PLO Levels ทั้งหมดจาก 5.1 เพื่อทำเป็น Headings
+        $ploLevelsList = [];
+        if (!empty($docxData['s5_1_plos'])) {
+            foreach ($docxData['s5_1_plos'] as $plo) {
+                $fullLevel = $plo['level'] ?? '';
+                $parts = explode('-', $fullLevel);
+                $ploLevelsList[$plo['id']] = trim($parts[0]);
+            }
+        }
 
         if(!empty($cloLllDescriptions)) {
             foreach($cloLllDescriptions as $cloInfo) {
                 $cloInfo = (array) $cloInfo;
                 $code = $cloInfo['code'] ?? null; 
-                $isLLL = str_starts_with($code, 'LLL'); // เช็คว่าเป็นบรรทัดของ LLL หรือไม่
+                $isLLL = str_starts_with($code, 'LLL'); 
                 
                 $aiMappedPlos = [];
-                $aiDomainAbbr = '';
+                $aiMappedLevels = '';
                 
                 if (!$isLLL) {
                     $originalKey = str_replace('CLO', 'CLO ', $code); 
                     $aiDetails = $aiTextData[$originalKey] ?? ($aiTextData[$code] ?? []);
                     
                     $ploRaw = '';
-                    $domainRaw = '';
-                    
                     if (is_array($aiDetails)) {
                         foreach ($aiDetails as $k => $v) {
                             $lowerK = strtolower($k);
                             if (strpos($lowerK, 'plo') !== false) $ploRaw = $v;
-                            if (strpos($lowerK, 'domain') !== false) $domainRaw = $v;
+                            if (strpos($lowerK, 'learning') !== false) $aiMappedLevels = $v;
                         }
                     }
-                    
                     $aiMappedPlos = $getPloNumbers($ploRaw);
-                    $aiDomainAbbr = $getDomainAbbr($domainRaw);
                 }
 
-                $mapping = ($code && isset($courseAccordData[$code])) ? $courseAccordData[$code] : [];
                 $row = ['clo_id' => $code ?? '?', 'clo_desc' => $cloInfo['description'] ?? '...'];
                 
                 if (!empty($docxData['s5_1_plos'])) {
@@ -1121,28 +1087,34 @@ class DocumentController extends Controller
                         $ploDbIndex = $plo['id']; 
                         $key = 'plo' . $ploDbIndex; 
                         
-                        $savedCellData = ['check' => false, 'level' => ''];
-                        $hasSavedData = false;
+                        $checkStatus = false;
 
-                        if (isset($mapping[(string)$ploDbIndex])) {
-                            $savedCellData['check'] = !empty($mapping[(string)$ploDbIndex]['check']);
-                            $savedCellData['level'] = $mapping[(string)$ploDbIndex]['level'] ?? '';
-                            $hasSavedData = true;
-                        }
-
-                        if (!$hasSavedData && !$isLLL && in_array($ploDbIndex, $aiMappedPlos)) {
-                            $savedCellData['check'] = true;
-                            $savedCellData['level'] = $aiDomainAbbr;
+                        // ตรวจสอบการติ๊กถูกของ LLL
+                        if ($isLLL) {
+                            $mappedPlos = $cloInfo['mapped_plos'] ?? [];
+                            if (in_array($ploDbIndex, $mappedPlos)) {
+                                $checkStatus = true;
+                            }
+                        } else {
+                            if (in_array($ploDbIndex, $aiMappedPlos)) {
+                                $checkStatus = true;
+                            }
                         }
                         
-                        // แยกการแสดงผลระหว่าง CLO กับ LLL 
-                        if ($savedCellData['check']) {
+                        if ($checkStatus) {
                             if ($isLLL) {
-                                // ถ้าเป็น LLL ให้แสดงเครื่องหมายติ๊กถูก (✓)
-                                $row[$key] = '✓' . (!empty($savedCellData['level']) ? " (" . $savedCellData['level'] . ")" : '');
+                                // LLL ให้แสดงเครื่องหมาย ✓
+                                $row[$key] = '✓';
                             } else {
-                                // ถ้าเป็น CLO ให้แสดงแค่คำย่อ (K, S, AR)
-                                $row[$key] = $savedCellData['level'];
+                                // CLO เอา Level มาป็นตัวย่อ
+                                $rawLevel = '';
+                                if (!empty($aiMappedLevels) && $aiMappedLevels !== '-') {
+                                    $rawLevel = $aiMappedLevels;
+                                } else if (!empty($ploLevelsList[$ploDbIndex])) {
+                                    $rawLevel = explode(',', $ploLevelsList[$ploDbIndex])[0]; 
+                                }
+                                
+                                $row[$key] = $getShortLevelName($rawLevel);
                             }
                         } else {
                             $row[$key] = '';
@@ -1156,7 +1128,6 @@ class DocumentController extends Controller
         // --- 6. Teaching Methods (แสดงทุกหัวข้อ และติ๊กถูกเฉพาะอันที่มีใน DB) ---
         $teachingMethodsData = $getArray('teaching_methods');
         
-        // จำลองข้อมูล Options ให้เหมือนกับหน้าเว็บ
         $teachingOptions = [
             "On-site โดยมีการเรียนการสอนแบบ" => [
                 "บรรยาย (Lecture)", "ฝึกปฏิบัติ (Laboratory Model)", "เรียนรู้จากการลงมือทำ (Learning by Doing)",
@@ -1647,20 +1618,20 @@ class DocumentController extends Controller
             $table5_3->addCell(5000, $thStyle)->addText('คำอธิบาย CLOs/LLLs', $boldFont, $cellCenter);
             
             foreach ($docxData['s5_1_plos'] as $plo) {
-                $table5_3->addCell(1000, $thStyle)->addText('PLO' . $plo['id'] . ' (' . $plo['level'] . ')', $boldFont, $cellCenter);
+                $levelAbbr = trim(explode('-', $plo['level'] ?? '')[0]);
+                $headerText = 'PLO' . $plo['id'] . (!empty($levelAbbr) ? "\n(" . $levelAbbr . ")" : '');
+                $table5_3->addCell(1000, $thStyle)->addText($headerText, $boldFont, $cellCenter);
             }
             
             foreach ($docxData['s5_3_clos_plo_mapping'] as $map) {
                 $table5_3->addRow(); 
                 $table5_3->addCell(1000, $vAlignCenter)->addText($map['clo_id'], null, $cellCenter); 
                 
-                // คลีนข้อความ ลบ Enter ที่แอบซ่อนอยู่ออกให้หมด เพื่อให้ประโยคต่อกัน
                 $cleanDesc = $map['clo_desc'];
-                $cleanDesc = preg_replace('/[\r\n]+/', ' ', $cleanDesc); // แปลง Enter ทุกชนิดให้เป็นช่องว่าง 1 เคาะ
-                $cleanDesc = preg_replace('/[ \t]+/u', ' ', $cleanDesc); // ยุบช่องว่างที่เกินให้เหลือแค่อันเดียว
+                $cleanDesc = preg_replace('/[\r\n]+/', ' ', $cleanDesc);
+                $cleanDesc = preg_replace('/[ \t]+/u', ' ', $cleanDesc);
                 $cleanDesc = trim($cleanDesc);
 
-                // นำข้อความที่คลีนแล้วมายัดลงตาราง
                 $table5_3->addCell(5000)->addText(htmlspecialchars($cleanDesc));
                 
                 if (!empty($docxData['s5_1_plos'])) {
