@@ -30,10 +30,20 @@ document.addEventListener('DOMContentLoaded', () => {
         if (show) {
             el.classList.remove('hidden');
             // Animation
-            const content = el.querySelector('.bg-white');
-            if(content) setTimeout(() => content.classList.replace('scale-95', 'scale-100'), 10);
+            setTimeout(() => {
+                el.classList.remove('opacity-0');
+                const content = el.querySelector('.bg-white');
+                if(content) content.classList.remove('scale-95', 'opacity-0');
+            }, 10);
         } else {
-            el.classList.add('hidden');
+            el.classList.add('opacity-0');
+            const content = el.querySelector('.bg-white');
+            if(content) {
+                content.classList.add('scale-95', 'opacity-0');
+            }
+            setTimeout(() => {
+                el.classList.add('hidden');
+            }, 300);
         }
     };
 
@@ -78,6 +88,19 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', (e) => {
             // หา Form ที่หุ้มปุ่มนี้อยู่
             currentDeleteForm = btn.closest('form');
+
+            const infoEl = document.getElementById('delete-course-name');
+            if (infoEl) {
+                const name = btn.getAttribute('data-name') || '';
+                const year = btn.getAttribute('data-year') || '';
+                const term = btn.getAttribute('data-term') || '';
+                let text = '';
+                if(name) text += `อาจารย์: ${name}`;
+                if(year) text += text ? `, ปี ${year}` : `ปี ${year}`;
+                if(term) text += text ? `, ภาคเรียน ${term}` : `ภาคเรียน ${term}`;
+                infoEl.textContent = text;
+            }
+
             toggleModal('delete-modal', true);
         });
     });
@@ -94,6 +117,8 @@ document.addEventListener('DOMContentLoaded', () => {
         deleteCancel.addEventListener('click', () => {
             toggleModal('delete-modal', false);
             currentDeleteForm = null;
+            const infoEl = document.getElementById('delete-course-name');
+            if(infoEl) infoEl.textContent = '';
         });
     }
 
@@ -103,8 +128,9 @@ document.addEventListener('DOMContentLoaded', () => {
         modals.forEach(id => {
             const modal = document.getElementById(id);
             if(modal) {
-                modal.style.opacity = '0';
-                modal.style.transition = 'opacity 0.3s ease';
+                modal.classList.add('opacity-0');
+                const content = modal.querySelector('.bg-white');
+                if(content) content.classList.add('scale-95', 'opacity-0');
                 setTimeout(() => modal.remove(), 300);
             }
         });
@@ -120,6 +146,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     closeSessionModal();
                 } else {
                     toggleModal(id, false);
+                    if(id === 'delete-modal') {
+                        const infoEl = document.getElementById('delete-course-name');
+                        if(infoEl) infoEl.textContent = '';
+                        currentDeleteForm = null;
+                    }
                 }
             }
         });

@@ -277,20 +277,22 @@
             </div>
 
             <h3 class="text-xl font-bold text-slate-900 mb-2">ยืนยันการลบ?</h3>
-            <p class="text-sm text-slate-500 mb-6">
-                คุณต้องการลบผู้ใช้งาน <span id="delete-user-name" class="font-bold text-slate-800"></span> ใช่หรือไม่?<br>
-                การกระทำนี้ไม่สามารถย้อนกลับได้
-            </p>
+            <p class="text-sm text-slate-500 mb-3">การกระทำนี้ไม่สามารถย้อนกลับได้</p>
+
+            <div class="mb-4 p-3 bg-gray-50 rounded-xl border border-gray-200 text-center">
+                <p class="text-sm text-slate-500 mb-1">คุณต้องการลบผู้ใช้งาน</p>
+                <p id="delete-user-name" class="font-bold text-red-600 text-sm break-words">-</p>
+            </div>
 
             <form id="delete-user-form" method="POST">
                 @csrf
                 @method('DELETE')
                 <div class="flex gap-3 justify-center">
-                    <button type="button" class="btn-close-delete-modal flex-1 bg-white border border-slate-300 text-slate-700 py-2.5 rounded-xl font-medium hover:bg-slate-50 transition">
-                        ยกเลิก
-                    </button>
                     <button type="submit" class="flex-1 bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-xl font-medium shadow-md transition hover:shadow-lg">
                         ยืนยัน ลบเลย
+                    </button>
+                    <button type="button" class="btn-close-delete-modal flex-1 bg-white border border-slate-300 text-slate-700 py-2.5 rounded-xl font-medium hover:bg-slate-50 transition">
+                        ยกเลิก
                     </button>
                 </div>
             </form>

@@ -285,22 +285,27 @@
     </div>
 
     <div id="delete-modal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60 z-50 hidden backdrop-blur-sm">
-        <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full text-center transform transition-all scale-100">
+        <div class="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full text-center transform transition-all scale-95">
             <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
                 <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
             </div>
             <h3 class="text-lg font-bold text-gray-900 mb-2">ยืนยันการลบ?</h3>
-            <p class="text-sm text-gray-500 mb-6">คุณแน่ใจหรือไม่ที่จะลบหลักสูตรนี้? การกระทำนี้ไม่สามารถย้อนกลับได้</p>
-            
+            <p class="text-sm text-gray-500 mb-3">การกระทำนี้ไม่สามารถย้อนกลับได้</p>
+
+            <div class="mb-4 p-3 bg-gray-50 rounded-xl border border-gray-200 text-center">
+                <p class="text-sm text-gray-500 mb-1">หลักสูตรที่จะลบ</p>
+                <p id="delete-curriculum-info" class="font-bold text-red-600 text-sm break-words">-</p>
+            </div>
+
             <form id="delete-form" method="POST">
                 @csrf
                 @method('DELETE')
                 <div class="flex justify-center gap-3">
-                    <button type="button" id="btn-close-delete" class="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition">
-                        ยกเลิก
-                    </button>
                     <button type="submit" class="px-5 py-2.5 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 shadow-md transition">
                         ใช่, ลบเลย
+                    </button>
+                    <button type="button" id="btn-close-delete" class="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 transition">
+                        ยกเลิก
                     </button>
                 </div>
             </form>

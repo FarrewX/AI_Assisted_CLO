@@ -280,13 +280,19 @@
                         <svg class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                     </div>
                     <h3 class="text-xl font-black text-gray-900 mb-2 tracking-tight">ยืนยันการลบ?</h3>
-                    <p class="text-sm text-gray-500 mb-6 font-medium">คุณแน่ใจหรือไม่ที่จะลบข้อมูลนี้? การกระทำนี้ไม่สามารถย้อนกลับได้</p>
+                    <p class="text-sm text-gray-500 mb-2 font-medium">การกระทำนี้ไม่สามารถย้อนกลับได้</p>
+
+                    <div class="mb-4 p-3 bg-gray-50 rounded-xl border border-gray-200 w-full">
+                        <p class="text-sm text-gray-500 mb-1">รายการที่จะลบ</p>
+                        <p id="confirm-lll-num" class="text-center font-extrabold text-red-600 text-2xl">-</p>
+                    </div>
+                    <p id="confirm-message" class="text-sm text-gray-500 mb-6 font-medium">คุณแน่ใจหรือไม่ที่จะลบข้อมูลนี้?</p>
                     <div class="flex gap-3 w-full">
-                        <button id="confirm-cancel" class="flex-1 rounded-xl bg-gray-100 hover:bg-gray-200 px-4 py-3 text-sm font-bold text-gray-700 transition-all duration-200">
-                            ยกเลิก
-                        </button>
                         <button id="confirm-ok" class="flex-1 rounded-xl bg-red-600 hover:bg-red-700 px-4 py-3 text-sm font-bold text-white shadow-md transition-all duration-200">
                             ใช่, ลบเลย
+                        </button>
+                        <button id="confirm-cancel" class="flex-1 rounded-xl bg-gray-100 hover:bg-gray-200 px-4 py-3 text-sm font-bold text-gray-700 transition-all duration-200">
+                            ยกเลิก
                         </button>
                     </div>
                 </div>

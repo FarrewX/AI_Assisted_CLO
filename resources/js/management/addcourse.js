@@ -1,17 +1,23 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Select2
-    if (window.jQuery && window.jQuery().select2) {
-        const $select = $('#curriculum_select');
-        
-        if ($select.length) {
-            $select.select2({
-                placeholder: "-- ค้นหาและเลือกหลักสูตร --",
-                allowClear: true,
-                width: '100%'
-            }).on('select2:select', function (e) {
-                $(this).closest('form').submit();
+    const searchInput = document.getElementById('course-search-input');
+    const tableBody = document.querySelector('#courses-table tbody');
+
+    if (searchInput && tableBody) {
+        searchInput.addEventListener('keyup', function() {
+            const filter = this.value.toLowerCase();
+            const rows = tableBody.querySelectorAll('tr');
+
+            rows.forEach(row => {
+                if (row.id === 'empty-row') return;
+
+                const text = row.textContent.toLowerCase();
+                if (text.includes(filter)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
             });
-        }
+        });
     }
 
     // Modal เพิ่ม/แก้ไข
@@ -25,7 +31,26 @@ document.addEventListener('DOMContentLoaded', () => {
     // ฟังก์ชันเปิด/ปิด Modal
     const toggleModal = (id, show) => {
         const el = document.getElementById(id);
-        if (el) el.classList.toggle('hidden', !show);
+        if (!el) return;
+        
+        if (show) {
+            el.classList.remove('hidden');
+            // Animation
+            setTimeout(() => {
+                el.classList.remove('opacity-0');
+                const content = el.querySelector('.bg-white');
+                if(content) content.classList.remove('scale-95', 'opacity-0');
+            }, 10);
+        } else {
+            el.classList.add('opacity-0');
+            const content = el.querySelector('.bg-white');
+            if(content) {
+                content.classList.add('scale-95', 'opacity-0');
+            }
+            setTimeout(() => {
+                el.classList.add('hidden');
+            }, 300);
+        }
     };
 
     if (btnAdd) {
@@ -77,14 +102,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // ปุ่มลบ
-        const deleteBtn = e.target.closest('.btn-delete');
+       const deleteBtn = e.target.closest('.btn-delete');
         
         if (deleteBtn) {
             const tr = deleteBtn.closest('tr');
             const deleteForm = document.getElementById('delete-form');
+            const courseNameDisplay = document.getElementById('delete-course-name');
             
             if (deleteForm) {
                 deleteForm.action = `/management/addcourses/${tr.dataset.id}`;
+                
+                if (courseNameDisplay) {
+                    courseNameDisplay.textContent = `${tr.dataset.code} : ${tr.dataset.nameTh}`;
+                }
+                
                 toggleModal('delete-modal', true);
             }
         }
@@ -96,14 +127,59 @@ document.addEventListener('DOMContentLoaded', () => {
         btnCloseDelete.onclick = () => toggleModal('delete-modal', false);
     }
 
+    // ปิด delete-modal เมื่อคลิกพื้นหลัง
+    const deleteModal = document.getElementById('delete-modal');
+    if(deleteModal) {
+        deleteModal.addEventListener('click', (e) => {
+            if(e.target === deleteModal) {
+                toggleModal('delete-modal', false);
+            }
+        });
+    }
+
     // Modal ผลลัพธ์การ Import
     const importModal = document.getElementById('import-result-modal');
     if (importModal) {
+        // เปิดเมื่อมี session
+        setTimeout(() => {
+            importModal.classList.remove('opacity-0');
+            const content = importModal.querySelector('.bg-white');
+            if(content) content.classList.remove('scale-95');
+        }, 10);
+        
         const closeButtons = importModal.querySelectorAll('button');
         closeButtons.forEach(btn => {
             btn.addEventListener('click', () => {
-                importModal.remove();
+                importModal.classList.add('opacity-0');
+                const content = importModal.querySelector('.bg-white');
+                if(content) content.classList.add('scale-95');
+                setTimeout(() => {
+                    importModal.remove();
+                }, 300);
             });
         });
+    }
+
+    // Popup Notification
+    const popupNotification = document.getElementById('popup-notification');
+    if (popupNotification) {
+        // เปิดเมื่อมี session
+        setTimeout(() => {
+            popupNotification.classList.remove('opacity-0');
+            const content = popupNotification.querySelector('.bg-white');
+            if(content) content.classList.remove('scale-95');
+        }, 10);
+        
+        const closeBtn = popupNotification.querySelector('button');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                popupNotification.classList.add('opacity-0');
+                const content = popupNotification.querySelector('.bg-white');
+                if(content) content.classList.add('scale-95');
+                setTimeout(() => {
+                    popupNotification.remove();
+                }, 300);
+            });
+        }
     }
 });

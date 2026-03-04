@@ -66,6 +66,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const deleteBtn = e.target.closest('.btn-delete');
         if (deleteBtn) {
             const tr = deleteBtn.closest('tr');
+            const infoEl = document.getElementById('delete-curriculum-info');
+            if (infoEl) {
+                const year = tr.dataset.year || tr.getAttribute('data-year') || '';
+                let text = '';
+                if (year) text += `ปีหลักสูตร ${year}`;
+                infoEl.textContent = text || '-';
+            }
+
             deleteForm.action = `/management/curriculum/${tr.dataset.id}`;
             toggleModal('delete-modal', true);
         }
@@ -83,6 +91,8 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.addEventListener('click', () => {
                 toggleModal('curriculum-modal', false);
                 toggleModal('delete-modal', false);
+                const infoEl = document.getElementById('delete-curriculum-info');
+                if (infoEl) infoEl.textContent = '';
             });
         }
     });
@@ -90,7 +100,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // คลิกพื้นหลังเพื่อปิด Modal
     window.addEventListener('click', (e) => {
         if (e.target === modal) toggleModal('curriculum-modal', false);
-        if (e.target === deleteModal) toggleModal('delete-modal', false);
+        if (e.target === deleteModal) {
+            toggleModal('delete-modal', false);
+            const infoEl = document.getElementById('delete-curriculum-info');
+            if (infoEl) infoEl.textContent = '';
+        }
     });
 
     const subSettingsModal = document.getElementById('sub-settings-modal');
@@ -124,18 +138,33 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('status-llls').innerHTML = hasLlls ? badgeComplete : badgeMissing;
 
             subSettingsModal.classList.remove('hidden');
+            setTimeout(() => {
+                subSettingsModal.classList.remove('opacity-0');
+                const content = subSettingsModal.querySelector('.bg-white');
+                if(content) content.classList.remove('scale-95');
+            }, 10);
         });
     });
 
     // ปิด Modal Settings ย่อย
     btnCloseSubSettings.addEventListener('click', () => {
-        subSettingsModal.classList.add('hidden');
+        subSettingsModal.classList.add('opacity-0');
+        const content = subSettingsModal.querySelector('.bg-white');
+        if(content) content.classList.add('scale-95');
+        setTimeout(() => {
+            subSettingsModal.classList.add('hidden');
+        }, 300);
     });
 
     // ปิดเมื่อคลิกพื้นที่พื้นหลัง
     subSettingsModal.addEventListener('click', (e) => {
         if (e.target === subSettingsModal) {
-            subSettingsModal.classList.add('hidden');
+            subSettingsModal.classList.add('opacity-0');
+            const content = subSettingsModal.querySelector('.bg-white');
+            if(content) content.classList.add('scale-95');
+            setTimeout(() => {
+                subSettingsModal.classList.add('hidden');
+            }, 300);
         }
     });
 });

@@ -21,7 +21,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 el.classList.add('opacity-0');
                 const content = el.querySelector('div');
                 if(content) content.classList.add('scale-95');
-                setTimeout(() => el.classList.add('hidden'), 300);
+                setTimeout(() => {
+                    if (id === 'confirm-modal') {
+                        const confirmPlo = document.getElementById('confirm-plo-num');
+                        if (confirmPlo) confirmPlo.textContent = '-';
+                    }
+                    el.classList.add('hidden');
+                }, 300);
             }
         }
     };
@@ -59,11 +65,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     let confirmCallback = null;
-    const showConfirmDelete = (msg, cb) => {
-        const confirmMsg = document.getElementById('confirm-message');
+    const showConfirmDelete = (ploNum, cb) => {
+        const confirmPlo = document.getElementById('confirm-plo-num');
         const confirmBtn = document.getElementById('confirm-ok');
 
-        if(confirmMsg) confirmMsg.textContent = msg;
+        if (confirmPlo) confirmPlo.textContent = ploNum ? `PLO ${ploNum}` : '-';
         confirmCallback = cb;
 
         // บังคับให้ปุ่มเป็นสีแดงเสมอ (เพราะใช้เฉพาะกับการลบ)
@@ -92,6 +98,16 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleModal(btn.modal, false);
         });
     });
+
+    // ปิด confirm-modal เมื่อคลิกพื้นหลัง
+    const confirmModal = document.getElementById('confirm-modal');
+    if(confirmModal) {
+        confirmModal.addEventListener('click', (e) => {
+            if(e.target === confirmModal) {
+                toggleModal('confirm-modal', false);
+            }
+        });
+    }
 
     const popupCloseBtn = document.getElementById('popup-close');
     if(popupCloseBtn) {
@@ -224,7 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const id = tr.dataset.id;
             const ploNum = tr.dataset.ploNum;
 
-            showConfirmDelete(`คุณแน่ใจหรือไม่ที่จะลบ PLO ${ploNum} ?`, () => {
+            showConfirmDelete(ploNum, () => {
                 const iconBtn = deleteBtn.innerHTML;
                 deleteBtn.disabled = true;
                 deleteBtn.innerHTML = '...';
