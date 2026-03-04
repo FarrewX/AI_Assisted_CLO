@@ -18,7 +18,7 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="bg-[#f8fafc] text-gray-800 font-sans antialiased min-h-screen">
+<body class="text-gray-800 font-sans antialiased min-h-screen">
     @include('component.navbar')
     
     <div class="container mx-auto p-4 pt-24 max-w-4xl">
@@ -33,12 +33,12 @@
 
         <div class="mb-8 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div class="flex items-center gap-4">
-                <div class="bg-indigo-100 p-3 rounded-xl text-indigo-600">
+                <div class="bg-indigo-100 p-3 rounded-xl text-baltic-blue">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
                 </div>
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900 tracking-tight">ปรัชญาหลักสูตร</h1>
-                    <p class="text-sm text-gray-500 mt-1">จัดการข้อมูลปรัชญาของหลักสูตรตามปีการศึกษา</p>
+                    <h1 class="text-2xl font-bold text-deep-navy tracking-tight">ปรัชญาหลักสูตร</h1>
+                    <p class="text-sm text-sky-surge mt-1">จัดการข้อมูลปรัชญาของหลักสูตรตามปีการศึกษา</p>
                 </div>
             </div>
 
@@ -77,7 +77,7 @@
                     <div class="space-y-7">
                         <div class="relative group">
                             <label class="flex items-center gap-2 text-sm font-bold text-gray-700 mb-1 ml-1">
-                                <span class="flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-700 text-xs">1</span>
+                                <span class="flex items-center justify-center w-6 h-6 rounded-full bg-pale-sky text-baltic-blue text-xs">1</span>
                                 ปรัชญามหาวิทยาลัยแม่โจ้
                             </label>
                             <textarea id="mju_philosophy" name="mju_philosophy" rows="3" placeholder="ระบุปรัชญามหาวิทยาลัย..." class="w-full border border-gray-200 rounded-2xl p-4 text-gray-700 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-blue-100 focus:border-blue-400 outline-none transition-all duration-300 resize-y shadow-inner">{{ $philosophyData->mju_philosophy ?? '' }}</textarea>
@@ -85,7 +85,7 @@
                         
                         <div class="relative group">
                             <label class="flex items-center gap-2 text-sm font-bold text-gray-700 mb-3 ml-1">
-                                <span class="flex items-center justify-center w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 text-xs">2</span>
+                                <span class="flex items-center justify-center w-6 h-6 rounded-full bg-pale-sky text-baltic-blue text-xs">2</span>
                                 ปรัชญาการศึกษา มหาวิทยาลัยแม่โจ้
                             </label>
                             <textarea id="education_philosophy" name="education_philosophy" rows="3" placeholder="ระบุปรัชญาการศึกษา..." class="w-full border border-gray-200 rounded-2xl p-4 text-gray-700 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-indigo-100 focus:border-indigo-400 outline-none transition-all duration-300 resize-y shadow-inner">{{ $philosophyData->education_philosophy ?? '' }}</textarea>
@@ -93,7 +93,7 @@
 
                         <div class="relative group">
                             <label class="flex items-center gap-2 text-sm font-bold text-gray-700 mb-3 ml-1">
-                                <span class="flex items-center justify-center w-6 h-6 rounded-full bg-purple-100 text-purple-700 text-xs">3</span>
+                                <span class="flex items-center justify-center w-6 h-6 rounded-full bg-pale-sky text-baltic-blue text-xs">3</span>
                                 ปรัชญาหลักสูตร
                             </label>
                             <textarea id="curriculum_philosophy" name="curriculum_philosophy" rows="4" placeholder="ระบุปรัชญาหลักสูตร..." class="w-full border border-gray-200 rounded-2xl p-4 text-gray-700 bg-gray-50 focus:bg-white focus:ring-4 focus:ring-purple-100 focus:border-purple-400 outline-none transition-all duration-300 resize-y shadow-inner">{{ $philosophyData->curriculum_philosophy ?? '' }}</textarea>
@@ -102,7 +102,7 @@
 
                     <div class="mt-10 pt-6 border-t border-gray-100 flex justify-end">
                         <button type="submit" id="btn-save" 
-                            style="background: linear-gradient(to right, #2563eb, #4f46e5); cursor: pointer;"
+                            style="background: linear-gradient(to right, #6CBAD9, #035AA6); cursor: pointer;"
                             class="text-white px-8 py-3 rounded-xl shadow-lg hover:shadow-xl font-semibold flex items-center gap-2 transition-all duration-300 transform hover:-translate-y-0.5 focus:outline-none border-0">
                             
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

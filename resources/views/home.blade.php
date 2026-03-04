@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>ELO_Generator</title>
+        <title>ELO_Generator | รายวิชาที่เปิดสอน</title>
 
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
@@ -11,37 +11,28 @@
         @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
             @vite(['resources/css/app.css', 'resources/js/app.js'])
         @else
-        @endif
+            @endif
     </head>
-    <body class="bg-gray-50">
+    <body class="font-sans antialiased">
         @include('component.navbar')
 
         <div class="flex flex-col items-center min-h-screen pt-28 pb-10 px-4">
             
             <div class="text-center mb-8">
-                <h1 class="text-2xl font-bold text-gray-800">ยินดีต้อนรับ</h1>
-                <h2 class="text-xl text-gray-600 mt-1">อาจารย์ {{ Auth::user()->name ?? 'ผู้ใช้งาน' }}</h2>
+                <h1 class="text-2xl font-bold text-deep-navy">ยินดีต้อนรับ</h1>
+                <h2 class="text-xl text-sky-surge mt-1">อาจารย์ {{ Auth::user()->name ?? 'ผู้ใช้งาน' }}</h2>
             </div>
 
-            <!-- <div class="flex flex-wrap justify-center gap-4 mb-10 w-full max-w-2xl">
-                <a href="{{ url('/form') }}" 
-                   class="flex-1 min-w-[200px] text-center px-6 py-4 bg-sky-500 text-white font-bold rounded-xl shadow-md hover:bg-sky-600 transition transform hover:-translate-y-1">
-                    + สร้าง มคอ. ใหม่
-                </a>
-                <a href="{{ url('/TQF/all') }}" 
-                   class="flex-1 min-w-[200px] text-center px-6 py-4 bg-emerald-500 text-white font-bold rounded-xl shadow-md hover:bg-emerald-600 transition transform hover:-translate-y-1">
-                    📂 มคอ. ทั้งหมดที่ดาวน์โหลด
-                </a>
-            </div> -->
-
-            <div class="w-full max-w-3xl bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <div class="flex items-center justify-between mb-6 border-b pb-4">
-                    <h3 class="text-lg font-bold text-gray-800">รายวิชาที่เปิดสอน</h3>
+            <div class="w-full max-w-3xl bg-pure-white rounded-2xl shadow-lg border border-pale-sky p-6 md:p-8">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 border-b border-pale-sky pb-5 gap-4">
+                    <h3 class="text-xl font-bold text-deep-navy flex items-center gap-2">
+                        <i class="fa-solid fa-book-open text-sky-surge"></i> รายวิชาที่เปิดสอน
+                    </h3>
                     
-                    <form method="GET" action="{{ route('home') }}" class="flex items-center space-x-2">
-                        <label for="year" class="text-sm text-gray-600">ปีการศึกษา:</label>
+                    <form method="GET" action="{{ route('home') }}" class="flex items-center space-x-2 w-full sm:w-auto">
+                        <label for="year" class="text-sm font-bold text-deep-navy whitespace-nowrap">ปีการศึกษา:</label>
                         <select name="year" id="year" onchange="this.form.submit()" 
-                            class="border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 py-1 pl-3 pr-8 text-sm bg-gray-50">
+                            class="w-full sm:w-auto border-pale-sky rounded-xl shadow-sm focus:ring-4 focus:ring-baltic-blue/20 focus:border-baltic-blue py-1.5 pl-3 pr-8 text-sm bg-pure-white text-deep-navy font-medium outline-none transition-all">
                             @php
                                 $currentYearBE = date('Y') + 543;
                                 $displayYear = $selectedYear ?? $currentYearBE; 
@@ -65,52 +56,55 @@
                         $termsGroup = $courseGroup->groupBy('term');
                     @endphp
 
-                    <div class="mb-6 last:mb-0 border border-gray-200 rounded-lg overflow-hidden">
-                        <div class="bg-gray-100 px-4 py-3 border-b border-gray-200 flex items-center">
-                            <span class="bg-blue-100 text-blue-800 text-xs font-semibold mr-2 px-2.5 py-0.5 rounded">
+                    <div class="mb-6 last:mb-0 border border-pale-sky rounded-xl overflow-hidden shadow-sm">
+                        <div class="bg-pale-sky/40 px-5 py-3.5 border-b border-pale-sky flex items-center">
+                            <span class="bg-pure-white text-baltic-blue text-xs font-bold mr-3 px-3 py-1 rounded-md border border-sky-surge/50 shadow-sm">
                                 {{ $courseCode }}
                             </span>
-                            <span class="font-semibold text-gray-700">{{ $courseName }}</span>
+                            <span class="font-bold text-deep-navy">{{ $courseName }}</span>
                         </div>
 
-                        <div class="p-4 bg-white">
+                        <div class="p-5 bg-pure-white">
                             @foreach($termsGroup as $term => $TQFItems)
-                                <div class="mb-4 last:mb-0">
-                                    <div class="text-sm font-bold text-gray-500 mb-2">ภาคเรียนที่ {{ $term }}</div>
+                                <div class="mb-5 last:mb-0">
+                                    <div class="text-sm font-bold text-slate-grey mb-3 flex items-center gap-2">
+                                        <i class="fa-regular fa-calendar text-sky-surge"></i> ภาคเรียนที่ {{ $term }}
+                                    </div>
                                     <div class="space-y-3">
                                         @foreach($TQFItems as $item)
                                             @php
                                                 $stepCount = collect([$item->startprompt, $item->generated, $item->success])->filter()->count();
                                                 
+                                                // คงสี Badge สถานะไว้ (เทา, แดง, ส้ม, เขียว) เพื่อให้เข้าใจง่าย
                                                 $statusConfig = match($stepCount) {
-                                                    0 => ['text' => 'ยังไม่เริ่ม', 'color' => 'text-gray-500', 'bg' => 'bg-gray-200', 'btn' => 'เริ่มต้น', 'url' => '/form'],
-                                                    1 => ['text' => 'เริ่มทำแล้ว', 'color' => 'text-red-500', 'bg' => 'bg-orange-500', 'btn' => 'สร้างต่อ', 'url' => '/form'],
-                                                    2 => ['text' => 'อยู่ระหว่างการสร้าง', 'color' => 'text-orange-500', 'bg' => 'bg-blue-500', 'btn' => 'แก้ไข', 'url' => '/editdoc'],
-                                                    3 => ['text' => 'เสร็จสมบูรณ์', 'color' => 'text-green-600', 'bg' => 'bg-green-500', 'btn' => 'ตรวจสอบ', 'url' => '/editdoc'],
-                                                    default => ['text' => '-', 'color' => 'text-gray-400', 'bg' => 'bg-gray-200', 'btn' => '', 'url' => '#']
+                                                    0 => ['text' => 'ยังไม่เริ่ม', 'color' => 'text-slate-grey', 'btn' => 'เริ่มต้น', 'url' => '/form'],
+                                                    1 => ['text' => 'เริ่มทำแล้ว', 'color' => 'text-red-600', 'btn' => 'สร้างต่อ', 'url' => '/form'],
+                                                    2 => ['text' => 'อยู่ระหว่างการสร้าง', 'color' => 'text-amber-600', 'btn' => 'แก้ไข', 'url' => '/editdoc'],
+                                                    3 => ['text' => 'เสร็จสมบูรณ์', 'color' => 'text-green-600', 'btn' => 'ตรวจสอบ', 'url' => '/editdoc'],
+                                                    default => ['text' => '-', 'color' => 'text-slate-grey', 'btn' => '', 'url' => '#']
                                                 };
 
                                                 $displayYear = ($item->year < 2400) ? $item->year + 543 : $item->year;
 
                                                 $url = url($statusConfig['url']) . '?' . http_build_query([
                                                     'CC_id' => $item->CC_id,
-                                                    'year' => $displayYear, // ใช้ปีที่แปลงแล้ว (หรือปีจาก DB)
+                                                    'year' => $displayYear,
                                                     'term' => $item->term,
                                                     'TQF' => $item->TQF
                                                 ]);
                                             @endphp
 
-                                            <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-gray-50 p-3 rounded-md border border-gray-100 hover:shadow-sm transition">
-                                                <div class="flex-1 mb-2 sm:mb-0">
-                                                    <div class="flex items-center gap-2">
-                                                        <span class="font-bold text-gray-800">มคอ.{{ $item->TQF }}</span>
-                                                        <span class="text-xs {{ $statusConfig['color'] }} border px-2 py-0.5 rounded-full bg-white">
+                                            <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-pale-sky/10 p-4 rounded-xl border border-pale-sky hover:border-sky-surge/50 hover:shadow-md transition-all duration-200">
+                                                <div class="flex-1 mb-3 sm:mb-0">
+                                                    <div class="flex items-center gap-3">
+                                                        <span class="font-bold text-deep-navy text-lg">มคอ.{{ $item->TQF }}</span>
+                                                        <span class="text-xs font-bold {{ $statusConfig['color'] }} border border-pale-sky px-2.5 py-1 rounded-full bg-pure-white shadow-sm">
                                                             {{ $statusConfig['text'] }}
                                                         </span>
-                                                    </div>                                     
+                                                    </div>                                      
                                                 </div>
                                                 <div>
-                                                    <a href="{{ $url }}" class="inline-block text-sm bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-blue-600 hover:border-blue-300 px-4 py-2 rounded-md transition shadow-sm">
+                                                    <a href="{{ $url }}" class="inline-flex items-center justify-center text-sm font-bold bg-[#035AA6]/50 hover:bg-[#6CBAD9] border border-cloud-blue text-white hover:text-pure-white hover:border-sky-surge px-5 py-2.5 rounded-lg transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-baltic-blue/30 w-full sm:w-auto">
                                                         {{ $statusConfig['btn'] }}
                                                     </a>
                                                 </div>
@@ -122,13 +116,14 @@
                         </div>
                     </div>
                 @empty
-                    <div class="text-center py-10">
-                        <div class="text-gray-400 mb-2">
-                            <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                    <div class="text-center py-16">
+                        <div class="text-pale-sky mb-4">
+                            <svg class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                         </div>
-                        <p class="text-gray-500 text-lg">
-                            ไม่พบรายวิชาในปีการศึกษา {{ request('year', date('Y') + 543) }}
+                        <p class="text-slate-grey text-lg font-medium">
+                            ไม่พบรายวิชาในปีการศึกษา <span class="text-deep-navy font-bold">{{ request('year', date('Y') + 543) }}</span>
                         </p>
+                        <p class="text-sm text-slate-grey/70 mt-2">กรุณาเลือกปีการศึกษาอื่น หรือติดต่อผู้ดูแลระบบ</p>
                     </div>
                 @endforelse
             </div>

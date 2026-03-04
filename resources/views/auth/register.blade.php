@@ -10,7 +10,7 @@
   @endif
 
   <style>
-    :root { --bg: #ffffffff; --card: #ffffffcc; --text: #000000ff; --muted: #9b9b9bff; --primary: #6366f1; --primary-hover: #4f46e5; --ring: #22d3ee; --danger: #ef4444; }
+    :root { --bg: #ffffffff; --card: #ffffffcc; --text: #000000ff; --muted: #9b9b9bff; --primary: #6366f1; --primary-hover: #C2E5F2; --ring: #035AA6; --danger: #ef4444; }
     * { box-sizing: border-box; }
     html, body { height: 100%; }
     body { margin: 0; color: var(--text); display: grid; place-items: center; padding: 2rem; }
@@ -97,7 +97,7 @@
       </div>
       <div id="confirmErr" class="error">รหัสผ่านไม่ตรงกัน</div>
 
-      <button class="btn" type="submit">สมัครสมาชิก</button>
+      <button class="btn" style="background: linear-gradient(to right, #6CBAD9, #035AA6); cursor: pointer;" type="submit">สมัครสมาชิก</button>
       <p style="text-align:center; margin-top:10px;">
         <a href="login" class="muted-link">มีบัญชีแล้ว? เข้าสู่ระบบ</a>
       </p>

@@ -58,7 +58,7 @@
         @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/preview-docx.js'])
     @endif
 </head>
-<body>
+<body class="font-sans antialiased">
 
     <div class="a4-paper">
         <div class="text-center font-bold text-2xl mb-6">

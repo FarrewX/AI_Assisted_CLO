@@ -15,7 +15,7 @@
         body { font-family: 'Sarabun', sans-serif; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
+<body class="text-gray-800">
 
     @include('component.navbar') 
 
@@ -23,8 +23,8 @@
         
         <div class="w-full max-w-2xl">
             <div class="mb-8 text-center sm:text-left">
-                <h1 class="text-3xl font-bold text-gray-900">แก้ไขโปรไฟล์</h1>
-                <p class="mt-2 text-sm text-gray-600">จัดการข้อมูลส่วนตัวของคุณ</p>
+                <h1 class="text-3xl font-bold text-deep-navy">แก้ไขโปรไฟล์</h1>
+                <p class="mt-2 text-sm text-sky-surge">จัดการข้อมูลส่วนตัวของคุณ</p>
             </div>
 
             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
@@ -143,7 +143,7 @@
                         
                         <button type="submit" 
                             :disabled="!hasChanged()"
-                            :class="{ 'opacity-50 cursor-not-allowed bg-gray-400': !hasChanged(), 'bg-blue-600 hover:bg-blue-700 shadow-sm': hasChanged() }"
+                            :class="{ 'opacity-50 cursor-not-allowed bg-gray-400': !hasChanged(), 'bg-[#035AA6] hover:bg-[#6CBAD9] shadow-sm': hasChanged() }"
                             class="inline-flex justify-center px-6 py-2.5 border border-transparent text-sm font-medium rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
                             บันทึกการเปลี่ยนแปลง
                         </button>

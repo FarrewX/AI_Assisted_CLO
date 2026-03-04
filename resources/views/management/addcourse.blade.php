@@ -10,19 +10,18 @@
         @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/management/addcourse.js'])
     @endif
 </head>
-<body class="bg-gray-50">
+<body class="font-sans antialiased">
     @include('component.navbar')
 
     <div class="container mx-auto p-4 pt-24 max-w-7xl">
-        
         <div class="mb-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div class="flex items-center gap-4">
-                <div class="bg-indigo-100 p-3 rounded-xl text-indigo-600">
+                <div class="bg-indigo-100 p-3 rounded-xl text-baltic-blue">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
                 </div>
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900 tracking-tight">จัดการรายวิชาในหลักสูตร</h1>
-                    <p class="text-sm text-gray-500 mt-1">Curriculum Courses Management</p>
+                    <h1 class="text-2xl font-bold text-deep-navy tracking-tight">จัดการรายวิชาในหลักสูตร</h1>
+                    <p class="text-sm text-sky-surge mt-1">Courses Management</p>
                 </div>
             </div>
 
@@ -57,7 +56,7 @@
                 <button id="btn-add" 
                     data-route-create="{{ route('addcourse.create') }}"
                     data-curriculum-id="{{ $selectedCurriculumId ?? '' }}"
-                    class="w-full lg:w-auto bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl shadow-sm flex items-center justify-center gap-2 transition font-semibold text-sm whitespace-nowrap">
+                    class="w-full lg:w-auto bg-[#035AA6] hover:bg-[#6CBAD9] text-white px-5 py-2.5 rounded-xl shadow-sm flex items-center justify-center gap-2 transition font-semibold text-sm whitespace-nowrap">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
                     เพิ่มรายวิชาใหม่
                 </button>
@@ -191,7 +190,7 @@
 
                 <div class="flex justify-end gap-2 pt-2">
                     <button type="button" id="btn-close-modal" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg">ยกเลิก</button>
-                    <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow">บันทึกข้อมูล</button>
+                    <button type="submit" class="px-4 py-2 bg-[#035AA6] hover:bg-[#6CBAD9] text-white rounded-lg shadow">บันทึกข้อมูล</button>
                 </div>
             </form>
         </div>
@@ -263,7 +262,7 @@
             </div>
 
             <div class="mt-4 flex justify-end">
-                <button onclick="document.getElementById('import-result-modal').remove()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg shadow transition">
+                <button onclick="document.getElementById('import-result-modal').remove()" class="bg-[#035AA6] hover:bg-[#6CBAD9] text-white px-6 py-2 rounded-lg shadow transition">
                     ตกลง
                 </button>
             </div>

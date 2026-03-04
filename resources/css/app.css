@@ -7,7 +7,24 @@
 
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+        'Segoe UI Symbol', 'Noto Color Emoji';    
+
+    --color-pure-white: #fcfcfc; /* ขาวสว่าง (ใช้กับพื้นหลังการ์ด ลดความจ้าของจอ) */
+    --color-deep-navy: #012840;  /* กรมท่าเข้มจัด (ใช้กับหัวข้อและข้อความหลัก) */
+    --color-baltic-blue: #035AA6; /* น้ำเงิน (ใช้กับปุ่มหลักและไอคอนสำคัญ) */
+    --color-sky-surge: #6CBAD9;   /* สีฟ้าสว่าง */
+    --color-pale-sky: #C2E5F2; /* ฟ้าอ่อน (ใช้กับเส้นขอบและพื้นหลังเวลา Hover) */
+    --color-amethyst-smoke: #C285BD; /* ม่วงอ่อน (ใช้กับเส้นขอบและพื้นหลังเวลา Hover) */
+}
+
+@layer base {
+    body {
+        background-color: var(--color-pure-white);
+        color: var(--color-deep-navy);
+    }
+    h1, h2, h3, h4, h5, h6 {
+        color: var(--color-deep-navy);
+    }
 }
 
 /* ทำ preview ให้มีขนาด A4 บนหน้าจอ */
@@ -27,38 +44,27 @@
 }
 .download-btn { position: fixed; right: 24px; top: 24px; z-index: 50; }
 
-/* กำหนดขนาด A4 สำหรับ print / preview */
-        .a4 {
-            width: 210mm;      /* A4 width */
-            min-height: 297mm; /* A4 height */
-            padding: 20mm;
-            margin: 10mm auto;
-            background: white;
-            box-shadow: 0 0 5px rgba(0,0,0,0.1);
-            box-sizing: border-box;
-        }
+table.doc-table {
+    width: 100%;
+    border-collapse: collapse;
+}
 
-        table.doc-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
+table.doc-table td, table.doc-table th {
+    border: 1px solid #999;
+    padding: 6px;
+}
 
-        table.doc-table td, table.doc-table th {
-            border: 1px solid #999;
-            padding: 6px;
-        }
+table.doc-table th {
+    background-color: #f0f0f0;
+    text-align: center;
+}
 
-        table.doc-table th {
-            background-color: #f0f0f0;
-            text-align: center;
-        }
-
-        @media print {
-            body {
-                background: none;
-            }
-            .a4 {
-                box-shadow: none;
-                margin: 0;
-            }
-        }
+@media print {
+    body {
+        background: none;
+    }
+    .a4 {
+        box-shadow: none;
+        margin: 0;
+    }
+}

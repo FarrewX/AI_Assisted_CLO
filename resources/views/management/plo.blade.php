@@ -20,7 +20,7 @@
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body data-current-year="{{ $selectedYear ?? '' }}" class="bg-[#f8fafc] text-gray-800 font-sans antialiased min-h-screen">
+<body data-current-year="{{ $selectedYear ?? '' }}" class="text-gray-800 font-sans antialiased min-h-screen">
     @include('component.navbar')
     <div class="container mx-auto p-4 pt-24 max-w-6xl">
         <div class="mb-8 fixed top-23 left-5 flex gap-3 z-50">
@@ -34,12 +34,12 @@
 
         <div class="mb-8 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div class="flex items-center gap-4">
-                <div class="bg-indigo-100 p-3 rounded-xl text-indigo-600">
+                <div class="bg-indigo-100 p-3 rounded-xl text-baltic-blue">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-8 h-8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
                 </div>
                 <div>
-                    <h1 class="text-2xl font-bold text-gray-900 tracking-tight">จัดการข้อมูล PLOs</h1>
-                    <p class="text-sm text-gray-500 mt-1">Program Learning Outcomes</p>
+                    <h1 class="text-2xl font-bold textdeep-navy tracking-tight">จัดการข้อมูล PLOs</h1>
+                    <p class="text-sm text-sky-surge mt-1">Program Learning Outcomes</p>
                 </div>
             </div>
 
@@ -73,7 +73,7 @@
                 <div class="flex justify-between items-center mb-4 px-2">
                     <h2 class="text-lg font-bold text-gray-800">รายการ PLOs ปี {{ $selectedYear }}</h2>
                     <button id="add-plo-btn" type="button" 
-                        style="background: linear-gradient(to right, #22c55e, #10b981); cursor: pointer;"
+                        style="background: linear-gradient(to right, #6CBAD9, #035AA6); cursor: pointer;"
                         class="text-white px-5 py-2.5 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5 flex items-center gap-2 font-medium text-sm border-0">
                         
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-4 h-4">
@@ -119,9 +119,9 @@
                                     </td>
                                     <td class="px-6 py-4 text-center">
                                         @if($plo->specific_lo)
-                                            <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-blue-100 text-blue-700">Specific LO</span>
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-pale-sky text-baltic-blue">Specific LO</span>
                                         @else
-                                            <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-gray-100 text-gray-700">Generic LO</span>
+                                            <span class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-sky-surge text-white">Generic LO</span>
                                         @endif
                                     </td>
                                     <td class="px-6 py-4 text-center space-x-2 whitespace-nowrap">
@@ -244,7 +244,7 @@
 
                     <div class="flex justify-end gap-3 pt-8 mt-2">
                         <button id="add-plo-cancel" class="px-5 py-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-xl transition-colors">ยกเลิก</button>
-                        <button id="add-plo-save" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl shadow-md transition-colors flex items-center gap-2">
+                        <button id="add-plo-save" class="px-5 py-2.5 bg-[#035AA6] hover:bg-[#6CBAD9] text-white font-medium rounded-xl shadow-md transition-colors flex items-center gap-2">
                             บันทึกข้อมูล
                         </button>
                     </div>
@@ -315,7 +315,7 @@
 
                     <div class="flex justify-end gap-3 pt-8 mt-2">
                         <button id="edit-plo-cancel" class="px-5 py-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-xl transition-colors">ยกเลิก</button>
-                        <button id="edit-plo-save" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-medium rounded-xl shadow-md transition-colors flex items-center gap-2">
+                        <button id="edit-plo-save" class="px-5 py-2.5 bg-[#035AA6] hover:bg-[#6CBAD9] text-white font-medium rounded-xl shadow-md transition-colors flex items-center gap-2">
                             บันทึกการแก้ไข
                         </button>
                     </div>

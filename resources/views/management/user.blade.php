@@ -18,24 +18,26 @@
         body { font-family: 'Sarabun', sans-serif; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800"> 
+<body class="font-sans antialiased">
     @include('component.navbar')
 
     <div class="max-w-7xl mx-auto pt-24 pb-12 px-4 sm:px-6 lg:px-8"> 
-        
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-            <div>
-                <h1 class="text-3xl font-bold text-slate-800 flex items-center gap-3">
-                    <div class="p-2 bg-blue-100 rounded-lg text-blue-600">
+            <div class="flex items-center gap-4">
+                <div class="bg-indigo-100 p-3 rounded-xl text-baltic-blue">
+                    <h1 class="text-3xl font-bold text-baltic-blue flex items-center gap-3">
                         <i class="fa-solid fa-users-gear"></i>
-                    </div>
-                    จัดการผู้ใช้งาน (User Management)
-                </h1>
-                <p class="text-slate-500 mt-2 ml-1">ดูรายชื่อ เปลี่ยนบทบาท และจัดการสถานะผู้ใช้งานในระบบ</p>
+                    </h1>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-deep-navy tracking-tight"> จัดการผู้ใช้งาน (User Management)</h1>
+                    <p class="text-sky-surge mt-2 ml-1">ดูรายชื่อ เปลี่ยนบทบาท และจัดการสถานะผู้ใช้งานในระบบ</p>
+                </div>
+
             </div>
             
             <button id="btn-add-user" 
-               class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-semibold shadow-md transition-all duration-200">
+               class="inline-flex items-center gap-2 bg-[#035AA6] hover:bg-[#6CBAD9] text-white px-5 py-2.5 rounded-xl font-semibold shadow-md transition-all duration-200">
                 <i class="fa-solid fa-user-plus"></i>
                 <span>เพิ่มผู้ใช้งาน</span>
             </button>
@@ -205,7 +207,7 @@
 
                 <div class="flex gap-3 mt-6">
                     <button type="button" class="btn-close-modal flex-1 bg-white border border-slate-300 text-slate-700 py-2.5 rounded-xl font-medium hover:bg-slate-50 transition">ยกเลิก</button>
-                    <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl font-medium shadow-md transition">บันทึกการเปลี่ยนแปลง</button>
+                    <button type="submit" class="flex-1 bg-[#035AA6] hover:bg-[#6CBAD9] text-white py-2.5 rounded-xl font-medium shadow-md transition">บันทึกการเปลี่ยนแปลง</button>
                 </div>
             </form>
         </div>
@@ -263,7 +265,7 @@
 
                 <div class="flex gap-3 mt-6 pt-4 border-t border-slate-100">
                     <button type="button" class="btn-close-add-modal flex-1 bg-white border border-slate-300 text-slate-700 py-2.5 rounded-xl font-medium hover:bg-slate-50 transition">ยกเลิก</button>
-                    <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl font-medium shadow-md transition">บันทึกข้อมูล</button>
+                    <button type="submit" class="flex-1 bg-[#035AA6] hover:bg-[#6CBAD9] text-white py-2.5 rounded-xl font-medium shadow-md transition">บันทึกข้อมูล</button>
                 </div>
             </form>
         </div>

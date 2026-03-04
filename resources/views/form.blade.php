@@ -21,7 +21,7 @@
     }
   </style>
 </head>
-<body>
+<body class="font-sans antialiased">
   <div x-data="{ ploOpen: false }">
     <div class="fixed top-4 left-4 flex gap-3 z-50">
       <a href="/" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-900 rounded-md shadow transform transition-all duration-200 ease-in-out hover:-translate-y-0.5">
@@ -31,7 +31,8 @@
           หน้าหลัก
       </a>
       <button @click="ploOpen = true"
-        class="inline-flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white font-semibold rounded-lg shadow-md hover:bg-green-700 hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+        style="background: linear-gradient(to right, #6CBAD9, #035AA6); cursor: pointer;"
+        class="inline-flex items-center gap-2 px-5 py-2.5 bg-[#035AA6] hover:bg-[#6CBAD9] text-white font-semibold rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-baltic-blue focus:ring-offset-2">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
               <path fill-rule="evenodd" d="M2.625 6.75a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0zm4.875 0A.75.75 0 018.25 6h12a.75.75 0 010 1.5h-12a.75.75 0 01-.75-.75zM2.625 12a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0zm4.875 0A.75.75 0 018.25 11.25h12a.75.75 0 010 1.5h-12A.75.75 0 017.5 12.75zM2.625 17.25a1.125 1.125 0 112.25 0 1.125 1.125 0 01-2.25 0zm4.875 0a.75.75 0 01.75-.75h12a.75.75 0 010 1.5h-12a.75.75 0 01-.75-.75z" clip-rule="evenodd" />
           </svg>
@@ -50,12 +51,12 @@
      x-transition:leave-end="-translate-x-full">
      
     <div class="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-200 shadow-sm">
-        <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 text-green-600">
+        <button class="text-xl font-bold text-gray-800 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 text-baltic-blue">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 6.75h12M8.25 12h12m-12 5.25h12M3.75 6.75h.007v.008H3.75V6.75zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zM3.75 12h.007v.008H3.75V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm-.375 5.25h.007v.008H3.75v-.008zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
             </svg>
             รายการ PLOs
-        </h2>
+        </button>
         <button @click="ploOpen = false" class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors focus:outline-none">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -66,14 +67,14 @@
     <div class="flex-1 overflow-y-auto p-4 space-y-4">
         @foreach($plos as $plo)
             <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-                <div class="inline-block px-2.5 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-md mb-2">
+                <div class="inline-block px-2.5 py-1 bg-pale-sky text-baltic-blue text-xs font-bold rounded-md mb-2">
                     PLO {{ $plo->plo }}
                 </div>
                 <p class="text-sm text-gray-600 leading-relaxed">{{ $plo->description }}</p>
             </div>
         @endforeach
     </div>
-</div>
+  </div>
 
   <div id="popup-modal" class="fixed inset-0 flex items-center justify-center z-[60] hidden">
     <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"></div>
@@ -96,7 +97,7 @@
   </div>
 
   <div class="flex items-center justify-center min-h-screen pt-8">
-    <div class="bg-white p-6 rounded-xl shadow-md w-[600px] relative">
+    <div class="bg-white p-6 rounded-xl shadow-md w-full max-w-[600px] relative">
       <h2 class="text-center text-[30px] font-bold text-gray-800 mb-4">ELO_Generate</h2>
 
       <form id="eloForm" method="POST" class="space-y-4">
@@ -140,7 +141,7 @@
             </div>
 
             <div id="selectPloboxes">
-              <label class="block font-semibold text-gray-700 mb-2">เลือก PLO ที่เกี่ยวข้อง :</label>
+              <label class="block font-semibold mb-2">เลือก PLO ที่เกี่ยวข้อง :</label>
               <div class="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto p-3 border rounded-md bg-gray-50">
                 @if(isset($plos) && count($plos) > 0)
                     @foreach($plos as $selectPlo)
@@ -158,7 +159,7 @@
         </div>
 
         <button type="button" onclick="openPreview()"
-          class="w-full mt-4 inline-flex items-center justify-center whitespace-nowrap bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2.5 rounded-md shadow-md hover:shadow-lg transition">
+          class="w-full mt-4 inline-flex items-center justify-center whitespace-nowrap bg-[#035AA6] hover:bg-[#6CBAD9] text-white font-bold px-4 py-2.5 rounded-md shadow-md hover:shadow-lg transition">
           Generate AI
         </button>
       </form>
@@ -178,18 +179,18 @@
                 ยกเลิก
             </button>
             <button onclick="submitForm()"
-                    class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                    class="px-5 py-2.5 bg-[#035AA6] hover:bg-[#6CBAD9] text-white font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
                 ยืนยันและสร้าง
             </button>
         </div>
     </div>
 </div>
 
-  <div id="loadingPopup" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center z-50 backdrop-blur-sm">
+  <div id="loadingPopup" class="hidden fixed inset-0 bg-pure-white bg-opacity-60 flex items-center justify-center z-50 backdrop-blur-sm">
     <div class="bg-white rounded-xl shadow-2xl p-8 flex flex-col items-center">
       <div class="loader border-4 border-blue-200 border-t-blue-600 rounded-full w-12 h-12 animate-spin mb-4"></div>
-      <p class="text-gray-800 font-bold text-lg">กำลังประมวลผลด้วย AI...</p>
-      <p class="text-gray-500 text-sm mt-1">กรุณารอสักครู่ ห้ามปิดหน้านี้</p>
+      <p class="text-baltic-blue font-bold text-lg">กำลังประมวลผลด้วย AI...</p>
+      <p class="text-baltic-blue text-sm mt-1">กรุณารอสักครู่ ห้ามปิดหน้านี้</p>
     </div>
   </div>
 </div>

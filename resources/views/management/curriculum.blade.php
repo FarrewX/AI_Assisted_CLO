@@ -10,20 +10,32 @@
         @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/management/curriculum.js'])
     @endif
 </head>
-<body class="bg-gray-50">
+<body class="font-sans antialiased">
     @include('component.navbar')
 
     <div class="container mx-auto p-4 pt-20">
-        <div class="flex justify-between items-center mb-6">
-            <h1 class="text-2xl font-bold text-gray-800">จัดการหลักสูตร (Curriculum)</h1>
+        <div class="mb-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div class="flex items-center gap-4">    
+                <div class="bg-indigo-100 p-3 rounded-xl text-baltic-blue">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-extrabold text-deep-navy tracking-tight">จัดการหลักสูตร (Curriculum)</h1>
+                    <p class="text-sm text-sky-surge mt-1">Curriculum Management</p>
+                </div>
+            </div>
+            
             <button id="btn-add" 
                 data-route-store="{{ route('curriculum.store') }}"
-                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg shadow flex items-center gap-2 transition transform hover:-translate-y-0.5">
+                class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#035AA6] hover:bg-[#6CBAD9] text-white text-sm font-bold rounded-xl shadow-lg shadow-[#035AA6]/30 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 focus:outline-none focus:ring-4 focus:ring-[#6CBAD9]/40 border border-transparent">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
                 </svg>
                 เพิ่มหลักสูตรใหม่
             </button>
+            
             @if(session('success') || session('error'))
             <div id="toast-notification" class="fixed bottom-5 right-5 z-50 ...">
                 </div>
@@ -112,7 +124,7 @@
                                 @if($isTrashed)
                                     <span class="text-red-400 italic font-normal text-xs uppercase tracking-wider">ยกเลิกการใช้งาน</span>
                                 @else
-                                    <button class="btn-sub-settings relative text-indigo-500 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-3 py-1 rounded-md transition"
+                                    <button class="btn-sub-settings relative text-[#035AA6] hover:text-[#6CBAD9] bg-indigo-50 hover:bg-indigo-100 px-3 py-1 rounded-md transition"
                                             title="จัดการข้อมูลย่อยของหลักสูตร"
                                             data-id="{{ $cur->id }}"
                                             data-year="{{ $cur->curriculum_year }}" 
@@ -165,8 +177,8 @@
         <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-lg transform transition-all scale-100">
             <div class="flex justify-between items-start border-b pb-4 mb-6">
                 <div>
-                    <h2 class="text-xl font-bold text-gray-800">จัดการข้อมูลหลักสูตร <span id="modal-curriculum-year-text"></span></h2>
-                    <p id="sub-settings-title" class="text-sm text-blue-600 font-medium mt-1"></p>
+                    <h2 class="text-xl font-bold text-deep-navy">จัดการข้อมูลหลักสูตร <span id="modal-curriculum-year-text"></span></h2>
+                    <p id="sub-settings-title" class="text-sm text-sky-surge font-medium mt-1"></p>
                 </div>
                 <button type="button" id="btn-close-sub-settings" class="text-gray-400 hover:text-red-500 transition bg-gray-100 rounded-full p-1">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -174,45 +186,45 @@
             </div>
             
             <div class="space-y-4">
-                <a href="#" id="link-manage-philosophy" class="group block p-4 border border-gray-200 rounded-xl hover:border-blue-500 hover:shadow-md transition bg-white">
+                <a href="#" id="link-manage-philosophy" class="group block p-4 border border-gray-200 rounded-xl hover:border-[#035AA6] hover:shadow-md transition bg-white">
                     <div class="flex justify-between items-center">
                         <div class="flex items-center gap-3">
-                            <div class="bg-blue-100 text-blue-600 p-2 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition">
+                            <div class="bg-sky-surge text-deep-navy p-2 rounded-lg group-hover:bg-baltic-blue group-hover:text-white transition">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
                             </div>
                             <div>
                                 <h3 class="font-bold text-gray-800">ปรัชญาหลักสูตร (Philosophy)</h3>
-                                <p class="text-xs text-gray-500">เพิ่ม/ลบ/แก้ไข ปรัชญาหลักสูตร</p>
+                                <p class="text-xs text-sky-surge">เพิ่ม/ลบ/แก้ไข ปรัชญาหลักสูตร</p>
                             </div>
                         </div>
                         <div id="status-philosophy"></div>
                     </div>
                 </a>
 
-                <a href="#" id="link-manage-plo" class="group block p-4 border border-gray-200 rounded-xl hover:border-blue-500 hover:shadow-md transition bg-white">
+                <a href="#" id="link-manage-plo" class="group block p-4 border border-gray-200 rounded-xl hover:border-[#035AA6] hover:shadow-md transition bg-white">
                     <div class="flex justify-between items-center">
                         <div class="flex items-center gap-3">
-                            <div class="bg-blue-100 text-blue-600 p-2 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition">
+                            <div class="bg-sky-surge text-deep-navy p-2 rounded-lg group-hover:bg-baltic-blue group-hover:text-white transition">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
                             </div>
                             <div>
                                 <h3 class="font-bold text-gray-800">ผลลัพธ์การเรียนรู้ (PLOs)</h3>
-                                <p class="text-xs text-gray-500">เพิ่ม/ลบ/แก้ไข Program Learning Outcomes</p>
+                                <p class="text-xs text-sky-surge">เพิ่ม/ลบ/แก้ไข Program Learning Outcomes</p>
                             </div>
                         </div>
                         <div id="status-plo"></div>
                     </div>
                 </a>
 
-                <a href="#" id="link-manage-llls" class="group block p-4 border border-gray-200 rounded-xl hover:border-blue-500 hover:shadow-md transition bg-white">
+                <a href="#" id="link-manage-llls" class="group block p-4 border border-gray-200 rounded-xl hover:border-[#035AA6] hover:shadow-md transition bg-white">
                     <div class="flex justify-between items-center">
                         <div class="flex items-center gap-3">
-                            <div class="bg-blue-100 text-blue-600 p-2 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition">
+                            <div class="bg-sky-surge text-deep-navy p-2 rounded-lg group-hover:bg-baltic-blue group-hover:text-white transition">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                             </div>
                             <div>
                                 <h3 class="font-bold text-gray-800">ทักษะการเรียนรู้ตลอดชีวิต (LLLs)</h3>
-                                <p class="text-xs text-gray-500">เพิ่ม/ลบ/แก้ไข Lifelong Learning Skills</p>
+                                <p class="text-xs text-sky-surge">เพิ่ม/ลบ/แก้ไข Lifelong Learning Skills</p>
                             </div>
                         </div>
                         <div id="status-llls"></div>
@@ -276,7 +288,7 @@
                     <button type="button" id="btn-close-modal" class="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 focus:ring-4 focus:ring-gray-100 transition">
                         ยกเลิก
                     </button>
-                    <button type="submit" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg focus:ring-4 focus:ring-blue-300 transition">
+                    <button type="submit" class="px-5 py-2.5 bg-[#035AA6] hover:bg-[#6CBAD9] text-white font-medium rounded-lg shadow-md hover:shadow-lg focus:ring-4 focus:ring-blue-300 transition">
                         บันทึกข้อมูล
                     </button>
                 </div>

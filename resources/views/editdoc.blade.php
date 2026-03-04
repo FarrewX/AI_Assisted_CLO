@@ -23,7 +23,7 @@
         @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/editdoc.js'])
     @endif
 </head>
-<body>
+<body class="font-sans antialiased">
     <div id="tqf-form-container" class="flex justify-center py-6 bg-gray-100 font-sans text-bases">
         <div class="fixed top-4 left-5 flex gap-3 z-50">
             <a href="/" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-900 rounded-md shadow transform transition-all duration-200 ease-in-out hover:-translate-y-0.5">
@@ -42,6 +42,7 @@
         </div>
         <div class="fixed top-4 right-4 flex gap-3 z-50">
             <button onclick="openPreviewModal()" 
+                    style="background: linear-gradient(to right, #6CBAD9, #035AA6); cursor: pointer;"
                     class="inline-block px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white font-medium rounded-md shadow-lg transition-all flex items-center  transform transition-all duration-200 ease-in-out hover:-translate-y-0.5">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -79,7 +80,8 @@
                     </button>
                     
                     <a href="/export-docx?CC_id={{ request('CC_id') ?? $data->CC_id ?? '' }}&year={{ request('year') ?? $data->year ?? '' }}&term={{ request('term') ?? $data->term ?? '' }}&TQF={{ request('TQF') ?: ($data->TQF ?: '3') }}" 
-                    class="px-5 py-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-md shadow transition-colors flex items-center"
+                    style="background: linear-gradient(to right, #6CBAD9, #035AA6); cursor: pointer;"
+                    class="px-5 py-2 text-white font-medium rounded-md shadow transition-colors flex items-center"
                     onclick="closePreviewModal()">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />

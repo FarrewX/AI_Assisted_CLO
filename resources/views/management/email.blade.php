@@ -8,7 +8,7 @@
         <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
         @vite(['resources/js/app.js', 'resources/js/management/email.js'])
     </head>
-    <body class="bg-gray-50 font-sans text-gray-900 antialiased">
+    <body class="font-sans text-gray-900 antialiased">
         @include('component.navbar')
 
         <div class="min-h-screen flex flex-col justify-center items-center px-4 sm:px-6 py-12 pt-24 sm:pt-28">
@@ -21,8 +21,8 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
                     </div>
-                    <h2 class="text-2xl font-bold tracking-tight">ตั้งค่า Gmail Sender</h2>
-                    <p class="text-blue-100 text-sm mt-1">กำหนดอีเมลสำหรับส่งการแจ้งเตือนในระบบ</p>
+                    <h2 class="text-2xl font-bold tracking-tight text-deep-navy">ตั้งค่า Gmail Sender</h2>
+                    <p class="text-sky-surge text-sm mt-1">กำหนดอีเมลสำหรับส่งการแจ้งเตือนในระบบ</p>
                 </div>
 
                 <div class="p-6">
@@ -30,7 +30,7 @@
                         @csrf
 
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2 mt-1">Gmail Address</label>
+                            <label class="block text-sm font-semibold text-deep-navy mb-2 mt-1">Gmail Address</label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -49,10 +49,10 @@
 
                         <div class="relative" x-data="{ showTooltip: false }">
                             <div class="flex items-center justify-between mb-2">
-                                <label class="block text-sm font-semibold text-gray-700">App Password</label>
+                                <label class="block text-sm font-semibold text-deep-navy">App Password</label>
                                 <button type="button" 
                                     @click="showTooltip = !showTooltip"
-                                    class="text-blue-600 hover:text-blue-800 text-xs font-medium flex items-center gap-1 focus:outline-none">
+                                    class="text-[#035AA6] hover:text-[#6CBAD9] text-xs font-medium flex items-center gap-1 focus:outline-none">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                                     </svg>
@@ -111,7 +111,9 @@
                         </div>
 
                         <div class="pt-2">
-                            <button type="submit" class="w-full flex justify-center items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
+                            <button type="submit"
+                            style="background: linear-gradient(to right, #6CBAD9, #035AA6); cursor: pointer;"
+                            class="w-full flex justify-center items-center gap-2 text-white font-bold py-3 px-4 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
                                 </svg>
