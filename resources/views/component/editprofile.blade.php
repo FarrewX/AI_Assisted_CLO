@@ -15,19 +15,18 @@
         body { font-family: 'Sarabun', sans-serif; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800">
-
+<body class="font-sans antialiased">
     @include('component.navbar') 
 
     <div class="min-h-screen pt-24 pb-12 px-4 sm:px-6 lg:px-8 flex justify-center">
         
         <div class="w-full max-w-2xl">
             <div class="mb-8 text-center sm:text-left">
-                <h1 class="text-3xl font-bold text-gray-900">แก้ไขโปรไฟล์</h1>
-                <p class="mt-2 text-sm text-gray-600">จัดการข้อมูลส่วนตัวของคุณ</p>
+                <h1 class="text-3xl font-bold text-deep-navy">แก้ไขโปรไฟล์</h1>
+                <p class="mt-2 text-sm text-slate-grey">จัดการข้อมูลส่วนตัวของคุณ</p>
             </div>
 
-            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div class="bg-pure-white rounded-2xl shadow-sm border border-cloud-blue overflow-hidden">
                 
                 @if(session('success'))
                     <div class="bg-green-50 border-l-4 border-green-500 p-4 m-6 mb-0 rounded-r-md">
@@ -61,12 +60,12 @@
                     @csrf
                     @method('PUT')
 
-                    <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6 pb-8 border-b border-gray-100">
+                    <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6 pb-8 border-b border-cloud-blue">
                         <div class="relative group">
-                            <div class="h-28 w-28 rounded-full overflow-hidden border-4 border-white shadow-md bg-gray-100 flex items-center justify-center relative cursor-pointer"
+                            <div class="h-28 w-28 rounded-full overflow-hidden border-4 border-pure-white shadow-md bg-cloud-blue/30 flex items-center justify-center relative cursor-pointer"
                                 @click="$refs.photo.click()">
                                 
-                                <div x-show="!photoPreview" class="w-full h-full flex items-center justify-center bg-blue-100 text-blue-600 text-4xl font-bold">
+                                <div x-show="!photoPreview" class="w-full h-full flex items-center justify-center bg-cloud-blue/50 text-royal-blue text-4xl font-bold">
                                     @if(Auth::user()->profile)
                                         <img src="{{ asset('storage/' . Auth::user()->profile) }}" class="h-full w-full object-cover">
                                     @else
@@ -76,8 +75,8 @@
                                 
                                 <img x-show="photoPreview" :src="photoPreview" class="h-full w-full object-cover" style="display: none;">
                                 
-                                <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <i class="fa-solid fa-camera text-white text-xl"></i>
+                                <div class="absolute inset-0 bg-deep-navy/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <i class="fa-solid fa-camera text-pure-white text-xl"></i>
                                 </div>
                             </div>
 
@@ -95,56 +94,56 @@
                         </div>
 
                         <div class="text-center sm:text-left flex-1">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-1">รูปโปรไฟล์</h3>
-                            <p class="text-sm text-gray-500 mb-4">รองรับไฟล์ JPG, PNG, GIF ขนาดไม่เกิน 2MB</p>
+                            <h3 class="text-lg font-semibold text-deep-navy mb-1">รูปโปรไฟล์</h3>
+                            <p class="text-sm text-slate-grey mb-4">รองรับไฟล์ JPG, PNG, GIF ขนาดไม่เกิน 2MB</p>
                             
                             <button type="button" @click="$refs.photo.click()" 
-                                class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-                                <i class="fa-solid fa-upload mr-2"></i> อัปโหลดรูปใหม่
+                                class="inline-flex items-center px-4 py-2 border border-cloud-blue shadow-sm text-sm font-medium rounded-lg text-deep-navy bg-pure-white hover:bg-cloud-blue/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-royal-blue transition-colors">
+                                <i class="fa-solid fa-upload mr-2 text-royal-blue"></i> อัปโหลดรูปใหม่
                             </button>
                         </div>
                     </div>
 
                     <div class="space-y-4">
-                        <h3 class="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                            <i class="fa-regular fa-id-card text-gray-400"></i> ข้อมูลส่วนตัว
+                        <h3 class="text-lg font-semibold text-deep-navy flex items-center gap-2">
+                            <i class="fa-regular fa-id-card text-royal-blue"></i> ข้อมูลส่วนตัว
                         </h3>
                         
                         <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-6">
                             <div class="sm:col-span-6">
-                                <label for="name" class="block text-sm font-medium text-gray-700 mb-1">ชื่อ-นามสกุล</label>
+                                <label for="name" class="block text-sm font-medium text-deep-navy mb-1">ชื่อ-นามสกุล</label>
                                 <input type="text" name="name" id="name" x-model="name"
-                                    class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2.5 px-3 border transition-colors">
-                                @error('name') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                    class="block w-full rounded-lg border-cloud-blue text-deep-navy shadow-sm focus:border-royal-blue focus:ring-royal-blue/30 sm:text-sm py-2.5 px-3 border transition-colors">
+                                @error('name') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
                             </div>
 
                             <div class="sm:col-span-6">
-                                <label for="email" class="block text-sm font-medium text-gray-700 mb-1">อีเมล</label>
-                                <i class="text-xs text-gray-500">(ใช้สำหรับเข้าสู่ระบบ และ รับการแจ้งเตือน)</i>
+                                <label for="email" class="block text-sm font-medium text-deep-navy mb-1">อีเมล</label>
+                                <i class="text-xs text-slate-grey">(ใช้สำหรับเข้าสู่ระบบ และ รับการแจ้งเตือน)</i>
                                 <input type="email" name="email" id="email" x-model="email"
-                                    class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm py-2.5 px-3 border transition-colors">
-                                @error('email') <p class="mt-1 text-sm text-red-600">{{ $message }}</p> @enderror
+                                    class="block w-full mt-1 rounded-lg border-cloud-blue text-deep-navy shadow-sm focus:border-royal-blue focus:ring-royal-blue/30 sm:text-sm py-2.5 px-3 border transition-colors">
+                                @error('email') <p class="mt-1 text-sm text-red-500">{{ $message }}</p> @enderror
                             </div>
                             
                             <div class="sm:col-span-6">
-                                <label class="block text-sm font-medium text-gray-500 mb-1">ชื่อผู้ใช้</label>
-                                <i class="text-xs text-gray-500">(ชื่อผู้ใช้ไม่สามารถแก้ไขได้)</i>
-                                <div class="block w-full rounded-lg border border-gray-200 bg-gray-50 text-gray-500 sm:text-sm py-2.5 px-3 select-none">
+                                <label class="block text-sm font-medium text-slate-grey mb-1">ชื่อผู้ใช้</label>
+                                <i class="text-xs text-slate-grey/80">(ชื่อผู้ใช้ไม่สามารถแก้ไขได้)</i>
+                                <div class="block w-full mt-1 rounded-lg border border-cloud-blue bg-cloud-blue/20 text-slate-grey sm:text-sm py-2.5 px-3 select-none">
                                     {{ Auth::user()->username }}
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div class="pt-6 border-t border-gray-100 flex items-center justify-end gap-3">
-                        <a href="{{ url('/') }}" class="px-4 py-2.5 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none transition-colors">
+                    <div class="pt-6 border-t border-cloud-blue flex items-center justify-end gap-3">
+                        <a href="{{ url('/') }}" class="px-4 py-2.5 border border-cloud-blue shadow-sm text-sm font-medium rounded-lg text-deep-navy bg-pure-white hover:bg-cloud-blue/20 focus:outline-none transition-colors">
                             ยกเลิก
                         </a>
                         
                         <button type="submit" 
                             :disabled="!hasChanged()"
-                            :class="{ 'opacity-50 cursor-not-allowed bg-gray-400': !hasChanged(), 'bg-blue-600 hover:bg-blue-700 shadow-sm': hasChanged() }"
-                            class="inline-flex justify-center px-6 py-2.5 border border-transparent text-sm font-medium rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
+                            :class="{ 'opacity-50 cursor-not-allowed bg-slate-grey text-pure-white': !hasChanged(), 'bg-royal-blue hover:bg-deep-navy text-pure-white shadow-sm': hasChanged() }"
+                            class="inline-flex justify-center px-6 py-2.5 border border-transparent text-sm font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-royal-blue transition-colors duration-200">
                             บันทึกการเปลี่ยนแปลง
                         </button>
                     </div>

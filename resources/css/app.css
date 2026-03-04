@@ -5,12 +5,31 @@
 @source '../**/*.blade.php';
 @source '../**/*.js';
 
+/* 1. สร้าง Theme สีเพื่อให้เรียกใช้งานเป็นคลาสได้ เช่น text-deep-navy หรือ bg-pure-white */
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* Custom Color Palette */
+    --color-deep-navy: #1B263B;
+    --color-royal-blue: #415A77;
+    --color-cloud-blue: #E0E1DD;
+    --color-pure-white: #FFFFFF;
+    --color-slate-grey: #778DA9;
 }
 
-/* ทำ preview ให้มีขนาด A4 บนหน้าจอ */
+/* 2. ตกแต่ง Body และ Tag พื้นฐานสำหรับทุกหน้า */
+@layer base {
+    body {
+        background-color: var(--color-pure-white); /* พื้นหลังหลักเป็น Pure White */
+        color: var(--color-slate-grey); /* ตัวอักษรเนื้อหาหลักเป็น Slate Grey */
+    }
+    h1, h2, h3, h4, h5, h6 {
+        color: var(--color-deep-navy); /* ตัวอักษรหัวข้อเป็น Deep Navy */
+    }
+}
+
+/* CSS สำหรับเอกสาร A4 (คงเดิม) */
 .a4 {
     width: 210mm;
     min-height: 297mm;
@@ -27,38 +46,27 @@
 }
 .download-btn { position: fixed; right: 24px; top: 24px; z-index: 50; }
 
-/* กำหนดขนาด A4 สำหรับ print / preview */
-        .a4 {
-            width: 210mm;      /* A4 width */
-            min-height: 297mm; /* A4 height */
-            padding: 20mm;
-            margin: 10mm auto;
-            background: white;
-            box-shadow: 0 0 5px rgba(0,0,0,0.1);
-            box-sizing: border-box;
-        }
+table.doc-table {
+    width: 100%;
+    border-collapse: collapse;
+}
 
-        table.doc-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
+table.doc-table td, table.doc-table th {
+    border: 1px solid #999;
+    padding: 6px;
+}
 
-        table.doc-table td, table.doc-table th {
-            border: 1px solid #999;
-            padding: 6px;
-        }
+table.doc-table th {
+    background-color: #f0f0f0;
+    text-align: center;
+}
 
-        table.doc-table th {
-            background-color: #f0f0f0;
-            text-align: center;
-        }
-
-        @media print {
-            body {
-                background: none;
-            }
-            .a4 {
-                box-shadow: none;
-                margin: 0;
-            }
-        }
+@media print {
+    body {
+        background: none;
+    }
+    .a4 {
+        box-shadow: none;
+        margin: 0;
+    }
+}

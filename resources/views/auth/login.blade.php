@@ -1,175 +1,107 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>เข้าสู่ระบบ | ELO Generator</title>
+    
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600;700" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     @else
     @endif
-  <title>Login</title>
-  <style>
-    :root {
-      --bg: #ffffffff;
-      --card: #ffffffcc;
-      --text: #000000ff;
-      --muted: #9b9b9bff;
-      --primary: #6366f1;
-      --primary-hover: #4f46e5;
-      --ring: #22d3ee;
-      --danger: #ef4444;
-    }
 
-    * { box-sizing: border-box; }
-    html, body { height: 100%; }
-    body {
-      margin: 0;
-      color: var(--text);
-      display: grid;
-      place-items: center;
-      padding: 2rem;
-    }
-
-    .card {
-      width: 100%;
-      max-width: 420px;
-      background: linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 16px;
-      box-shadow: 0 20px 60px rgba(2,6,23,0.6);
-      padding: 24px;
-      position: relative;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 10px;
-    }
-    .logo {
-      width: 36px; height: 36px; border-radius: 10px;
-      background: conic-gradient(from 180deg, #22d3ee, #8b5cf6, #22d3ee);
-      box-shadow: 0 8px 30px rgba(139,92,246,0.35);
-    }
-    h1 {
-      margin: 0; font-size: 1.25rem; letter-spacing: 0.2px;
-    }
-    p.sub {
-      margin: 4px 0 20px; color: var(--muted); font-size: .95rem;
-    }
-
-    form { display: grid; gap: 14px; }
-    label { font-size: .9rem; color: var(--muted); }
-
-    .field { position: relative; }
-    input[type="email"], input[type="text"], input[type="password"] {
-      width: 100%;
-      padding: 12px 44px 12px 12px;
-      border-radius: 12px;
-      border: 1px solid rgba(0, 0, 0, 0.15);
-      background: rgba(255, 255, 255, 1);
-      color: var(--text);
-      outline: none;
-      transition: border .2s, box-shadow .2s, transform .05s;
-    }
-    input:focus {
-      border-color: var(--ring);
-      box-shadow: 0 0 0 3px rgba(34,211,238,0.25);
-    }
-
-    .toggle-pass {
-      position: absolute; right: 10px; top: 50%;
-      border: 0; background: transparent; color: var(--muted); cursor: pointer; font-size: .9rem;
-    }
-
-    .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-    .row label.inline { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
-    .row input[type="checkbox"] { width: 16px; height: 16px; }
-
-    .btn {
-      appearance: none; border: 0; cursor: pointer;
-      padding: 12px 14px; border-radius: 12px; font-weight: 600; font-size: 1rem;
-      background: linear-gradient(135deg, var(--primary), var(--primary-hover));
-      color: white; letter-spacing: .2px;
-      box-shadow: 0 10px 30px rgba(79,70,229,0.35);
-      transition: transform .05s ease, box-shadow .2s ease, filter .2s ease;
-    }
-    .btn:hover { filter: brightness(1.1); box-shadow: 0 10px 30px rgba(79,70,229,0.35); }
-    .btn:active { transform: translateY(1px); }
-
-    .muted-link { color: var(--muted); font-size: .9rem; text-decoration: none; }
-    .muted-link:hover { text-decoration: underline; }
-
-    .error { display:none; color: var(--danger); font-size: .9rem; margin-top: -12px; }
-
-    @media (prefers-reduced-motion: no-preference) {
-      .card { animation: floatIn .6s cubic-bezier(.2,.8,.2,1); }
-      @keyframes floatIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0);} }
-    }
-  </style>
+    <style>
+        /* เก็บ Animation การลอยขึ้นมาให้ดูมีมิติเหมือนโค้ดต้นฉบับ */
+        @keyframes floatIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-float-in {
+            animation: floatIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        }
+    </style>
 </head>
-<body>
-  <main class="card" aria-label="Login form">
-    @if(session()->has('success'))
-        <div class="alert alert-success" style="background-color: #d1fae5; color: #065f46; padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
-            {{ session('success') }}
+<body class="min-h-screen flex items-center justify-center p-4 font-sans antialiased text-slate-grey">
+
+    <main class="w-full max-w-md bg-pure-white rounded-2xl shadow-[0_20px_60px_rgba(27,38,59,0.1)] border border-cloud-blue p-8 animate-float-in relative overflow-hidden" aria-label="Login form">
+        
+        <div class="absolute top-0 left-0 w-full h-1.5 bg-royal-blue"></div>
+
+        @if(session()->has('success'))
+            <div class="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-xl text-center text-sm font-medium flex items-center justify-center gap-2">
+                <i class="fa-solid fa-circle-check"></i> {{ session('success') }}
+            </div>
+        @endif
+        @if(session()->has('error'))
+            <div class="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-center text-sm font-medium flex items-center justify-center gap-2">
+                <i class="fa-solid fa-circle-exclamation"></i> {{ session('error') }}
+            </div>
+        @endif
+
+        <div class="flex items-center gap-4 mb-8">
+            <div class="w-12 h-12 rounded-xl bg-royal-blue flex items-center justify-center text-pure-white shadow-lg shadow-royal-blue/30" aria-hidden="true">
+                <i class="fa-solid fa-cube text-2xl"></i>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold text-deep-navy m-0 leading-tight">เข้าสู่ระบบ</h1>
+                <p class="text-slate-grey text-sm mt-1">ยินดีต้อนรับสู่ ELO Generator</p>
+            </div>
         </div>
-    @endif
-    @if(session()->has('error'))
-        <div class="alert alert-error" style="background-color: #fee2e2; color: #b91c1c; padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align: center;">
-            {{ session('error') }}
-        </div>
-    @endif
-    <div class="brand">
-      <div class="logo" aria-hidden="true"></div>
-      <div>
-        <h1>เข้าสู่ระบบ</h1>
-        <p class="sub">ยินดีต้อนรับสู่ ELO Generator</p>
-      </div>
-    </div>
 
-    <form id="loginForm" action="{{ route('login.post') }}" method="POST">
-    @csrf
-    <div class="field">
-      <label for="email">อีเมลหรือชื่อผู้ใช้</label>
-      <input id="email" name="email" type="text" placeholder="you@example.com" autocomplete="username" value="{{ old('email') }}" required />
-      @error('email')
-        <div class="error" style="display:block; color: red; margin-top: 5px; font-size: 0.9em;">{{ $message }}</div>
-      @enderror
-      <div id="emailErr" class="error" style="display:none; color:red; font-size: 0.9em; margin-top: 5px;">กรุณากรอกอีเมล</div>
-    </div>
+        <form id="loginForm" action="{{ route('login.post') }}" method="POST" class="space-y-5">
+            @csrf
+            
+            <div>
+                <label for="email" class="block text-sm font-semibold text-deep-navy mb-1.5">อีเมลหรือชื่อผู้ใช้</label>
+                <input id="email" name="email" type="text" placeholder="you@example.com" autocomplete="username" value="{{ old('email') }}" required 
+                    class="w-full px-4 py-3 rounded-xl border border-cloud-blue bg-pure-white text-deep-navy focus:outline-none focus:border-royal-blue focus:ring-4 focus:ring-royal-blue/15 transition-all duration-200" />
+                @error('email')
+                    <div class="text-red-500 text-sm mt-1.5 flex items-center gap-1"><i class="fa-solid fa-circle-exclamation text-xs"></i> {{ $message }}</div>
+                @enderror
+                <div id="emailErr" class="hidden text-red-500 text-sm mt-1.5 flex items-center gap-1"><i class="fa-solid fa-circle-exclamation text-xs"></i> กรุณากรอกอีเมล</div>
+            </div>
 
-    <div class="field">
-      <label for="password">รหัสผ่าน</label>
-      <div style="position: relative;">
-          <input id="password" name="password" type="password" placeholder="••••••••" autocomplete="current-password" required minlength="6" style="width: 100%; padding-right: 50px;" />
-          <button type="button" class="toggle-pass" onclick="togglePass()" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #666;">แสดง</button>
-      </div>
-      @error('password')
-        <div class="error" style="display:block; color: red; margin-top: 5px; font-size: 0.9em;">{{ $message }}</div>
-      @enderror
-      <div id="passErr" class="error" style="display:none; color:red; font-size: 0.9em; margin-top: 5px;">รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร</div>
-    </div>
+            <div>
+                <label for="password" class="block text-sm font-semibold text-deep-navy mb-1.5">รหัสผ่าน</label>
+                <div class="relative">
+                    <input id="password" name="password" type="password" placeholder="••••••••" autocomplete="current-password" required minlength="6" 
+                        class="w-full px-4 py-3 pr-16 rounded-xl border border-cloud-blue bg-pure-white text-deep-navy focus:outline-none focus:border-royal-blue focus:ring-4 focus:ring-royal-blue/15 transition-all duration-200" />
+                    <button type="button" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-sm font-medium text-slate-grey hover:text-royal-blue transition-colors focus:outline-none" onclick="togglePass()">
+                        แสดง
+                    </button>
+                </div>
+                @error('password')
+                    <div class="text-red-500 text-sm mt-1.5 flex items-center gap-1"><i class="fa-solid fa-circle-exclamation text-xs"></i> {{ $message }}</div>
+                @enderror
+                <div id="passErr" class="hidden text-red-500 text-sm mt-1.5 flex items-center gap-1"><i class="fa-solid fa-circle-exclamation text-xs"></i> รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร</div>
+            </div>
 
-    <div class="row">
-      <label class="inline"><input type="checkbox" name="remember" /> จดจำฉันไว้</label>
-      <a href="#" class="muted-link">ลืมรหัสผ่าน?</a>
-    </div>
+            <div class="flex items-center justify-between pt-1">
+                <label class="flex items-center gap-2 cursor-pointer group">
+                    <input type="checkbox" name="remember" class="w-4 h-4 rounded border-cloud-blue text-royal-blue focus:ring-royal-blue/30 transition-colors cursor-pointer" /> 
+                    <span class="text-sm text-slate-grey group-hover:text-deep-navy transition-colors">จดจำฉันไว้</span>
+                </label>
+                <a href="#" class="text-sm font-medium text-royal-blue hover:text-deep-navy transition-colors">ลืมรหัสผ่าน?</a>
+            </div>
 
-    <button class="btn" type="submit">เข้าสู่ระบบ</button>
-  </form>
-  </main>
+            <button class="w-full bg-royal-blue hover:bg-deep-navy text-pure-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-royal-blue/20 transition-all duration-200 transform hover:-translate-y-0.5 focus:outline-none focus:ring-4 focus:ring-royal-blue/30 mt-2" type="submit">
+                เข้าสู่ระบบ
+            </button>
+        </form>
+    </main>
 
-  <script>
-    function togglePass() {
-      const inp = document.getElementById('password');
-      const btn = document.querySelector('.toggle-pass');
-      const isPwd = inp.type === 'password';
-      inp.type = isPwd ? 'text' : 'password';
-      btn.textContent = isPwd ? 'ซ่อน' : 'แสดง';
-    }
-  </script>
+    <script>
+        function togglePass() {
+            const inp = document.getElementById('password');
+            const btn = document.querySelector('button[onclick="togglePass()"]');
+            const isPwd = inp.type === 'password';
+            inp.type = isPwd ? 'text' : 'password';
+            btn.textContent = isPwd ? 'ซ่อน' : 'แสดง';
+        }
+    </script>
 </body>
 </html>
