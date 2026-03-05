@@ -305,8 +305,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     sortedCloKeys.forEach(cloKey => {
         let rowData = tData[cloKey] || [];
+        let cloDescription = '';
+        let originalKey = Object.keys(aiText).find(k => k.replace(/\s/g, '').toUpperCase() === cloKey.toUpperCase());
+        
+        if (originalKey && aiText[originalKey] && aiText[originalKey].CLO) {
+            cloDescription = aiText[originalKey].CLO;
+        }
+
+        let displayCloText = cloDescription 
+            ? `<span class="font-bold">${cloKey}</span><br><span class="text-xs font-normal text-gray-700">${cloDescription}</span>` 
+            : `<span class="font-bold">${cloKey}</span>`;
+
         html6 += `<tr>
-                    <td class="border border-black p-2 text-center font-bold align-top bg-gray-50">${cloKey}</td>
+                    <td class="border border-black p-2 text-left font-bold align-top bg-gray-50">${displayCloText}</td>
                     <td class="border border-black p-2 align-top">${renderCheckboxList(data_s6_teachingOptions, rowData, 'วิธีการสอน')}</td>
                     <td class="border border-black p-2 align-top">${renderCheckboxList(data_s6_assessmentOptions, rowData, 'การประเมินผล')}</td>
                   </tr>`;
@@ -315,7 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
     html6 += '</tbody></table>';
     const el6 = document.getElementById('preview-s6');
     if (el6) el6.innerHTML = sortedCloKeys.length ? html6 : '<div class="text-gray-500 italic p-2 bg-gray-100 border rounded">ไม่มีข้อมูลวิธีการสอน</div>';
-    
+
     // ========================================================
     // เรนเดอร์ 7. Lesson Plan
     // ========================================================

@@ -1,13 +1,22 @@
 document.addEventListener('DOMContentLoaded', function () {
     const params = new URLSearchParams(window.location.search);
     const urlCCId = params.get('CC_id'); 
+    const urlYear = params.get('year');
+    const urlTerm = params.get('term');
+    const urlTQF = params.get('TQF');
     
     const courseSelect = document.getElementById('course');
 
     if (courseSelect && urlCCId) {
-        const option = Array.from(courseSelect.options).find(opt => 
-            opt.getAttribute('data-cc-id') === urlCCId
-        );
+        const option = Array.from(courseSelect.options).find(opt => {
+            let isMatch = opt.getAttribute('data-cc-id') === urlCCId;
+            
+            if (urlYear) isMatch = isMatch && opt.getAttribute('data-year') === urlYear;
+            if (urlTerm) isMatch = isMatch && opt.getAttribute('data-term') === urlTerm;
+            if (urlTQF)  isMatch = isMatch && opt.getAttribute('data-TQF') === urlTQF;
+            
+            return isMatch;
+        });
 
         if (option) {
             option.selected = true;
@@ -270,7 +279,7 @@ function cleanAndParseAIResponse(generatedText, numClo) {
     let jsonData = null;
     let jsonString = generatedText;
 
-    console.log("[AI Parser] เริ่มต้นทำความสะอาดข้อความจาก AI...");
+    // console.log("[AI Parser] เริ่มต้นทำความสะอาดข้อความจาก AI...");
 
     try {
         // ตัดขยะรอบนอกและ Markdown ทิ้งให้หมด
@@ -287,7 +296,7 @@ function cleanAndParseAIResponse(generatedText, numClo) {
             jsonData = JSON.parse(jsonString);
         }
         
-        console.log("[AI Parser] แปลง JSON สำเร็จด้วยวิธีปกติ:", jsonData);
+        // console.log("[AI Parser] แปลง JSON สำเร็จด้วยวิธีปกติ:", jsonData);
 
     } catch (e) {
         console.warn("⚠️ [AI Parser] แปลง JSON ไม่สำเร็จ! ระบบกำลังใช้วิธีสกัดข้อมูล (Regex Extractor)...");
@@ -328,7 +337,7 @@ function cleanAndParseAIResponse(generatedText, numClo) {
             });
             
             jsonData = finalData;
-            console.log("🛠️ [AI Parser] สกัดข้อมูลสำเร็จ:", jsonData);
+            // console.log("🛠️ [AI Parser] สกัดข้อมูลสำเร็จ:", jsonData);
         } else {
             console.error("❌ [AI Parser] ข้อมูลพังเกินเยียวยา ไม่พบ Block CLO");
             return null;

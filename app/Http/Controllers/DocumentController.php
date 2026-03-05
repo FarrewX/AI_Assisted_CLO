@@ -97,7 +97,8 @@ class DocumentController extends Controller
                 'c.course_detail_en',
                 'cy.year',
                 'cy.term',
-                'cy.CC_id'
+                'cy.CC_id',
+                'cy.TQF'
             )
             ->where('cy.user_id', $user->user_id)
             ->where('cy.CC_id', $CC_id)
@@ -141,10 +142,6 @@ class DocumentController extends Controller
             ->get(['num_LLL', 'name_LLL', 'check_LLL']);
 
         $lllDataArray = [];
-        
-        // ดึง course_accord ของเดิมมาก่อน (เพื่อไม่ให้ข้อมูล CLO ที่เซฟไว้หาย)
-        $courseAccordArray = $this->safeJsonDecode($learningMaps->course_accord ?? '{}', true);
-        $hasLllUpdates = false;
 
         foreach ($dbLlls as $lll) {
             $lllKey = 'LLL' . $lll->num_LLL;
@@ -1171,6 +1168,23 @@ class DocumentController extends Controller
                 $teachingRaw = $dataT[0]['วิธีการสอน'] ?? [];
                 $assessmentRaw = $dataT[1]['การประเมินผล'] ?? [];
 
+                // ดึงคำอธิบาย CLO จาก $aiTextData มาต่อท้าย
+                $cloDescText = '';
+                $cleanCloKey = str_replace(' ', '', strtoupper($cloKey));
+                if (is_array($aiTextData)) {
+                    foreach ($aiTextData as $k => $v) {
+                        if (str_replace(' ', '', strtoupper($k)) === $cleanCloKey) {
+                            if (is_array($v) && isset($v['CLO'])) {
+                                $cloDescText = trim($v['CLO']);
+                            } elseif (is_string($v)) {
+                                $cloDescText = trim($v);
+                            }
+                            break;
+                        }
+                    }
+                }
+                $displayCloKey = $cloDescText ? "{$cloKey}\n{$cloDescText}" : $cloKey;
+
                 // ตรวจสอบว่าหัวข้อนี้ถูกบันทึกไว้ใน DB หรือไม่ (รองรับทั้งฟอร์แมตเก่าและใหม่)
                 $isChecked = function($categoryLabel, $itemText, $rawData) {
                     if (!is_array($rawData)) return false;
@@ -1221,7 +1235,7 @@ class DocumentController extends Controller
 
                 // นำไปเก็บลง Array รอวาดลงตาราง
                 $docxData['s6_clos_teaching'][] = [
-                    'clo' => $cloKey,
+                    'clo' => $displayCloKey,
                     'teaching' => implode("\n", $teachingFlat),
                     'assessment' => implode("\n", $assessmentFlat)
                 ];

@@ -4,10 +4,81 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // สำหรับ Popup (SweetAlert2)
     const AppAlert = (message, iconType = 'warning') => {
-        return Swal.fire({ title: 'แจ้งเตือน', text: message, icon: iconType, confirmButtonText: 'ตกลง', confirmButtonColor: '#3085d6' });
+        return new Promise((resolve) => {
+            Swal.fire({
+                title: 'แจ้งเตือน',
+                text: message,
+                icon: iconType,
+                didOpen: (modal) => {
+                    const popup = modal.closest('.swal2-container');
+                    const defaultActions = popup.querySelector('.swal2-actions');
+                    
+                    if (defaultActions) {
+                        defaultActions.innerHTML = '';
+                        
+                        // Create OK button
+                        const okBtn = document.createElement('button');
+                        okBtn.className = 'px-5 py-2.5 bg-[#035AA6] hover:bg-[#6CBAD9] text-white font-medium rounded-xl shadow-md transition-colors';
+                        okBtn.textContent = 'ตกลง';
+                        okBtn.addEventListener('click', () => {
+                            Swal.close();
+                            resolve({ isConfirmed: true });
+                        });
+                        
+                        defaultActions.style.display = 'flex';
+                        defaultActions.style.justifyContent = 'center';
+                        defaultActions.appendChild(okBtn);
+                    }
+                },
+                showConfirmButton: false
+            });
+        });
     };
+
     const AppConfirm = (message) => {
-        return Swal.fire({ title: 'ยืนยันการดำเนินการ', text: message, icon: 'warning', showCancelButton: true, confirmButtonColor: '#3085d6', cancelButtonColor: '#d33', confirmButtonText: 'ตกลง', cancelButtonText: 'ยกเลิก' });
+        return new Promise((resolve) => {
+            Swal.fire({
+                title: 'ยืนยันการดำเนินการ',
+                text: message,
+                icon: 'warning',
+                didOpen: (modal) => {
+                    const popup = modal.closest('.swal2-container');
+                    const defaultActions = popup.querySelector('.swal2-actions');
+                    
+                    if (defaultActions) {
+                        defaultActions.innerHTML = '';
+                        
+                        // Create cancel button
+                        const cancelBtn = document.createElement('button');
+                        cancelBtn.id = 'edit-plo-cancel';
+                        cancelBtn.className = 'px-5 py-2.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-xl transition-colors';
+                        cancelBtn.textContent = 'ยกเลิก';
+                        cancelBtn.addEventListener('click', () => {
+                            Swal.close();
+                            resolve({ isConfirmed: false });
+                        });
+                        
+                        // Create save button
+                        const saveBtn = document.createElement('button');
+                        saveBtn.id = 'edit-plo-save';
+                        saveBtn.className = 'px-5 py-2.5 bg-[#035AA6] hover:bg-[#6CBAD9] text-white font-medium rounded-xl shadow-md transition-colors flex items-center gap-2';
+                        saveBtn.innerHTML = 'บันทึกการแก้ไข';
+                        saveBtn.addEventListener('click', () => {
+                            Swal.close();
+                            resolve({ isConfirmed: true });
+                        });
+                        
+                        defaultActions.style.display = 'flex';
+                        defaultActions.style.gap = '10px';
+                        defaultActions.style.justifyContent = 'center';
+                        defaultActions.appendChild(saveBtn);
+                        defaultActions.appendChild(cancelBtn);
+                    }
+                },
+                showCancelButton: false,
+                confirmButtonText: ''
+            });
+        });
     };
 
     async function saveData(fieldName, value, targetElement = null) {
@@ -43,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!element && fieldName === 'section9_1_data') element = document.getElementById('referenceList');
         if (!element && fieldName.startsWith('plo')) element = document.getElementById('plosTableBody');
         
-        console.log('Saving:', { field: fieldName, value: value, CC_id: CC_id });
+        // console.log('Saving:', { field: fieldName, value: value, CC_id: CC_id });
         
         // Feedback Logic
         let originalColor = '';
@@ -89,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const result = await response.json();
-            console.log('Save successful:', result);
+            // console.log('Save successful:', result);
 
             if (feedbackElement) {
                 feedbackElement.style.backgroundColor = '#d4edda'; 
@@ -265,9 +336,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         // ถ้ารอดมาถึงตรงนี้ แสดงว่า JSON สมบูรณ์ร้อยเปอร์เซ็นต์
-        if (Object.keys(window.SHARED_CLO_DATA).length > 0) {
-            console.log("✅ โหลดข้อมูล CLO สำเร็จ:", window.SHARED_CLO_DATA);
-        }
+        // if (Object.keys(window.SHARED_CLO_DATA).length > 0) {
+        //     console.log("✅ โหลดข้อมูล CLO สำเร็จ:", window.SHARED_CLO_DATA);
+        // }
 
     } catch (e) {
         console.warn("⚠️ พบ JSON ใน Database ผิดรูปแบบ!");
@@ -289,7 +360,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
             window.SHARED_CLO_DATA = finalData;
-            console.log("🛠️ ซ่อมแซมข้อมูลสำเร็จ! กู้คืนมาได้:", window.SHARED_CLO_DATA);
+            // console.log("🛠️ ซ่อมแซมข้อมูลสำเร็จ! กู้คืนมาได้:", window.SHARED_CLO_DATA);
         } else {
             console.error("❌ ข้อมูลพังเกินเยียวยา สกัดไม่ได้:", rawString);
             window.SHARED_CLO_DATA = {};
@@ -350,7 +421,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // สั่งเซฟข้อมูลทั้งก้อนลงฐานข้อมูล (คอลัมน์ ai_text)
                 if (typeof saveData === 'function') {
-                    console.log(`💾 กำลังบันทึกการแก้ไขของ ${cloKey}...`);
+                    // console.log(`💾 กำลังบันทึกการแก้ไขของ ${cloKey}...`);
                     saveData('ai_text', updatedJSON, e.target);
                 }
             }
@@ -556,9 +627,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Section 5.3 Logic ---
     try {
-        const aiTextData = window.SHARED_CLO_DATA || {};
-        let cloData = [];
-
         // แปลงตัวย่อเป็นชื่อเต็ม
         function getFullLevelName(abbr, domainStr = '') {
             if (!abbr) return '';
@@ -591,167 +659,189 @@ document.addEventListener('DOMContentLoaded', () => {
             return matches ? matches.map(Number) : [];
         }
 
-        if (Object.keys(aiTextData).length > 0) {
-            Object.keys(aiTextData).forEach(key => {
-                const details = aiTextData[key];
-                if (details && typeof details === 'object' && details.CLO) {
-                    cloData.push({ code: key.replace(/\s/g, ''), description: details.CLO });
-                }
+        function renderSection5_3() {
+            const aiTextData = window.SHARED_CLO_DATA || {};
+            let cloData = [];
+
+            if (Object.keys(aiTextData).length > 0) {
+                Object.keys(aiTextData).forEach(key => {
+                    const details = aiTextData[key];
+                    if (details && typeof details === 'object' && details.CLO) {
+                        cloData.push({ code: key.replace(/\s/g, ''), description: details.CLO });
+                    }
+                });
+                cloData.sort((a, b) => (parseInt(a.code.replace('CLO', '')) || 0) - (parseInt(b.code.replace('CLO', '')) || 0));
+            }
+
+            const lllData = PAGE_DATA.lllData || [];
+            const cloLllData = [...cloData, ...lllData];
+            const ploCount = PAGE_DATA.ploCount || 0;
+            const table = document.querySelector("#ploTable");
+            const tbody = table ? table.querySelector("tbody") : null;
+            
+            // ดึงค่า Level จากหัวตารางมาเก็บไว้เป็น Array
+            const ploHeaders = table ? Array.from(table.querySelectorAll("thead th")).slice(2) : [];
+            const ploLevelsFromHeader = ploHeaders.map(th => {
+                const match = th.textContent.match(/\((.*?)\)/);
+                return match ? match[1].trim() : '';
             });
-            cloData.sort((a, b) => (parseInt(a.code.replace('CLO', '')) || 0) - (parseInt(b.code.replace('CLO', '')) || 0));
-        }
 
-        const lllData = PAGE_DATA.lllData || [];
-        const cloLllData = [...cloData, ...lllData];
-        const ploCount = PAGE_DATA.ploCount || 0;
-        const table = document.querySelector("#ploTable");
-        const tbody = table ? table.querySelector("tbody") : null;
-        
-        // ดึงค่า Level จากหัวตารางมาเก็บไว้เป็น Array
-        const ploHeaders = table ? Array.from(table.querySelectorAll("thead th")).slice(2) : [];
-        const ploLevelsFromHeader = ploHeaders.map(th => {
-            const match = th.textContent.match(/\((.*?)\)/);
-            return match ? match[1].trim() : '';
-        });
+            if (tbody) {
+                tbody.innerHTML = '';
+                cloLllData.forEach((item, rowIndex) => {
+                    const tr = document.createElement("tr");
+                    const itemCode = item.code ?? `Item ${rowIndex+1}`;
+                    const isLLL = itemCode.startsWith('LLL');
 
-        if (tbody) {
-            tbody.innerHTML = '';
-            cloLllData.forEach((item, rowIndex) => {
-                const tr = document.createElement("tr");
-                const itemCode = item.code ?? `Item ${rowIndex+1}`;
-                const isLLL = itemCode.startsWith('LLL');
-
-                // ดึงข้อมูล AI ประจำแถว
-                let aiMappedPlos = [];
-                if (!isLLL) {
-                    const originalKey = itemCode.replace('CLO', 'CLO ');
-                    const aiDetails = aiTextData[originalKey] || aiTextData[itemCode] || {};
-                    let ploRaw = '';
-                    
-                    for (const k in aiDetails) {
-                        const lowerK = k.toLowerCase();
-                        if (lowerK.includes('plo')) ploRaw = aiDetails[k];
-                    }
-                    aiMappedPlos = getPloNumbers(ploRaw);
-                }
-
-                tr.innerHTML = `
-                    <td class="border border-gray-400 p-2 text-center font-bold" readonly>${itemCode}</td>
-                    <td class="border border-gray-400 p-2 text-left">
-                       <span class="inline-block w-full ${isLLL ? 'text-gray-800' : ''} p-1 rounded"
-                            data-field="cloLll_desc_${itemCode}">${item.description ?? ''}</span>
-                    </td>`;
-
-                for (let colIndex = 0; colIndex < ploCount; colIndex++) {
-                    const td = document.createElement("td");
-                    td.className = "border border-gray-400 p-2 text-center";
-                    const ploDbIndex = colIndex + 1;
-                    
-                    let savedCellData = { check: false, level: '' };
-                    const targetPloLevel = ploLevelsFromHeader[colIndex] || '';
-
-                    if (isLLL) {
-                        const mappedPlos = item.mapped_plos || [];
-                        if (mappedPlos.includes(ploDbIndex)) {
-                            savedCellData.check = true;
-                            savedCellData.level = targetPloLevel;
-                        }
-                    } else {
-                        // สำหรับ CLO ดึงจาก AI
-                        if (aiMappedPlos.includes(ploDbIndex)) {
-                            savedCellData.check = true;
-                            savedCellData.level = targetPloLevel;
-                        }
-                    }
-
-                    if (isLLL) {
-                        // โชว์ติ๊กถูกสำหรับ LLL
-                        if (savedCellData.check) {
-                            td.innerHTML = `<span class="font-bold text-lg">✔</span>`;
-                        } else {
-                            td.innerHTML = `<span class="text-gray-200"></span>`;
-                        }
-                    } else {
-                        // สร้าง Checkbox สำหรับแก้ไข CLO
-                        const checkbox = document.createElement("input");
-                        checkbox.type = "checkbox";
-                        checkbox.className = `mr-1.5 scale-125 plo-map-checkbox cursor-pointer`;
-                        checkbox.name = `plo_map_${itemCode}_c${colIndex}_check`; 
-                        checkbox.checked = savedCellData.check;
+                    // ดึงข้อมูล AI ประจำแถว
+                    let aiMappedPlos = [];
+                    if (!isLLL) {
+                        const originalKey = itemCode.replace('CLO', 'CLO ');
+                        const aiDetails = aiTextData[originalKey] || aiTextData[itemCode] || {};
+                        let ploRaw = '';
                         
-                        const hiddenLevelInput = document.createElement("input");
-                        hiddenLevelInput.type = "hidden";
-                        hiddenLevelInput.name = `plo_map_${itemCode}_c${colIndex}_level`;
-                        hiddenLevelInput.value = savedCellData.check ? targetPloLevel : '';
+                        for (const k in aiDetails) {
+                            const lowerK = k.toLowerCase();
+                            if (lowerK.includes('plo')) ploRaw = aiDetails[k];
+                        }
+                        aiMappedPlos = getPloNumbers(ploRaw);
+                    }
 
-                        const levelDisplay = document.createElement("div");
-                        levelDisplay.className = "text-xs mt-1 text-gray-600 font-medium h-4"; 
-                        levelDisplay.textContent = savedCellData.check ? targetPloLevel : '';
+                    tr.innerHTML = `
+                        <td class="border border-gray-400 p-2 text-center font-bold" readonly>${itemCode}</td>
+                        <td class="border border-gray-400 p-2 text-left">
+                           <span class="inline-block w-full ${isLLL ? 'text-gray-800' : ''} p-1 rounded"
+                                data-field="cloLll_desc_${itemCode}">${item.description ?? ''}</span>
+                        </td>`;
+
+                    for (let colIndex = 0; colIndex < ploCount; colIndex++) {
+                        const td = document.createElement("td");
+                        td.className = "border border-gray-400 p-2 text-center";
+                        const ploDbIndex = colIndex + 1;
+                        
+                        let savedCellData = { check: false, level: '' };
+                        const targetPloLevel = ploLevelsFromHeader[colIndex] || '';
+
+                        if (isLLL) {
+                            const mappedPlos = item.mapped_plos || [];
+                            if (mappedPlos.includes(ploDbIndex)) {
+                                savedCellData.check = true;
+                                savedCellData.level = targetPloLevel;
+                            }
+                        } else {
+                        // สำหรับ CLO ดึงจาก AI
+                            if (aiMappedPlos.includes(ploDbIndex)) {
+                                savedCellData.check = true;
+                                savedCellData.level = targetPloLevel;
+                            }
+                        }
+
+                        if (isLLL) {
+                        // โชว์ติ๊กถูกสำหรับ LLL
+                            if (savedCellData.check) {
+                                td.innerHTML = `<span class="font-bold text-lg">✔</span>`;
+                            } else {
+                                td.innerHTML = `<span class="text-gray-200"></span>`;
+                            }
+                        } else {
+                        // สร้าง Checkbox สำหรับแก้ไข CLO
+                            const checkbox = document.createElement("input");
+                            checkbox.type = "checkbox";
+                            checkbox.className = `mr-1.5 scale-125 plo-map-checkbox cursor-pointer`;
+                            checkbox.name = `plo_map_${itemCode}_c${colIndex}_check`; 
+                            checkbox.checked = savedCellData.check;
+                            
+                            const hiddenLevelInput = document.createElement("input");
+                            hiddenLevelInput.type = "hidden";
+                            hiddenLevelInput.name = `plo_map_${itemCode}_c${colIndex}_level`;
+                            hiddenLevelInput.value = savedCellData.check ? targetPloLevel : '';
+
+                            const levelDisplay = document.createElement("div");
+                            levelDisplay.className = "text-xs mt-1 text-gray-600 font-medium h-4"; 
+                            levelDisplay.textContent = savedCellData.check ? targetPloLevel : '';
 
                         // เมื่อคนคลิกเปลี่ยนค่า Checkbox
-                        checkbox.addEventListener('change', function() {
-                            if(this.checked) {
-                                levelDisplay.textContent = targetPloLevel;
-                                hiddenLevelInput.value = targetPloLevel;
-                            } else {
-                                levelDisplay.textContent = '';
-                                hiddenLevelInput.value = '';
-                            }
+                            checkbox.addEventListener('change', function() {
+                                if(this.checked) {
+                                    levelDisplay.textContent = targetPloLevel;
+                                    hiddenLevelInput.value = targetPloLevel;
+                                } else {
+                                    levelDisplay.textContent = '';
+                                    hiddenLevelInput.value = '';
+                                }
 
                             // เซฟลง JSON
-                            if (!isLLL && window.SHARED_CLO_DATA) {
-                                let targetKey = Object.keys(window.SHARED_CLO_DATA).find(k => k.replace(/\s/g, '') === itemCode);
-                                
-                                if (targetKey) {
-                                    const rowCheckboxes = tr.querySelectorAll('input[type="checkbox"]:checked');
-                                    let selectedPlos = [];
-                                    let selectedLevels = [];
+                                if (!isLLL && window.SHARED_CLO_DATA) {
+                                    let targetKey = Object.keys(window.SHARED_CLO_DATA).find(k => k.replace(/\s/g, '') === itemCode);
                                     
-                                    const domainKey = window.SHARED_CLO_DATA[targetKey].hasOwnProperty('Domain') ? 'Domain' : 'Domain';
-                                    const domainStr = window.SHARED_CLO_DATA[targetKey][domainKey] || '';
+                                    if (targetKey) {
+                                        const rowCheckboxes = tr.querySelectorAll('input[type="checkbox"]:checked');
+                                        let selectedPlos = [];
+                                        let selectedLevels = [];
+                                        
+                                        const domainKey = window.SHARED_CLO_DATA[targetKey].hasOwnProperty('Domain') ? 'Domain' : 'Domain';
+                                        const domainStr = window.SHARED_CLO_DATA[targetKey][domainKey] || '';
 
-                                    rowCheckboxes.forEach(cb => {
-                                        const match = cb.name.match(/_c(\d+)_check/);
-                                        if (match) {
-                                            const colIdx = parseInt(match[1]);
-                                            const ploNum = colIdx + 1;
-                                            selectedPlos.push(`PLO${ploNum}`);
-                                            
-                                            const lvlAbbr = ploLevelsFromHeader[colIdx] || '';
-                                            if (lvlAbbr) {
-                                                lvlAbbr.split(',').forEach(abbr => {
-                                                    const fullLvl = getFullLevelName(abbr, domainStr);
-                                                    if (fullLvl && !selectedLevels.includes(fullLvl)) {
-                                                        selectedLevels.push(fullLvl);
-                                                    }
-                                                });
+                                        rowCheckboxes.forEach(cb => {
+                                            const match = cb.name.match(/_c(\d+)_check/);
+                                            if (match) {
+                                                const colIdx = parseInt(match[1]);
+                                                const ploNum = colIdx + 1;
+                                                selectedPlos.push(`PLO${ploNum}`);
+                                                
+                                                const lvlAbbr = ploLevelsFromHeader[colIdx] || '';
+                                                if (lvlAbbr) {
+                                                    lvlAbbr.split(',').forEach(abbr => {
+                                                        const fullLvl = getFullLevelName(abbr, domainStr);
+                                                        if (fullLvl && !selectedLevels.includes(fullLvl)) {
+                                                            selectedLevels.push(fullLvl);
+                                                        }
+                                                    });
+                                                }
                                             }
+                                        });
+
+                                        const ploKey = window.SHARED_CLO_DATA[targetKey].hasOwnProperty('PLO') ? 'PLO' : 'PLO ต่อ ร้องรับ';
+                                        const levelKey = window.SHARED_CLO_DATA[targetKey].hasOwnProperty('Learning Level') ? 'Learning Level' : "Learning's Level";
+
+                                        window.SHARED_CLO_DATA[targetKey][ploKey] = selectedPlos.length > 0 ? selectedPlos.join(', ') : '-';
+                                        window.SHARED_CLO_DATA[targetKey][levelKey] = selectedLevels.length > 0 ? selectedLevels.join(', ') : '-';
+
+                                        if (typeof saveData === 'function') {
+                                            saveData('ai_text', JSON.stringify(window.SHARED_CLO_DATA), this);
                                         }
-                                    });
-
-                                    const ploKey = window.SHARED_CLO_DATA[targetKey].hasOwnProperty('PLO') ? 'PLO' : 'PLO ต่อ ร้องรับ';
-                                    const levelKey = window.SHARED_CLO_DATA[targetKey].hasOwnProperty('Learning Level') ? 'Learning Level' : "Learning's Level";
-
-                                    window.SHARED_CLO_DATA[targetKey][ploKey] = selectedPlos.length > 0 ? selectedPlos.join(', ') : '-';
-                                    window.SHARED_CLO_DATA[targetKey][levelKey] = selectedLevels.length > 0 ? selectedLevels.join(', ') : '-';
-
-                                    if (typeof saveData === 'function') {
-                                        saveData('ai_text', JSON.stringify(window.SHARED_CLO_DATA), this);
                                     }
                                 }
-                            }
-                        });
+                            });
 
-                        td.appendChild(checkbox);
-                        td.appendChild(levelDisplay);
-                        td.appendChild(hiddenLevelInput);
+                            td.appendChild(checkbox);
+                            td.appendChild(levelDisplay);
+                            td.appendChild(hiddenLevelInput);
+                        }
+                        
+                        tr.appendChild(td);
                     }
-                    
-                    tr.appendChild(td);
+                    tbody.appendChild(tr);
+                });
+            }
+        }
+
+        // วาดตาราง 5.3 ตอนโหลดหน้าเว็บครั้งแรก
+        renderSection5_3();
+
+        // ซิงค์การอัปเดตตาราง 5.3 เมื่อมีการแก้ไขข้อความ CLO ในหมวด 2.2
+        const cloInputContainer = document.getElementById('clo-input-container');
+        if (cloInputContainer) {
+            cloInputContainer.addEventListener('change', (e) => {
+                if (e.target.classList.contains('clo-description')) {
+                    // หน่วงเวลารอให้หมวด 2.2 อัปเดตตัวเองให้เสร็จก่อน
+                    setTimeout(() => {
+                        renderSection5_3();
+                    }, 100);
                 }
-                tbody.appendChild(tr);
             });
         }
+
     } catch (s5Error) { console.error("S5.3 Error", s5Error); }
 
     // --- Section 6 Logic ---
@@ -799,8 +889,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             rows.forEach((row, rowIndex) => {
                 const cloCell = row.querySelector('.clo-cell-s6');
-                let cloKey = cloCell ? cloCell.textContent.trim().replace(/ \[คลิกเพื่อแก้ไข\]$/, '').trim().replace(/\s/g, '') : `CLO${rowIndex + 1}`;
-                if (!cloKey) cloKey = `CLO${rowIndex + 1}`;
+                // ดึง Key ให้ตัดข้อความภาษาไทยทิ้ง เอาแค่ "CLO1" ไว้เป็น Key สำหรับเซฟ
+                let fullCloText = cloCell ? cloCell.textContent.trim() : `CLO${rowIndex + 1}`;
+                let cloKeyMatch = fullCloText.match(/CLO\s*\d+/i);
+                let cloKey = cloKeyMatch ? cloKeyMatch[0].replace(/\s/g, '') : `CLO${rowIndex + 1}`;
 
                 // สร้าง Object เก็บหมวดย่อยของการสอน
                 const teachingMethods = {};
@@ -825,7 +917,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     { "การประเมินผล": assessmentMethods }
                 ];
             });
-            console.log("Prepared Section 6 Data (Nested):", sectionData);
+            // console.log("Prepared Section 6 Data (Nested):", sectionData);
             return sectionData;
         }
 
@@ -874,17 +966,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         let isChecked = false;
                         
                         if (relevantData) {
-                            // ตรวจสอบว่าเป็น Format ใหม่ที่แบ่งหมวดหมู่ไว้ หรือแบบเก่าที่เป็น Array ก้อนเดียว
                             if (Array.isArray(relevantData)) {
-                                // รองรับ Format เก่า (เผื่อข้อมูลที่เซฟไปแล้ว)
                                 isChecked = relevantData.includes(String(itemText).trim());
                             } else if (typeof relevantData === 'object' && relevantData[catLabel] && Array.isArray(relevantData[catLabel])) {
-                                // รองรับ Format ใหม่
                                 isChecked = relevantData[catLabel].includes(String(itemText).trim());
                             }
                         }
 
-                        // ฝัง data-category ลงใน input เพื่อใช้ตอนดึงข้อมูลกลับ
                         html += `
                             <label class="flex items-start ${indentClass} hover:bg-gray-50 cursor-pointer">
                                 <input type="checkbox" class="mt-1 scale-125 mr-1.5 s6-checkbox" data-category="${catLabel}" value="${itemText}" ${isChecked ? 'checked' : ''}>
@@ -910,7 +998,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (cloCell.hasAttribute('data-field')) cloCell.removeAttribute('data-field');
 
-                cloCell.textContent = cloKey;
+                // ดึงข้อความอธิบาย (Description) ของ CLO
+                let cloDescription = '';
+                // หาคีย์ "CLO 1" หรือ "CLO1"
+                const originalKey = Object.keys(window.SHARED_CLO_DATA).find(k => k.replace(/\s/g, '').toUpperCase() === cloKey);
+                if (originalKey && window.SHARED_CLO_DATA[originalKey].CLO) {
+                    cloDescription = window.SHARED_CLO_DATA[originalKey].CLO;
+                }
+
+                // จับข้อความมารวมกัน (ถ้ามี Description ก็ให้ใส่เคาะวรรคต่อท้าย)
+                if (cloDescription) {
+                    cloCell.innerHTML = `<span class="font-bold">${cloKey}</span> ${cloDescription}`;
+                } else {
+                    cloCell.innerHTML = `<span class="font-bold">${cloKey}</span>`;
+                }
+
                 teachingCell.innerHTML = _s6_createCheckboxHtml(data_s6_teachingOptions, 'teach', rowData);
                 assessmentCell.innerHTML = _s6_createCheckboxHtml(data_s6_assessmentOptions, 'assess', rowData);
 
@@ -946,16 +1048,21 @@ document.addEventListener('DOMContentLoaded', () => {
                     saveData('section6_data', section6JSON, event.target);
                 }
             });
-
-            tableBody.addEventListener('blur', (event) => {
-                if (event.target.classList.contains('clo-cell-s6')) {
-                    const section6JSON = getSection6Data();
-                    saveData('section6_data', section6JSON, event.target);
-                }
-            }, true);
         }
         
         initializeCloTable_Section6();
+
+        // อัปเดตตัวเองอัตโนมัติ ถ้ามีการพิมพ์แก้ไขใน 2.2
+        document.getElementById('clo-input-container')?.addEventListener('change', (e) => {
+            if (e.target.classList.contains('clo-description')) {
+                setTimeout(() => {
+                    const currentS6Data = getSection6Data();
+                    PAGE_DATA.teachingMethods = currentS6Data;
+                    initializeCloTable_Section6();
+                }, 100);
+            }
+        });
+
     } catch (e) {
         console.error("Error initializing Section 6 (CLO Table):", e);
     }
@@ -981,7 +1088,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
                 planData.push(rowData);
             });
-            console.log("Prepared Section 7 Data:", planData);
+            // console.log("Prepared Section 7 Data:", planData);
             return planData;
         }
 
@@ -1249,7 +1356,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const result = await response.json();
                     
-                    console.log("Prompt Debug:", result.prompt_debug || 'No Prompt'); 
+                    // console.log("Prompt Debug:", result.prompt_debug || 'No Prompt'); 
                     console.log("AI Raw Output:", result.raw_output || 'No Raw Output');  
 
                     // ถ้า Backend ตอบว่า success = false ให้โยน Error เลย
@@ -1390,7 +1497,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
                 assessmentData.push(rowData);
             });
-            console.log("Prepared Section 8.1 Data:", assessmentData);
+            // console.log("Prepared Section 8.1 Data:", assessmentData);
             return assessmentData;
         }
 
@@ -1767,7 +1874,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     referencesData.push(input.value.trim());
                 }
             });
-            console.log("Prepared Section 9.1 Data:", referencesData);
+            // console.log("Prepared Section 9.1 Data:", referencesData);
             return referencesData;
         }
 
@@ -1880,6 +1987,11 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 window.openPreviewModal = function() {
+    // บังคับให้ช่องที่กำลังพิมพ์อยู่เอาเคอร์เซอร์ออก(เพื่อ Auto-save)
+    if (document.activeElement && document.activeElement !== document.body) {
+        document.activeElement.blur();
+    }
+
     const modal = document.getElementById('previewModal');
     const iframe = document.getElementById('previewIframe');
     const loading = document.getElementById('previewLoading');
@@ -1893,16 +2005,18 @@ window.openPreviewModal = function() {
     const term = urlParams.get('term') || '';
     const TQF = urlParams.get('TQF') || '';
     
-    // ประกอบ URL ใหม่ด้วย JavaScript Template Literal (ใช้เครื่องหมาย ` ` และ ${})
-    if(iframe) {
-        iframe.src = `/preview-docx?CC_id=${CC_id}&year=${year}&term=${term}&TQF=${TQF}`;
-    }
-    
-    if(iframe && loading) {
-        iframe.onload = function() {
-            loading.classList.add('hidden');
-        };
-    }
+    // หน่วงเวลาเพื่อให้ Auto-save ทำงานส่งไปหา Backend ทัน
+    setTimeout(() => {
+        if(iframe) {
+            iframe.src = `/preview-docx?CC_id=${CC_id}&year=${year}&term=${term}&TQF=${TQF}`;
+        }
+        
+        if(iframe && loading) {
+            iframe.onload = function() {
+                loading.classList.add('hidden');
+            };
+        }
+    }, 150);
 };
 
 window.closePreviewModal = function() {
