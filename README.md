@@ -35,7 +35,7 @@ php artisan storage:link
 ### 2. Local AI Engine Setup (Ollama)
 This application relies on a custom local AI model named elo_generator. Please follow these steps to configure and run the model:
 
-1.Install Ollama: Download and install Ollama from the https://ollama.com/download. For more details, refer to the https://github.com/ollama/ollama/blob/main/README.md.
+1.Install Ollama: Download and install Ollama from the [official website](https://ollama.com/download/). For more details, refer to the [Ollama Documentation](https://github.com/ollama/ollama/blob/main/README.md).
 
 2.Navigate to the Model Directory:
 ```Bash
@@ -82,4 +82,4 @@ npm run dev
 ```
 
 # License
-This project is built on the Laravel framework, which is open-sourced software licensed under the MIT license.(https://opensource.org/license/MIT)
+This project is built on the Laravel framework, which is open-sourced software licensed under the [MIT license](https://opensource.org/license/MIT).
