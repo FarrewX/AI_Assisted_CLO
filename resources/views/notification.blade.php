@@ -7,7 +7,6 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        /* ล็อค Scrollbar ให้แสดงตลอดเวลาเพื่อป้องกันหน้าขยับ (Layout Shift) */
         html { overflow-y: scroll; }
     </style>
 </head>
@@ -62,8 +61,12 @@
                             
                             <td class="px-6 py-4">
                                 <div class="flex items-center">
-                                    <div class="h-9 w-9 rounded-full bg-pale-sky/40 flex items-center justify-center text-baltic-blue mr-3 border border-pale-sky">
-                                        <i class="fa-solid fa-user-tie"></i>
+                                    <div class="h-10 w-10 shrink-0 rounded-full overflow-hidden bg-pale-sky/40 flex items-center justify-center text-baltic-blue mr-3 border border-pale-sky shadow-sm">
+                                        @if(isset($item->user->profile) && $item->user->profile)
+                                            <img src="{{ asset('storage/' . $item->user->profile) }}" alt="{{ $item->user->name }}" class="h-full w-full object-cover">
+                                        @else
+                                            <span class="font-bold text-lg">{{ mb_substr($item->user->name ?? 'U', 0, 1) }}</span>
+                                        @endif
                                     </div>
                                     <div>
                                         <div class="text-sm font-bold text-deep-navy">{{ $item->user->name ?? 'ไม่ระบุชื่อ' }}</div>

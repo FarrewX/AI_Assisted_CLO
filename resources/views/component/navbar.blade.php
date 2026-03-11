@@ -6,7 +6,6 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body>
-    <!-- resources/views/layouts/navbar.blade.php -->
     <nav x-data="{ mobileOpen: false, userOpen: false }" 
         class="fixed top-0 left-0 w-full z-50 bg-white/90 backdrop-blur-md border-b border-gray-200 shadow-sm transition-all duration-300">
         
@@ -63,7 +62,15 @@
                                         @endif
                                     </div>
 
-                                    <span class="text-gray-700 font-medium hidden md:block">{{ Auth::user()->name }}</span>
+                                    <div class="hidden md:flex items-center gap-1.5">
+                                        <span class="text-gray-700 font-medium">{{ Auth::user()->name }}</span>
+                                        @if(Auth::user()->role_id == 1)
+                                            <span class="px-1.5 py-0.5 rounded-md bg-red-100 text-red-700 text-[10px] font-bold tracking-wider uppercase border border-red-200 shadow-sm">
+                                                Admin
+                                            </span>
+                                        @endif
+                                    </div>
+
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                                     </svg>
@@ -141,7 +148,14 @@
                         </div>
                     </div>
                     <div class="ml-3">
-                        <div class="text-base font-medium text-gray-800">{{ Auth::user()->name }}</div>
+                        <div class="text-base font-medium text-gray-800 flex items-center gap-2">
+                            {{ Auth::user()->name }}
+                            @if(Auth::user()->role_id == 1)
+                                <span class="px-2 py-0.5 rounded-md bg-red-100 text-red-700 text-xs font-bold tracking-wider uppercase border border-red-200 shadow-sm">
+                                    Admin
+                                </span>
+                            @endif
+                        </div>
                         <div class="text-sm font-medium text-gray-500">{{ Auth::user()->email }}</div>
                     </div>
                 </div>
