@@ -56,7 +56,7 @@ class EmailController extends Controller
                 'mail.mailers.smtp.username' => $emailConfig->mail_username,
                 'mail.mailers.smtp.password' => Crypt::decryptString($emailConfig->mail_password),
                 'mail.from.address' => $emailConfig->mail_username,
-                'mail.from.name' => 'ระบบ AI ELO',
+                'mail.from.name' => config('app.name'),
             ]);
         }
 
