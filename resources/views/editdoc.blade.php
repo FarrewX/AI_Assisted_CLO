@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <title>แบบฟอร์ม มคอ.3</title>
+    <title>{{ config('app.name', 'AI-Assisted CLO') }} | แบบฟอร์ม มคอ.3</title>
     <meta name="viewport" content="width=1920mm, height: 1080mm, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     

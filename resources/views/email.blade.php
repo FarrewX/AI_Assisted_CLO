@@ -3,9 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ส่งแจ้งเตือน | ELO Generator</title>
+    <title>{{ config('app.name', 'AI-Assisted CLO') }} | ส่งแจ้งเตือน</title>
     @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/email.js'])
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        window.APP_CONFIG = {
+            name: "{{ config('app.name', 'AI-Assisted CLO') }}"
+        };
+    </script>
 </head>
 <body class="font-sans antialiased text-deep-navy">
     @include('component.navbar')
@@ -46,9 +51,9 @@
                         <select name="subject" id="subject" required
                             class="block w-full px-4 py-3 rounded-lg border-pale-sky shadow-sm focus:ring-baltic-blue/30 focus:border-baltic-blue transition duration-150 ease-in-out border text-deep-navy">
                             <option value="" disabled selected hidden>เลือกหัวข้อการแจ้งเตือน</option>
-                            <option value="แจ้งเตือน: กำหนดการจัดทำ มคอ. (AI ELO Generator)">แจ้งเตือน: กำหนดการจัดทำ มคอ. (AI ELO Generator)</option>
-                            <option value="ประกาศ: ขอความอนุเคราะห์อาจารย์ดำเนินการในระบบ ELO">ประกาศ: ขอความอนุเคราะห์อาจารย์ดำเนินการในระบบ ELO</option>
-                            <option value="ติดตาม: สถานะการใช้งานระบบ AI ELO">ติดตาม: สถานะการใช้งานระบบ AI ELO</option>
+                            <option value="แจ้งเตือน: กำหนดการจัดทำ มคอ.3">แจ้งเตือน: กำหนดการจัดทำ มคอ.3</option>
+                            <option value="ประกาศ: ขอความอนุเคราะห์อาจารย์ดำเนินการในระบบ {{ config('app.name', 'AI-Assisted CLO') }}">ประกาศ: ขอความอนุเคราะห์อาจารย์ดำเนินการในระบบ {{ config('app.name', 'AI-Assisted CLO') }}</option>
+                            <option value="ติดตาม: สถานะการใช้งานระบบ {{ config('app.name', 'AI-Assisted CLO') }}">ติดตาม: สถานะการใช้งานระบบ {{ config('app.name', 'AI-Assisted CLO') }}</option>
                             <option value="other">อื่นๆ (ระบุหัวข้อเอง)</option>
                         </select>
                         <input type="text" id="custom_subject" placeholder="โปรดระบุหัวข้ออีเมลที่ต้องการ..."
@@ -84,7 +89,7 @@
                     <i class="fa-solid fa-circle-info mr-1 text-sky-surge"></i> <span class="underline text-sky-surge">ระบบจะส่งเมลโดยใช้ Gmail สาขาที่ตั้งค่าไว้ในฐานข้อมูล</span>
                 </span>
                 <span class="text-xs text-baltic-blue font-black uppercase tracking-widest">
-                    AI ELO GENERATOR
+                    AI-Assisted CLO
                 </span>
             </div>
         </div>

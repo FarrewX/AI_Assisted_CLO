@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>จัดการผู้ใช้งาน | User Management</title>
+    <title>{{ config('app.name', 'AI-Assisted CLO') }} | จัดการผู้ใช้งาน</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))

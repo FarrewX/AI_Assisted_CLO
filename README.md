@@ -33,7 +33,7 @@ php artisan storage:link
 ```
 
 ### 2. Local AI Engine Setup (Ollama)
-This application relies on a custom local AI model named elo_generator. Please follow these steps to configure and run the model:
+This application relies on a custom local AI model named AI-Assisted CLO. Please follow these steps to configure and run the model:
 
 1.Install Ollama: Download and install Ollama from the [official website](https://ollama.com/download/). For more details, refer to the [Ollama Documentation](https://github.com/ollama/ollama/blob/main/README.md).
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Register</title>
+  <title>{{ config('app.name', 'AI-Assisted CLO') }} | Register</title>
   
   @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
       @vite(['resources/css/app.css', 'resources/js/app.js', 'resources/js/auth/register.js'])
@@ -51,7 +51,7 @@
       <div class="logo" aria-hidden="true"></div>
       <div>
         <h1>สมัครสมาชิก</h1>
-        <p class="sub">สร้างบัญชีใหม่สำหรับ ELO Generator</p>
+        <p class="sub">สร้างบัญชีใหม่สำหรับ {{ config('app.name', 'AI-Assisted CLO') }}</p>
       </div>
     </div>
 

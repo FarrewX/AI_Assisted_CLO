@@ -16,7 +16,7 @@
                 <!-- Desktop Menu -->
                 <div class="flex">
                     <div class="flex-shrink-0 flex items-center gap-2 cursor-pointer" onclick="window.location='{{ url('/') }}'">
-                        <span class="font-bold text-xl tracking-tight text-gray-800">ELO Generator</span>
+                        <span class="font-bold text-xl tracking-tight text-gray-800">{{ config('app.name', 'AI-Assisted CLO') }}</span>
                     </div>
 
                     <div class="hidden sm:ml-8 sm:flex">

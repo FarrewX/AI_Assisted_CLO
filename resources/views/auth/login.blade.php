@@ -7,7 +7,7 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     @else
     @endif
-  <title>Login</title>
+  <title>{{ config('app.name', 'AI-Assisted CLO') }} | Login</title>
   <style>
     :root { --bg: #ffffffff; --card: #ffffffcc; --text: #000000ff; --muted: #9b9b9bff; --primary: #6366f1; --primary-hover: #C2E5F2; --ring: #035AA6; --danger: #ef4444; }
 
@@ -117,7 +117,7 @@
       <div class="logo" aria-hidden="true"></div>
       <div>
         <h1>เข้าสู่ระบบ</h1>
-        <p class="sub">ยินดีต้อนรับสู่ ELO Generator</p>
+        <p class="sub">ยินดีต้อนรับสู่ {{ config('app.name', 'AI-Assisted CLO') }}</p>
       </div>
     </div>
 
