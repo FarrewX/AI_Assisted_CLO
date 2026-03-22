@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
+    <link rel="icon" type="image/png" href="{{ asset('favicon.png') }}">
     <title>{{ config('app.name', 'AI-Assisted CLO') }} | ศูนย์จัดการระบบ</title>
 
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -40,7 +40,7 @@
                 </div>
                 <div class="relative z-10">
                     <h3 class="text-xl font-bold text-deep-navy group-hover:text-baltic-blue transition-colors">หลักสูตร</h3>
-                    <p class="text-sm text-slate-grey mt-1">Curriculum Management</p>
+                    <p class="text-sm text-slate-grey mt-1">การจัดการหลักสูตร</p>
                 </div>
             </a>
 
