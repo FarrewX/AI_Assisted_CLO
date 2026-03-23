@@ -311,6 +311,30 @@
         <div class="heading-blue">หมวดที่ 11 : ขั้นตอนการแก้ไขคะแนน</div>
         <div class="text-content text-sm mb-6">{{ $data->grade_correction ?? '-' }}</div>
 
+        {{-- ============================== ลายเซ็นอาจารย์ ============================== --}}
+        @php
+            $thaiMonths = [
+                1 => 'มกราคม', 2 => 'กุมภาพันธ์', 3 => 'มีนาคม',
+                4 => 'เมษายน', 5 => 'พฤษภาคม', 6 => 'มิถุนายน',
+                7 => 'กรกฎาคม', 8 => 'สิงหาคม', 9 => 'กันยายน',
+                10 => 'ตุลาคม', 11 => 'พฤศจิกายน', 12 => 'ธันวาคม'
+            ];
+            $currentDay = date('j');
+            $currentMonth = $thaiMonths[(int)date('n')];
+            $currentYear = (int)date('Y');
+            $currentYearBE = ($currentYear > 2400) ? $currentYear : $currentYear + 543;
+            
+            $currentDateText = "วันที่ {$currentDay} {$currentMonth} {$currentYearBE}";
+            $instructorName = !empty($data->instructor_name) ? $data->instructor_name : '.........................................................';
+        @endphp
+
+        <div class="mt-16 flex justify-end text-sm text-black">
+            <div class="w-3/4 text-center">
+                <div class="mb-2">ลงชื่อ........................................................................</div>
+                <div class="mb-2">ผู้รับผิดชอบรายวิชา/ผู้รายงาน {{ $instructorName }} {{ $currentDateText }}</div>
+            </div>
+        </div>
+
         <div class="text-center text-gray-400 text-sm mt-10 border-t pt-4 pb-4">
             -- จบการแสดงตัวอย่าง หากต้องการดูข้อมูลตารางแบบสมบูรณ์ กรุณาดาวน์โหลดไฟล์ .docx --
         </div>

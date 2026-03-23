@@ -1751,6 +1751,32 @@ class DocumentController extends Controller
             $table11Head->addCell(10000, ['bgColor' => 'DBEAFE', 'valign' => 'center'])->addText('หมวดที่ 11 : ขั้นตอนการแก้ไขคะแนน', array_merge($boldFont, $head), ['alignment' => \PhpOffice\PhpWord\SimpleType\Jc::CENTER, 'spaceAfter' => 0, 'spaceBefore' => 0]);
             $section->addText(htmlspecialchars($docxData['s11_grade_correction']));
 
+            // ==== ลายเซ็นอาจารย์ ====
+            $section->addTextBreak(2);
+
+            $thaiMonths = [
+                1 => 'มกราคม', 2 => 'กุมภาพันธ์', 3 => 'มีนาคม',
+                4 => 'เมษายน', 5 => 'พฤษภาคม', 6 => 'มิถุนายน',
+                7 => 'กรกฎาคม', 8 => 'สิงหาคม', 9 => 'กันยายน',
+                10 => 'ตุลาคม', 11 => 'พฤศจิกายน', 12 => 'ธันวาคม'
+            ];
+            $currentDay = date('j'); // วันที่แบบไม่มี 0 นำหน้า (1-31)
+            $currentMonth = $thaiMonths[(int)date('n')];
+            $currentYear = (int) date('Y');
+            $currentYearBE = ($currentYear > 2400) ? $currentYear : $currentYear + 543;
+            
+            $currentDateText = "วันที่ {$currentDay} {$currentMonth} {$currentYearBE}";
+
+            $sigTable = $section->addTable(['borderSize' => 0, 'width' => '100%', 'borderColor' => 'FFFFFF']);
+            $sigTable->addRow();
+            $sigTable->addCell(3000);
+            $sigCell = $sigTable->addCell(7000);
+
+            $sigCell->addText('ลงชื่อ........................................................................', [], ['alignment' => 'center']);
+            $instructorName = !empty($docxData['s1_instructors']) ? $docxData['s1_instructors'] : '.........................................................';
+            $sigCell->addText('ผู้รับผิดชอบรายวิชา/ผู้รายงาน ' . htmlspecialchars($instructorName) . ' ' . $currentDateText, [], ['alignment' => 'center']);
+            // ==========================================================
+
             $fileName = $docxData['fileName'] . '.docx';
             $writer = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'Word2007');
             $tempFile = tempnam(sys_get_temp_dir(), 'phpword');
