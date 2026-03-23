@@ -289,9 +289,15 @@
                         </tr>
                         <tr>
                         <td class="p-4 border border-gray-300">
-                            <b>2.2 ผลลัพธ์การเรียนรู้ระดับรายวิชา (Course learning Outcome) CLOs </b>
-                            <br>
-                            <div id="clo-input-container" class="mt-2 space-y-2">
+                            <div class="flex justify-between items-center mb-3">
+                                <b class="text-lg">2.2 ผลลัพธ์การเรียนรู้ระดับรายวิชา (Course learning Outcome) CLOs </b>
+                                <button type="button" onclick="addNewCLO()" class="px-3 py-1.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 shadow-sm transition-colors flex items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                    เพิ่ม CLO
+                                </button>
+                            </div>
+                            
+                            <div id="clo-input-container" class="mt-2 space-y-3">
                                 <div class="text-sm text-gray-500 py-2">
                                     <i class="fa-solid fa-spinner fa-spin mr-2 text-blue-500"></i> กำลังโหลดข้อมูล CLO...
                                 </div>

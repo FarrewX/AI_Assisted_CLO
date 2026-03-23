@@ -388,8 +388,9 @@ document.addEventListener('DOMContentLoaded', () => {
         cloKeys.forEach(key => {
             const details = safeData[key];
             const row = document.createElement('div');
-            row.className = 'flex gap-2 clo-item-row';
+            row.className = 'flex gap-2 clo-item-row mb-2';
             
+            // 🌟 เพิ่มปุ่ม "ลบ" เข้าไปในแถว
             row.innerHTML = `
                 <input type="text" class="w-20 p-2 text-sm font-bold border rounded bg-gray-100 text-center clo-key" value="${key.replace(/\s/g, '')}" readonly>
                 <input type="text" 
@@ -397,12 +398,56 @@ document.addEventListener('DOMContentLoaded', () => {
                     data-original-key="${key}"
                     name="ignore_auto"
                     value="${details.CLO || ''}">
+                <button type="button" onclick="deleteCLO('${key}')" class="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors text-sm shadow-sm">
+                    ลบ
+                </button>
             `;
             container.appendChild(row);
         });
     }
 
+    // เพิ่ม CLO ใหม่
+    window.addNewCLO = function() {
+        if (!window.SHARED_CLO_DATA) window.SHARED_CLO_DATA = {};
+        
+        // หาเลข CLO สูงสุดเพื่อรันเลขถัดไป
+        let maxNum = 0;
+        for (let key in window.SHARED_CLO_DATA) {
+            let num = parseInt(key.replace(/\D/g, ''));
+            if (!isNaN(num) && num > maxNum) maxNum = num;
+        }
+        let nextNum = maxNum + 1;
+        let newKey = "CLO " + nextNum;
+
+        window.SHARED_CLO_DATA[newKey] = { CLO: "" };
+        
+        renderSection2_2();
+
+        if (typeof saveData === 'function') {
+            saveData('ai_text', JSON.stringify(window.SHARED_CLO_DATA));
+        }
+    };
+
+    // ลบ CLO
+    window.deleteCLO = function(cloKey) {
+        if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบ [${cloKey}] ?\n\n*หมายเหตุ: ข้อมูลในตารางอื่นๆ ที่ผูกกับ CLO นี้อาจได้รับผลกระทบ`)) {
+            return;
+        }
+
+        // ลบ Key ออกจาก Object หลัก
+        delete window.SHARED_CLO_DATA[cloKey];
+        
+        renderSection2_2();
+
+        if (typeof saveData === 'function') {
+            saveData('ai_text', JSON.stringify(window.SHARED_CLO_DATA));
+        }
+    };
+
+    // เรียกใช้งานครั้งแรกตอนโหลดหน้าเว็บ
     renderSection2_2();
+
+    // จัดการ Event Listener สำหรับการพิมพ์แก้ไขข้อความ
     const container = document.getElementById('clo-input-container');
     if (container) {
         // เมื่อมีการพิมพ์และคลิกออกนอกกล่อง (change/blur)
