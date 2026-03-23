@@ -21,7 +21,13 @@
             
             <div class="text-center mb-8">
                 <h1 class="text-2xl font-bold text-deep-navy">ยินดีต้อนรับ</h1>
-                <h2 class="text-xl text-sky-surge mt-1">อาจารย์ {{ Auth::user()->name ?? 'ผู้ใช้งาน' }}</h2>
+                <h2 class="text-xl text-sky-surge mt-1">
+                    @if(Auth::user()->role_id == 1)
+                        ผู้ดูแลระบบ: {{ Auth::user()->name ?? 'ผู้ใช้งาน' }}
+                    @else
+                        อาจารย์: {{ Auth::user()->name ?? 'ผู้ใช้งาน' }}
+                    @endif
+                </h2>
             </div>
 
             <div class="w-full max-w-3xl bg-pure-white rounded-2xl shadow-lg border border-pale-sky p-6 md:p-8">
@@ -54,17 +60,21 @@
                                       ?? $courseRow->course_name_en 
                                       ?? 'รหัสวิชา: ' . ($courseRow->course_code ?? '-');
                         $courseCode = $courseRow->course_code ?? '';
+                        $curriculumYear = $courseRow->curriculum_year ?? '-';
                         $termsGroup = $courseGroup->groupBy('term');
                     @endphp
 
                     <div class="mb-6 last:mb-0 border border-pale-sky rounded-xl overflow-hidden shadow-sm">
-                        <div class="bg-pale-sky/40 px-5 py-3.5 border-b border-pale-sky flex items-center">
-                            <span class="bg-pure-white text-baltic-blue text-xs font-bold mr-3 px-3 py-1 rounded-md border border-sky-surge/50 shadow-sm">
+                        <div class="bg-pale-sky/40 px-5 py-3.5 border-b border-pale-sky flex items-center flex-wrap gap-2">
+                            <span class="bg-pure-white text-baltic-blue text-xs font-bold px-3 py-1 rounded-md border border-sky-surge/50 shadow-sm">
                                 {{ $courseCode }}
                             </span>
                             <span class="font-bold text-deep-navy">{{ $courseName }}</span>
+                            
+                            <span class="text-xs text-baltic-blue font-semibold bg-pure-white/80 px-2.5 py-1 rounded-lg border border-sky-surge/30 ml-auto sm:ml-2">
+                                <i class="fa-solid fa-graduation-cap mr-1"></i> หลักสูตร {{ $curriculumYear }}
+                            </span>
                         </div>
-
                         <div class="p-5 bg-pure-white">
                             @foreach($termsGroup as $term => $TQFItems)
                                 <div class="mb-5 last:mb-0">
@@ -76,7 +86,6 @@
                                             @php
                                                 $stepCount = collect([$item->startprompt, $item->generated, $item->success])->filter()->count();
                                                 
-                                                // คงสี Badge สถานะไว้ (เทา, แดง, ส้ม, เขียว) เพื่อให้เข้าใจง่าย
                                                 $statusConfig = match($stepCount) {
                                                     0 => ['text' => 'ยังไม่เริ่ม', 'color' => 'text-slate-grey', 'btn' => 'เริ่มต้น', 'url' => '/form'],
                                                     1 => ['text' => 'เริ่มทำแล้ว', 'color' => 'text-red-600', 'btn' => 'สร้างต่อ', 'url' => '/form'],
@@ -97,15 +106,23 @@
 
                                             <div class="flex flex-col sm:flex-row sm:items-center justify-between bg-pale-sky/10 p-4 rounded-xl border border-pale-sky hover:border-sky-surge/50 hover:shadow-md transition-all duration-200">
                                                 <div class="flex-1 mb-3 sm:mb-0">
-                                                    <div class="flex items-center gap-3">
+                                                    <div class="flex items-center flex-wrap gap-2">
                                                         <span class="font-bold text-deep-navy text-lg">มคอ.{{ $item->TQF }}</span>
                                                         <span class="text-xs font-bold {{ $statusConfig['color'] }} border border-pale-sky px-2.5 py-1 rounded-full bg-pure-white shadow-sm">
                                                             {{ $statusConfig['text'] }}
                                                         </span>
-                                                    </div>                                      
+                                                    </div>
+                                                    
+                                                    @if(Auth::user()->role_id == 1)
+                                                    <div class="text-sm text-slate-grey mt-2 flex items-center gap-1.5">
+                                                        <i class="fa-solid fa-user-tie text-sky-surge"></i>
+                                                        <span class="font-medium">ผู้สอน: {{ $item->instructor_name ?? 'ไม่ระบุชื่อ' }}</span>
+                                                    </div>
+                                                    @endif
+
                                                 </div>
                                                 <div>
-                                                    <a href="{{ $url }}" class="inline-flex items-center justify-center text-sm font-bold bg-[#035AA6]/50 hover:bg-[#6CBAD9] border border-cloud-blue text-white hover:text-pure-white hover:border-sky-surge px-5 py-2.5 rounded-lg transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-baltic-blue/30 w-full sm:w-auto">
+                                                    <a href="{{ $url }}" class="inline-flex items-center justify-center text-sm font-bold bg-[#035AA6] hover:bg-[#6CBAD9] border border-cloud-blue text-white hover:text-pure-white hover:border-sky-surge px-5 py-2.5 rounded-lg transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-baltic-blue/30 w-full sm:w-auto">
                                                         {{ $statusConfig['btn'] }}
                                                     </a>
                                                 </div>

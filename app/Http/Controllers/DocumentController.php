@@ -43,14 +43,19 @@ class DocumentController extends Controller
 
         try {
             // หา CourseYear ID
-            $courseYear = DB::table('courseyears')
+            $query = DB::table('courseyears')
                 ->where('CC_id', $validated['CC_id'])
-                ->where('user_id', $user->user_id)
                 ->where('year', $validated['year'])
                 ->where('term', $validated['term'])
-                ->where('TQF', $validated['TQF'])
-                ->first();
+                ->where('TQF', $validated['TQF']);
 
+            if ($user->role_id != 1) {
+                $query->where('user_id', $user->user_id);
+            }
+
+            $courseYear = $query->first();
+
+            // ถ้าหาไม่เจอ (หรือไม่มีสิทธิ์) เด้ง 404
             if (!$courseYear) {
                 return response()->json(['message' => 'TQF Document (CourseYear) not found.'], 404);
             }
@@ -82,8 +87,7 @@ class DocumentController extends Controller
             abort(400, 'Missing required parameters or not authenticated');
         }
 
-        // ค้นหาตามโครงสร้างใหม่
-        $context = DB::table('courseyears as cy')
+        $query = DB::table('courseyears as cy')
             ->leftJoin('users as u', 'cy.user_id', '=', 'u.user_id')
             ->leftJoin('curriculum_courses as cc', 'cy.CC_id', '=', 'cc.id')
             ->leftJoin('courses as c', 'cc.course_code', '=', 'c.id') 
@@ -100,14 +104,18 @@ class DocumentController extends Controller
                 'cy.CC_id',
                 'cy.TQF'
             )
-            ->where('cy.user_id', $user->user_id)
             ->where('cy.CC_id', $CC_id)
             ->where('cy.year', $year)
             ->where('cy.term', $term)
-            ->where('cy.TQF', $TQF)
-            ->first();
+            ->where('cy.TQF', $TQF);
 
-        if (!$context) abort(404, 'TQF Document (CourseYear) not found.');
+        if ($user->role_id != 1) {
+            $query->where('cy.user_id', $user->user_id);
+        }
+
+        $context = $query->first();
+
+        if (!$context) abort(404, 'TQF Document (CourseYear) not found or unauthorized.');
 
         return $context;
     }
@@ -1747,6 +1755,11 @@ class DocumentController extends Controller
             $writer = \PhpOffice\PhpWord\IOFactory::createWriter($phpWord, 'Word2007');
             $tempFile = tempnam(sys_get_temp_dir(), 'phpword');
             $writer->save($tempFile);
+
+            \Illuminate\Support\Facades\DB::table('statuses')->updateOrInsert(
+                ['courseyear_id_ref' => $context->courseYearId],
+                ['success' => now(), 'updated_at' => now()]
+            );
 
             return response()->download($tempFile, $fileName)->deleteFileAfterSend(true);
 

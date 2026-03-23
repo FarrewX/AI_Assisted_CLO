@@ -25,25 +25,33 @@ class CourseController extends Controller
         $defaultYear = date('Y') + 543;
         $selectedYear = $request->input('year', $defaultYear); 
 
-        $courses = DB::table('courseyears as cy')
+        $query = DB::table('courseyears as cy')
             ->join('curriculum_courses as cc', 'cy.CC_id', '=', 'cc.id')
-            ->join('courses as c', 'cc.course_code', '=', 'c.id') 
+            ->join('courses as c', 'cc.course_code', '=', 'c.id')
+            ->join('curriculum as cur', 'cc.curriculum_id', '=', 'cur.id')
             ->leftJoin('statuses as s', 'cy.id', '=', 's.courseyear_id_ref')
-            ->where('cy.user_id', $user->user_id) 
+            ->leftJoin('users as u', 'cy.user_id', '=', 'u.user_id')
             ->where('cy.year', $selectedYear)
             ->select(
                 'c.course_code',
                 'c.course_name_th',
                 'c.course_name_en',
+                'cur.curriculum_year',
                 'cy.year',
                 'cy.term',
                 'cy.TQF',
                 'cy.CC_id',
                 's.startprompt',
                 's.generated',
-                's.success'
-            )
-            ->orderBy('cy.term', 'asc')
+                's.success',
+                'u.name as instructor_name',
+            );
+
+        if ($user->role_id != 1) {
+            $query->where('cy.user_id', $user->user_id);
+        }
+
+        $courses = $query->orderBy('cy.term', 'asc')
             ->orderBy('c.course_code', 'asc')
             ->get();
 
@@ -84,7 +92,7 @@ class CourseController extends Controller
             ->whereRaw('p1.updated_at = (select max(p2.updated_at) from prompts as p2 where p2.courseyear_id_ref = p1.courseyear_id_ref)')
             ->groupBy('p1.courseyear_id_ref', 'p1.course_text');
 
-        $courseOptions = DB::table('courseyears as cy')
+        $query = DB::table('courseyears as cy')
             ->join('curriculum_courses as cc', 'cy.CC_id', '=', 'cc.id')
             ->join('courses as c', 'cc.course_code', '=', 'c.id') 
             ->join('curriculum as cur', 'cc.curriculum_id', '=', 'cur.id')
@@ -93,7 +101,6 @@ class CourseController extends Controller
             ->leftJoinSub($latestPrompts, 'lp', function($join) {
                 $join->on('cy.id', '=', 'lp.courseyear_id_ref');
             })
-            ->where('cy.user_id', $user->user_id)
             ->whereIn('cy.year', $targetYears)
             ->select(
                 'c.id as course_pk',
@@ -108,9 +115,15 @@ class CourseController extends Controller
                 'cy.TQF',
                 'cur.curriculum_year',
                 'lp.course_text',
-                'lp.courseyear_id_ref'
-            )
-            ->orderBy('cy.year', 'desc')
+                'lp.courseyear_id_ref',
+                'u.name as instructor_name'
+            );
+
+        if ($user->role_id != 1) {
+            $query->where('cy.user_id', $user->user_id);
+        }
+
+        $courseOptions = $query->orderBy('cy.year', 'desc')
             ->orderBy('cy.term', 'asc')
             ->get(); 
 
@@ -161,13 +174,17 @@ class CourseController extends Controller
             'TQF'   => 'required|string',
         ]);
 
-        $cy = Courseyears::with('curriculum_course.course')
+        $query = Courseyears::with('curriculum_course.course')
             ->where('CC_id', $request->CC_id)
-            ->where('user_id', $user->user_id)
             ->where('year', $request->year)
             ->where('term', $request->term)
-            ->where('TQF', $request->TQF)
-            ->first();
+            ->where('TQF', $request->TQF);
+
+        if ($user->role_id != 1) {
+            $query->where('user_id', $user->user_id);
+        }
+
+        $cy = $query->first();
 
         if (!$cy) {
             return response()->json(['message' => 'ไม่พบข้อมูลรายวิชา', 'prompt' => ''], 404);
@@ -189,8 +206,8 @@ class CourseController extends Controller
         // ถ้าไม่มี -> ดึง Course Detail จาก Master Data
         $courseDetail = '';
         if ($cy->curriculum_course && $cy->curriculum_course->course) {
-             $c = $cy->curriculum_course->course;
-             $courseDetail = $c->course_detail_th ?? $c->course_detail_en ?? '';
+            $c = $cy->curriculum_course->course;
+            $courseDetail = $c->course_detail_th ?? $c->course_detail_en ?? '';
         }
 
         return response()->json(['prompt' => $courseDetail]);

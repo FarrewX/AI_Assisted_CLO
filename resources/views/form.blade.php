@@ -117,11 +117,14 @@
                         data-TQF="{{ $course->TQF }}"
                         data-detail="{{ $course->course_detail_th }}"
                         data-coursetext="{{ $course->course_text }}">
-                        {{ $course->course_code }} {{ $course->course_name_th }} (ภาค{{$course->term}}/{{ $course->year }}) [หลักสูตร {{ $course->curriculum_year }}]
+                        {{ $course->course_code }} {{ $course->course_name_th }} [{{ $course->curriculum_year }}] (ภาคเรียน{{$course->term}}/{{ $course->year }}) 
+                        @if(Auth::user()->role_id == 1) 
+                            [ผู้สอน: {{ $course->instructor_name }}]
+                        @endif
                     </option>
                 @endforeach
             @endif
-        </select>
+          </select>
         </div>
 
         <div>
