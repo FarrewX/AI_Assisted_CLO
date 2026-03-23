@@ -132,7 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (feedbackElement) {
             originalColor = feedbackElement.style.backgroundColor;
             feedbackElement.style.transition = 'background-color 0.1s ease';
-            feedbackElement.style.backgroundColor = '#fffbdd';
+            // feedbackElement.style.backgroundColor = '#fffbdd';
         }
 
         try {
@@ -163,7 +163,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // console.log('Save successful:', result);
 
             if (feedbackElement) {
-                feedbackElement.style.backgroundColor = '#d4edda'; 
+                // feedbackElement.style.backgroundColor = '#d4edda'; 
                 setTimeout(() => {
                      if(feedbackElement) {
                         feedbackElement.style.backgroundColor = originalColor;
@@ -175,7 +175,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('Save failed:', error);
             if (feedbackElement) {
-                feedbackElement.style.backgroundColor = '#f8d7da';
+                // feedbackElement.style.backgroundColor = '#f8d7da';
                 setTimeout(() => {
                      if(feedbackElement) {
                          feedbackElement.style.backgroundColor = originalColor;
@@ -429,8 +429,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // ลบ CLO
-    window.deleteCLO = function(cloKey) {
-        if (!confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบ [${cloKey}] ?\n\n*หมายเหตุ: ข้อมูลในตารางอื่นๆ ที่ผูกกับ CLO นี้อาจได้รับผลกระทบ`)) {
+   window.deleteCLO = async function(cloKey) {
+        const result = await AppConfirm(`คุณแน่ใจหรือไม่ว่าต้องการลบ [${cloKey}] ?\n\n*หมายเหตุ: ข้อมูลในตารางอื่นๆ ที่ผูกกับ CLO นี้อาจได้รับผลกระทบ`);
+        
+        if (!result.isConfirmed) {
             return;
         }
 
