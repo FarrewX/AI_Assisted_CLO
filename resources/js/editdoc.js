@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const PAGE_DATA = window.pageData || {};
 
     // สำหรับ Popup (SweetAlert2)
-    const AppAlert = (message, iconType = 'warning') => {
+    window.AppAlert = (message, iconType = 'warning') => {
         return new Promise((resolve) => {
             Swal.fire({
                 title: 'แจ้งเตือน',
@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    const AppConfirm = (message) => {
+    window.AppConfirm = (message) => {
         return new Promise((resolve) => {
             Swal.fire({
                 title: 'ยืนยันการดำเนินการ',
@@ -2028,6 +2028,75 @@ document.addEventListener('DOMContentLoaded', () => {
                 AppAlert('เกิดข้อผิดพลาดในการดึงข้อมูลจากเซิร์ฟเวอร์', 'error');
                 fetchPrevGradingBtn.innerText = 'ดึงข้อมูลเก่า';
                 fetchPrevGradingBtn.disabled = false;
+            }
+        });
+    }
+
+    // ดึงข้อมูลทั้งหมด
+    const fetchAllBtn = document.getElementById('fetchAllPrevDataBtn');
+    
+    if (fetchAllBtn) {
+        fetchAllBtn.addEventListener('click', async function() {
+            const result = await AppConfirm("คุณต้องการดึงข้อมูลเก่าของ 'ทุกหมวด' มาใช้งานใช่หรือไม่?\n\n*คำเตือน: ข้อมูลเดิมที่มีอยู่ในแต่ละหมวดจะถูกแทนที่ด้วยข้อมูลเก่าทันที");
+            
+            if (!result.isConfirmed) return;
+
+            const loading = document.getElementById('loadingPopup');
+            if (loading) loading.style.display = 'flex';
+
+            // ปิดฟังก์ชัน Confirm และ Alert ชั่วคราว
+            const originalConfirm = window.confirm;
+            const originalAppConfirm = AppConfirm;
+            const originalAppAlert = AppAlert;
+            window.confirm = () => true; 
+            window.AppConfirm = async () => ({ isConfirmed: true }); 
+            window.AppAlert = async () => true;
+
+            try {
+                const btnIds = [
+                    'fetchPrevAgreementBtn',     // หมวด 4
+                    'fetchPrevMapBtn',           // หมวด 5.2
+                    'fetchPrevLessonPlanBtn',    // หมวด 7
+                    'fetchPrevAssessmentBtn',    // หมวด 8.1
+                    'fetchPrevRubricsBtn',       // หมวด 8.2
+                    'fetchPrevGradingBtn'        // หมวด 10
+                ];
+
+                let clickedCount = 0;
+
+                // วนลูปสั่งจำลองการคลิกทีละปุ่ม
+                for (const id of btnIds) {
+                    const btn = document.getElementById(id);
+                    if (btn) {
+                        btn.click();
+                        clickedCount++;
+                        await new Promise(resolve => setTimeout(resolve, 600));
+                    }
+                }
+
+                if (loading) loading.style.display = 'none';
+
+                // คืนค่าฟังก์ชัน Alert กลับมา
+                window.AppAlert = originalAppAlert; 
+
+                // แจ้งเตือนผลลัพธ์แบบรวบยอดแค่ครั้งเดียว
+                if (clickedCount > 0) {
+                    AppAlert('ดึงข้อมูลเก่าสำเร็จเรียบร้อยแล้ว!', 'success');
+                } else {
+                    AppAlert('ไม่พบข้อมูลเก่าในรายวิชานี้เลย', 'info');
+                }
+
+            } catch (error) {
+                console.error("Error fetching all previous data:", error);
+                if (loading) loading.style.display = 'none';
+                
+                window.AppAlert = originalAppAlert;
+                AppAlert('เกิดข้อผิดพลาดในการดึงข้อมูลเก่า', 'error');
+                
+            } finally {
+                window.confirm = originalConfirm;
+                window.AppConfirm = originalAppConfirm;
+                window.AppAlert = originalAppAlert; 
             }
         });
     }
