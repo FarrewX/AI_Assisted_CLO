@@ -1,0 +1,60 @@
+name: Laravel CI
+
+# 1. กำหนดว่าจะให้ CI ทำงานตอนไหน (Trigger)
+on:
+  push:
+    branches: [ "main" ] # ทำงานเมื่อดันโค้ดขึ้นกิ่ง main
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    # 2. เลือกเซิร์ฟเวอร์จำลอง (Runner)
+    runs-on: ubuntu-latest
+
+    # 3. ขั้นตอนการทำงาน (Steps)
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # --- ตั้งค่า PHP และ Laravel ---
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2' # 🌟 เปลี่ยนเป็นเวอร์ชัน PHP ที่คุณใช้จริง (เช่น 8.1, 8.2)
+
+    - name: Copy .env
+      run: |
+        php -r "file_exists('.env') || copy('.env.example', '.env');"
+        echo "API_KEY=${{ secrets.API_KEY }}" >> .env
+
+    - name: Install Composer Dependencies
+      run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+    - name: Generate App Key
+      run: php artisan key:generate
+
+    - name: Set Directory Permissions
+      run: chmod -R 777 storage bootstrap/cache
+
+    # --- ตั้งค่า Node.js สำหรับ Tailwind CSS ---
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+
+    - name: Install NPM and Build CSS/JS
+      run: |
+        npm install
+        npm run build
+
+    # --- ทดสอบการทำงาน (Testing) ---
+    - name: Execute tests (PHPUnit)
+      # ใช้ฐานข้อมูลจำลอง (SQLite) ในการเทสต์ เพื่อความรวดเร็วและไม่ต้องตั้งค่า MySQL ให้วุ่นวาย
+      env:
+        DB_CONNECTION: sqlite
+        DB_DATABASE: database/database.sqlite
+      run: |
+        touch database/database.sqlite
+        php artisan migrate --force
+        php artisan test
