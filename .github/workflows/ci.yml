@@ -26,6 +26,7 @@ jobs:
     - name: Copy .env
       run: |
         php -r "file_exists('.env') || copy('.env.example', '.env');"
+        echo "" >> .env
         echo "API_KEY=${{ secrets.API_KEY }}" >> .env
 
     - name: Install Composer Dependencies
