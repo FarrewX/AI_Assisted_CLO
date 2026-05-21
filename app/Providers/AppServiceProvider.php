@@ -24,22 +24,29 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void 
     {
-        if (Schema::hasTable('email_for_send')) {
-            $emailConfig = EmailForSend::latest()->first();
+        if (app()->runningInConsole()) {
+            return;
+        }
 
-            if ($emailConfig && $emailConfig->mail_password) {
-                try {
-                    $mailPassword = Crypt::decryptString(trim($emailConfig->mail_password));
+        try {
+            if (Schema::hasTable('email_for_send')) {
+                $emailConfig = EmailForSend::latest()->first();
 
-                    Config::set('mail.mailers.smtp.username', $emailConfig->mail_username);
-                    Config::set('mail.mailers.smtp.password', $mailPassword);
-                    Config::set('mail.from.address', $emailConfig->mail_username);
+                if ($emailConfig && $emailConfig->mail_password) {
+                    try {
+                        $mailPassword = Crypt::decryptString(trim($emailConfig->mail_password));
 
-                } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
-                    // รหัสผ่านไม่สามารถถอดรหัสได้
-                    Log::error('Failed to decrypt email password: ' . $e->getMessage());
+                        Config::set('mail.mailers.smtp.username', $emailConfig->mail_username);
+                        Config::set('mail.mailers.smtp.password', $mailPassword);
+                        Config::set('mail.from.address', $emailConfig->mail_username);
+
+                    } catch (\Illuminate\Contracts\Encryption\DecryptException $e) {
+                        Log::error('Failed to decrypt email password: ' . $e->getMessage());
+                    }
                 }
             }
+        } catch (\Exception $e) {
+            Log::warning('AppServiceProvider DB Check Failed: ' . $e->getMessage());
         }
     }
 }

@@ -38,8 +38,4 @@ class Courseyears extends Model
         return $this->belongsTo(Curriculum_course::class, 'CC_id', 'id');
     }
 
-    public function course_learning_maps()
-    {
-        return $this->hasOne(course_learning_maps::class, 'courseyear_id_ref', 'id');
-    }
 }
